@@ -2,6 +2,7 @@ package dev.lavalink.youtube.track;
 
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
+import org.jetbrains.annotations.NotNull;
 
 import static com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN;
 
@@ -14,6 +15,7 @@ public class TemporalInfo {
         this.durationMillis = durationMillis;
     }
 
+    @NotNull
     public static TemporalInfo fromRawData(boolean wasLiveStream, JsonBrowser durationSecondsField, boolean legacy) {
         long durationValue = durationSecondsField.asLong(0L);
 

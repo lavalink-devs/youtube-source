@@ -3,6 +3,8 @@ package dev.lavalink.youtube.clients;
 import com.grack.nanojson.JsonWriter;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +26,9 @@ public class ClientConfig {
         this.name = null;
     }
 
-    private ClientConfig(Map<String, Object> context, String userAgent, String name) {
+    private ClientConfig(@NotNull Map<String, Object> context,
+                         @NotNull String userAgent,
+                         @NotNull String name) {
         this.root = context;
         this.userAgent = userAgent;
         this.name = name;
@@ -34,7 +38,7 @@ public class ClientConfig {
         return new ClientConfig(new HashMap<>(this.root), this.userAgent, this.name);
     }
 
-    public ClientConfig withClientName(String name) {
+    public ClientConfig withClientName(@NotNull String name) {
         this.name = name;
         withClientField("clientName", name);
         return this;
@@ -44,7 +48,7 @@ public class ClientConfig {
         return this.name;
     }
 
-    public ClientConfig withUserAgent(String userAgent) {
+    public ClientConfig withUserAgent(@NotNull String userAgent) {
         this.userAgent = userAgent;
         return this;
     }
@@ -53,7 +57,7 @@ public class ClientConfig {
         return this.userAgent;
     }
 
-    public ClientConfig withApiKey(String apiKey) {
+    public ClientConfig withApiKey(@NotNull String apiKey) {
         this.apiKey = apiKey;
         return this;
     }
@@ -62,7 +66,8 @@ public class ClientConfig {
         return this.apiKey;
     }
 
-    public Map<String, Object> putOnceAndJoin(Map<String, Object> on, String key) {
+    public Map<String, Object> putOnceAndJoin(@NotNull Map<String, Object> on,
+                                              @NotNull String key) {
         return (Map<String, Object>) on.computeIfAbsent(key, __ -> new HashMap<String, Object>());
     }
 
@@ -73,40 +78,43 @@ public class ClientConfig {
         return withClientField("screenWidthPoints", 1920);
     }
 
-    public ClientConfig withThirdPartyEmbedUrl(String embedUrl) {
+    public ClientConfig withThirdPartyEmbedUrl(@NotNull String embedUrl) {
         Map<String, Object> context = putOnceAndJoin(root, "context");
         Map<String, Object> thirdParty = putOnceAndJoin(context, "thirdParty");
         thirdParty.put("embedUrl", embedUrl);
         return this;
     }
 
-    public ClientConfig withPlaybackSignatureTimestamp(String signatureTimestamp) {
+    public ClientConfig withPlaybackSignatureTimestamp(@NotNull String signatureTimestamp) {
         Map<String, Object> playbackContext = putOnceAndJoin(root, "playbackContext");
         Map<String, Object> contentPlaybackContext = putOnceAndJoin(playbackContext, "contentPlaybackContext");
         contentPlaybackContext.put("signatureTimestamp", signatureTimestamp);
         return this;
     }
 
-    public ClientConfig withRootField(String key, Object value) {
+    public ClientConfig withRootField(@NotNull String key,
+                                      @Nullable Object value) {
         root.put(key, value);
         return this;
     }
 
-    public ClientConfig withClientField(String key, Object value) {
+    public ClientConfig withClientField(@NotNull String key,
+                                        @Nullable Object value) {
         Map<String, Object> context = putOnceAndJoin(root, "context");
         Map<String, Object> client = putOnceAndJoin(context, "client");
         client.put(key, value);
         return this;
     }
 
-    public ClientConfig withUserField(String key, Object value) {
+    public ClientConfig withUserField(@NotNull String key,
+                                      @Nullable Object value) {
         Map<String, Object> context = putOnceAndJoin(root, "context");
         Map<String, Object> user = putOnceAndJoin(context, "user");
         user.put(key, value);
         return this;
     }
 
-    public ClientConfig setAttributes(HttpInterface httpInterface) {
+    public ClientConfig setAttributes(@NotNull HttpInterface httpInterface) {
         if (userAgent != null) {
             httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.ATTRIBUTE_USER_AGENT_SPECIFIED, userAgent);
         }
@@ -127,7 +135,7 @@ public class ClientConfig {
         private final String osVersion;
         private final int sdkVersion;
 
-        AndroidVersion(String osVersion, int sdkVersion) {
+        AndroidVersion(@NotNull String osVersion, int sdkVersion) {
             this.osVersion = osVersion;
             this.sdkVersion = sdkVersion;
         }

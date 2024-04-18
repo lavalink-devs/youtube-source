@@ -3,6 +3,7 @@ package dev.lavalink.youtube;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
+import org.jetbrains.annotations.NotNull;
 
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -11,7 +12,9 @@ import java.util.stream.Collectors;
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 
 public class UrlTools {
-    public static UrlInfo getUrlInfo(String url, boolean retryValidPart) {
+    @NotNull
+    public static UrlInfo getUrlInfo(@NotNull String url,
+                                     boolean retryValidPart) {
         try {
             if (!url.startsWith("http://") && !url.startsWith("https://")) {
                 url = "https://" + url;
@@ -34,7 +37,8 @@ public class UrlTools {
         public final String path;
         public final Map<String, String> parameters;
 
-        private UrlInfo(String path, Map<String, String> parameters) {
+        private UrlInfo(@NotNull String path,
+                        @NotNull Map<String, String> parameters) {
             this.path = path;
             this.parameters = parameters;
         }

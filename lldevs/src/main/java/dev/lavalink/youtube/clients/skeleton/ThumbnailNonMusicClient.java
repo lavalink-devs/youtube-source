@@ -1,12 +1,18 @@
 package dev.lavalink.youtube.clients.skeleton;
 
-import com.sedmelluq.discord.lavaplayer.tools.*;
+import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.ThumbnailTools;
+import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.track.*;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
-import dev.lavalink.youtube.clients.skeleton.NonMusicClient;
 import dev.lavalink.youtube.track.TemporalInfo;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,9 +21,9 @@ import java.util.List;
  * The base class for a client that is used for everything except music.youtube.com.
  */
 public abstract class ThumbnailNonMusicClient extends NonMusicClient {
-    protected void extractPlaylistTracks(JsonBrowser json,
-                                         List<AudioTrack> tracks,
-                                         YoutubeAudioSourceManager source) {
+    protected void extractPlaylistTracks(@NotNull JsonBrowser json,
+                                         @NotNull List<AudioTrack> tracks,
+                                         @NotNull YoutubeAudioSourceManager source) {
         if (!json.get("contents").isNull()) {
             json = json.get("contents");
         }
@@ -46,7 +52,9 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
         }
     }
 
-    protected AudioTrack extractAudioTrack(JsonBrowser json, YoutubeAudioSourceManager source) {
+    @Nullable
+    protected AudioTrack extractAudioTrack(@NotNull JsonBrowser json,
+                                           @NotNull YoutubeAudioSourceManager source) {
         // Ignore if it's not a track or if it's a livestream
         if (json.isNull() || json.get("lengthText").isNull() || !json.get("unplayableText").isNull()) return null;
 
@@ -66,9 +74,9 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
     }
 
     @Override
-    public AudioItem loadVideo(YoutubeAudioSourceManager source,
-                               HttpInterface httpInterface,
-                               String videoId) throws CannotBeLoaded, IOException {
+    public AudioItem loadVideo(@NotNull YoutubeAudioSourceManager source,
+                               @NotNull HttpInterface httpInterface,
+                               @NotNull String videoId) throws CannotBeLoaded, IOException {
         JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");

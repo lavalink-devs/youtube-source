@@ -15,6 +15,8 @@ import dev.lavalink.youtube.track.TemporalInfo;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,11 +47,13 @@ public abstract class NonMusicClient implements Client {
      *                      if applicable.
      * @return A client configuration.
      */
-    protected abstract ClientConfig getBaseClientConfig(HttpInterface httpInterface);
+    @NotNull
+    protected abstract ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface);
 
-    protected JsonBrowser loadJsonResponse(HttpInterface httpInterface,
-                                           HttpPost request,
-                                           String context) throws IOException {
+    @NotNull
+    protected JsonBrowser loadJsonResponse(@NotNull HttpInterface httpInterface,
+                                           @NotNull HttpPost request,
+                                           @NotNull String context) throws IOException {
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             HttpClientTools.assertSuccessWithContent(response, context);
             // todo: flag for checking json content type?
@@ -60,10 +64,11 @@ public abstract class NonMusicClient implements Client {
         }
     }
 
-    protected JsonBrowser loadTrackInfoFromInnertube(YoutubeAudioSourceManager source,
-                                                     HttpInterface httpInterface,
-                                                     String videoId,
-                                                     PlayabilityStatus status) throws CannotBeLoaded, IOException {
+    @NotNull
+    protected JsonBrowser loadTrackInfoFromInnertube(@NotNull YoutubeAudioSourceManager source,
+                                                     @NotNull HttpInterface httpInterface,
+                                                     @NotNull String videoId,
+                                                     @Nullable PlayabilityStatus status) throws CannotBeLoaded, IOException {
         SignatureCipherManager cipherManager = source.getCipherManager();
         CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
         SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, playerScript.url);
@@ -117,8 +122,9 @@ public abstract class NonMusicClient implements Client {
         return json;
     }
 
-    protected JsonBrowser loadSearchResults(HttpInterface httpInterface,
-                                            String searchQuery) {
+    @NotNull
+    protected JsonBrowser loadSearchResults(@NotNull HttpInterface httpInterface,
+                                            @NotNull String searchQuery) {
         ClientConfig clientConfig = getBaseClientConfig(httpInterface)
             .withRootField("query", searchQuery)
             .withRootField("params", SEARCH_PARAMS);
@@ -133,8 +139,9 @@ public abstract class NonMusicClient implements Client {
         }
     }
 
-    protected List<AudioTrack> extractSearchResults(YoutubeAudioSourceManager source,
-                                                    JsonBrowser json) {
+    @NotNull
+    protected List<AudioTrack> extractSearchResults(@NotNull YoutubeAudioSourceManager source,
+                                                    @NotNull JsonBrowser json) {
         return json.get("contents")
             .get("sectionListRenderer")
             .get("contents")
@@ -146,9 +153,10 @@ public abstract class NonMusicClient implements Client {
             .collect(Collectors.toList());
     }
 
-    protected JsonBrowser loadMixResult(HttpInterface httpInterface,
-                                        String mixId,
-                                        String selectedVideoId) {
+    @NotNull
+    protected JsonBrowser loadMixResult(@NotNull HttpInterface httpInterface,
+                                        @NotNull String mixId,
+                                        @Nullable String selectedVideoId) {
         ClientConfig clientConfig = getBaseClientConfig(httpInterface)
             .withRootField("videoId", selectedVideoId)
             .withRootField("playlistId", mixId)
@@ -164,15 +172,17 @@ public abstract class NonMusicClient implements Client {
         }
     }
 
-    protected JsonBrowser extractMixPlaylistData(JsonBrowser json) {
+    @NotNull
+    protected JsonBrowser extractMixPlaylistData(@NotNull JsonBrowser json) {
         return json.get("contents")
             .get("singleColumnWatchNextResults")
             .get("playlist") // this doesn't exist if mix is not found
             .get("playlist");
     }
 
-    protected JsonBrowser loadPlaylistResult(HttpInterface httpInterface,
-                                             String playlistId) {
+    @NotNull
+    protected JsonBrowser loadPlaylistResult(@NotNull HttpInterface httpInterface,
+                                             @NotNull String playlistId) {
         ClientConfig clientConfig = getBaseClientConfig(httpInterface)
             .withRootField("browseId", "VL" + playlistId)
             .setAttributes(httpInterface);
@@ -187,7 +197,8 @@ public abstract class NonMusicClient implements Client {
         }
     }
 
-    protected String extractPlaylistError(JsonBrowser json) {
+    @Nullable
+    protected String extractPlaylistError(@NotNull JsonBrowser json) {
         JsonBrowser alerts = json.get("alerts");
 
         if (!alerts.isNull()) {
@@ -210,11 +221,13 @@ public abstract class NonMusicClient implements Client {
         return null;
     }
 
-    protected String extractPlaylistName(JsonBrowser json) {
+    @Nullable
+    protected String extractPlaylistName(@NotNull JsonBrowser json) {
         return json.get("header").get("playlistHeaderRenderer").get("title").get("runs").index(0).get("text").text();
     }
 
-    protected JsonBrowser extractPlaylistVideoList(JsonBrowser json) {
+    @NotNull
+    protected JsonBrowser extractPlaylistVideoList(@NotNull JsonBrowser json) {
         return json.get("contents")
             .get("singleColumnBrowseResultsRenderer")
             .get("tabs")
@@ -227,17 +240,19 @@ public abstract class NonMusicClient implements Client {
             .get("playlistVideoListRenderer");
     }
 
-    protected String extractPlaylistContinuationToken(JsonBrowser videoList) {
+    @Nullable
+    protected String extractPlaylistContinuationToken(@NotNull JsonBrowser videoList) {
         return videoList.get("continuations").index(0).get("nextContinuationData").get("continuation").text();
     }
 
-    protected JsonBrowser extractPlaylistContinuationVideos(JsonBrowser continuationJson) {
+    @NotNull
+    protected JsonBrowser extractPlaylistContinuationVideos(@NotNull JsonBrowser continuationJson) {
         return continuationJson.get("continuationContents").get("playlistVideoListContinuation");
     }
 
-    protected void extractPlaylistTracks(JsonBrowser json,
-                                         List<AudioTrack> tracks,
-                                         YoutubeAudioSourceManager source) {
+    protected void extractPlaylistTracks(@NotNull JsonBrowser json,
+                                         @NotNull List<AudioTrack> tracks,
+                                         @NotNull YoutubeAudioSourceManager source) {
         if (!json.get("contents").isNull()) {
             json = json.get("contents");
         }
@@ -265,7 +280,9 @@ public abstract class NonMusicClient implements Client {
         }
     }
 
-    protected AudioTrack extractAudioTrack(JsonBrowser json, YoutubeAudioSourceManager source) {
+    @Nullable
+    protected AudioTrack extractAudioTrack(@NotNull JsonBrowser json,
+                                           @NotNull YoutubeAudioSourceManager source) {
         // Ignore if it's not a track or if it's a livestream
         if (json.isNull() || json.get("lengthText").isNull() || !json.get("unplayableText").isNull()) return null;
 
@@ -285,7 +302,7 @@ public abstract class NonMusicClient implements Client {
     //</editor-fold>
 
     @Override
-    public boolean canHandleRequest(String identifier) {
+    public boolean canHandleRequest(@NotNull String identifier) {
         return !identifier.startsWith(YoutubeAudioSourceManager.MUSIC_SEARCH_PREFIX);
     }
 
@@ -295,9 +312,9 @@ public abstract class NonMusicClient implements Client {
     }
 
     @Override
-    public AudioItem loadVideo(YoutubeAudioSourceManager source,
-                               HttpInterface httpInterface,
-                               String videoId) throws CannotBeLoaded, IOException {
+    public AudioItem loadVideo(@NotNull YoutubeAudioSourceManager source,
+                               @NotNull HttpInterface httpInterface,
+                               @NotNull String videoId) throws CannotBeLoaded, IOException {
         JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
@@ -316,7 +333,9 @@ public abstract class NonMusicClient implements Client {
     }
 
     @Override
-    public AudioItem loadSearch(YoutubeAudioSourceManager source, HttpInterface httpInterface, String searchQuery) {
+    public AudioItem loadSearch(@NotNull YoutubeAudioSourceManager source,
+                                @NotNull HttpInterface httpInterface,
+                                @NotNull String searchQuery) {
         JsonBrowser json = loadSearchResults(httpInterface, searchQuery);
         List<AudioTrack> tracks = extractSearchResults(source, json);
 
@@ -328,7 +347,10 @@ public abstract class NonMusicClient implements Client {
     }
 
     @Override
-    public AudioItem loadMix(YoutubeAudioSourceManager source, HttpInterface httpInterface, String mixId, String selectedVideoId) throws CannotBeLoaded, IOException {
+    public AudioItem loadMix(@NotNull YoutubeAudioSourceManager source,
+                             @NotNull HttpInterface httpInterface,
+                             @NotNull String mixId,
+                             @Nullable String selectedVideoId) {
         JsonBrowser json = loadMixResult(httpInterface, mixId, selectedVideoId);
         JsonBrowser playlist = extractMixPlaylistData(json);
 
@@ -350,7 +372,10 @@ public abstract class NonMusicClient implements Client {
     }
 
     @Override
-    public AudioItem loadPlaylist(YoutubeAudioSourceManager source, HttpInterface httpInterface, String playlistId, String selectedVideoId) throws CannotBeLoaded {
+    public AudioItem loadPlaylist(@NotNull YoutubeAudioSourceManager source,
+                                  @NotNull HttpInterface httpInterface,
+                                  @NotNull String playlistId,
+                                  @Nullable String selectedVideoId) {
         JsonBrowser json = loadPlaylistResult(httpInterface, playlistId);
         String error = extractPlaylistError(json);
 
@@ -359,6 +384,12 @@ public abstract class NonMusicClient implements Client {
         }
 
         String playlistName = extractPlaylistName(json);
+
+        if (playlistName == null) {
+            throw new IllegalStateException("Failed to extract playlist name",
+                new RuntimeException("Playlist name was not found, JSON: " + json.format()));
+        }
+
         JsonBrowser playlistVideoList = extractPlaylistVideoList(json);
 
         List<AudioTrack> tracks = new ArrayList<>();
@@ -395,7 +426,9 @@ public abstract class NonMusicClient implements Client {
     }
 
     @Override
-    public AudioItem loadSearchMusic(YoutubeAudioSourceManager source, HttpInterface httpInterface, String searchQuery) {
+    public AudioItem loadSearchMusic(@NotNull YoutubeAudioSourceManager source,
+                                     @NotNull HttpInterface httpInterface,
+                                     @NotNull String searchQuery) {
         throw new UnsupportedOperationException();
     }
 }

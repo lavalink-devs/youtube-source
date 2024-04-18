@@ -1,5 +1,7 @@
 package dev.lavalink.youtube.cipher;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -15,7 +17,9 @@ public class SignatureCipher {
   public final String scriptTimestamp;
   public final String rawScript;
 
-  public SignatureCipher(String nFunction, String timestamp, String rawScript) {
+  public SignatureCipher(@NotNull String nFunction,
+                         @NotNull String timestamp,
+                         @NotNull String rawScript) {
     this.nFunction = nFunction;
     this.scriptTimestamp = timestamp;
     this.rawScript = rawScript;
@@ -25,7 +29,7 @@ public class SignatureCipher {
    * @param text Text to apply the cipher on
    * @return The result of the cipher on the input text
    */
-  public String apply(String text) {
+  public String apply(@NotNull String text) {
     StringBuilder builder = new StringBuilder(text);
 
     for (CipherOperation operation : operations) {
@@ -56,7 +60,7 @@ public class SignatureCipher {
    * @param scriptEngine JavaScript engine to execute function
    * @return The result of the n parameter transformation
    */
-  public String transform(String text, ScriptEngine scriptEngine) throws ScriptException, NoSuchMethodException {
+  public String transform(@NotNull String text, @NotNull ScriptEngine scriptEngine) throws ScriptException, NoSuchMethodException {
     String transformed;
 
     scriptEngine.eval("n=" + nFunction);
@@ -68,7 +72,7 @@ public class SignatureCipher {
   /**
    * @param operation The operation to add to this cipher
    */
-  public void addOperation(CipherOperation operation) {
+  public void addOperation(@NotNull CipherOperation operation) {
     operations.add(operation);
   }
 

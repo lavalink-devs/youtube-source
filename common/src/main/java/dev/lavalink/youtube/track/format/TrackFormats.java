@@ -1,5 +1,7 @@
 package dev.lavalink.youtube.track.format;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -9,19 +11,23 @@ public class TrackFormats {
     private final List<StreamFormat> formats;
     private final String playerScriptUrl;
 
-    public TrackFormats(List<StreamFormat> formats, String playerScriptUrl) {
+    public TrackFormats(@NotNull List<StreamFormat> formats,
+                        @NotNull String playerScriptUrl) {
         this.formats = formats;
         this.playerScriptUrl = playerScriptUrl;
     }
 
+    @NotNull
     public List<StreamFormat> getFormats() {
         return this.formats;
     }
 
+    @NotNull
     public String getPlayerScriptUrl() {
         return playerScriptUrl;
     }
 
+    @NotNull
     public StreamFormat getBestFormat() {
         StreamFormat bestFormat = null;
 

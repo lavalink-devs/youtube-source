@@ -18,6 +18,8 @@ import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +43,9 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
    * @param trackInfo Track info
    * @param sourceManager Source manager which was used to find this track
    */
-  public YoutubeAudioTrack(AudioTrackInfo trackInfo, YoutubeAudioSourceManager sourceManager) {
+  public YoutubeAudioTrack(@NotNull AudioTrackInfo trackInfo,
+                           @NotNull YoutubeAudioSourceManager sourceManager) {
     super(trackInfo);
-
     this.sourceManager = sourceManager;
   }
 
@@ -162,8 +164,9 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     processDelegate(new YoutubeMpegStreamAudioTrack(trackInfo, httpInterface, augmentedFormat.signedUrl), localExecutor);
   }
 
-  private FormatWithUrl loadBestFormatWithUrl(HttpInterface httpInterface,
-                                              Client client) throws CannotBeLoaded, Exception {
+  @NotNull
+  private FormatWithUrl loadBestFormatWithUrl(@NotNull HttpInterface httpInterface,
+                                              @NotNull Client client) throws CannotBeLoaded, Exception {
     if (!client.supportsFormatLoading()) {
       throw new RuntimeException(client.getIdentifier() + " does not support loading of formats!");
     }
@@ -201,7 +204,8 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     private final StreamFormat format;
     private final URI signedUrl;
 
-    private FormatWithUrl(StreamFormat format, URI signedUrl) {
+    private FormatWithUrl(@NotNull StreamFormat format,
+                          @NotNull URI signedUrl) {
       this.format = format;
       this.signedUrl = signedUrl;
     }
@@ -218,6 +222,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
       return System.currentTimeMillis() >= expiresAbsMillis;
     }
 
+    @Nullable
     public FormatWithUrl getFallback() {
       String signedString = signedUrl.toString();
       Map<String, String> urlParameters = decodeUrlEncodedItems(signedString, false);
@@ -249,7 +254,8 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
   private static class StreamExpiredException extends RuntimeException {
     private final long lastStreamPosition;
 
-    private StreamExpiredException(long lastStreamPosition, Exception cause) {
+    private StreamExpiredException(long lastStreamPosition,
+                                   @NotNull Exception cause) {
       super(cause);
       this.lastStreamPosition = lastStreamPosition;
     }

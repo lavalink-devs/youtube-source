@@ -5,15 +5,16 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.ThumbnailTools;
 import com.sedmelluq.discord.lavaplayer.track.*;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
-import dev.lavalink.youtube.clients.skeleton.MusicClient;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ThumbnailMusicClient extends MusicClient {
     @Override
-    protected List<AudioTrack> extractSearchResultTracks(YoutubeAudioSourceManager source,
-                                                         JsonBrowser json) {
+    @NotNull
+    protected List<AudioTrack> extractSearchResultTracks(@NotNull YoutubeAudioSourceManager source,
+                                                         @NotNull JsonBrowser json) {
         List<AudioTrack> tracks = new ArrayList<>();
 
         for (JsonBrowser track : json.values()) {
@@ -35,7 +36,7 @@ public abstract class ThumbnailMusicClient extends MusicClient {
 
             if (videoId == null) {
                 // If the track is not available on YouTube Music, videoId will be empty
-                return null;
+                continue;
             }
 
             List<JsonBrowser> runs = columns.index(1)

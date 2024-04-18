@@ -9,6 +9,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ public class YoutubeAccessTokenTracker {
   private String visitorId;
   private long lastVisitorIdUpdate;
 
-  public YoutubeAccessTokenTracker(HttpInterfaceManager httpInterfaceManager) {
+  public YoutubeAccessTokenTracker(@NotNull HttpInterfaceManager httpInterfaceManager) {
     this.httpInterfaceManager = httpInterfaceManager;
   }
 
@@ -60,7 +61,7 @@ public class YoutubeAccessTokenTracker {
     return visitorId;
   }
 
-  public boolean isTokenFetchContext(HttpClientContext context) {
+  public boolean isTokenFetchContext(@NotNull HttpClientContext context) {
     return context.getAttribute(TOKEN_FETCH_CONTEXT_ATTRIBUTE) == Boolean.TRUE;
   }
 

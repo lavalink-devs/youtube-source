@@ -3,6 +3,7 @@ package dev.lavalink.youtube.clients;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
+import org.jetbrains.annotations.NotNull;
 
 public class Ios extends StreamingNonMusicClient {
     public static String CLIENT_VERSION = "19.07.5";
@@ -15,12 +16,14 @@ public class Ios extends StreamingNonMusicClient {
         .withUserField("lockedSafetyMode", false);
 
     @Override
-    protected ClientConfig getBaseClientConfig(HttpInterface httpInterface) {
+    @NotNull
+    protected ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
         return BASE_CONFIG.copy();
     }
 
     @Override
-    protected JsonBrowser extractPlaylistVideoList(JsonBrowser json) {
+    @NotNull
+    protected JsonBrowser extractPlaylistVideoList(@NotNull JsonBrowser json) {
         return json.get("contents")
             .get("singleColumnBrowseResultsRenderer")
             .get("tabs")
@@ -37,11 +40,13 @@ public class Ios extends StreamingNonMusicClient {
     }
 
     @Override
+    @NotNull
     public String getPlayerParams() {
         return MOBILE_PLAYER_PARAMS;
     }
 
     @Override
+    @NotNull
     public String getIdentifier() {
         return BASE_CONFIG.getName();
     }

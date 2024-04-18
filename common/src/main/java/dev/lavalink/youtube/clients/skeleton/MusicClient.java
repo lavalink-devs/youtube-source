@@ -6,13 +6,14 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.*;
-import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.ClientConfig;
 import dev.lavalink.youtube.track.format.TrackFormats;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,10 +23,11 @@ import java.util.List;
  * The base class for a client that can be used with music.youtube.com.
  */
 public abstract class MusicClient implements Client {
-    protected abstract ClientConfig getBaseClientConfig(HttpInterface httpInterface);
+    @NotNull
+    protected abstract ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface);
 
-    protected JsonBrowser getMusicSearchResult(HttpInterface httpInterface,
-                                               String searchQuery) {
+    protected JsonBrowser getMusicSearchResult(@NotNull HttpInterface httpInterface,
+                                               @NotNull String searchQuery) {
         ClientConfig config = getBaseClientConfig(httpInterface)
             .withRootField("query", searchQuery)
             .withRootField("params", MUSIC_SEARCH_PARAMS)
@@ -43,7 +45,7 @@ public abstract class MusicClient implements Client {
         }
     }
 
-    protected JsonBrowser extractSearchResultTrackJson(JsonBrowser json) {
+    protected JsonBrowser extractSearchResultTrackJson(@NotNull JsonBrowser json) {
         return json.get("contents")
             .get("tabbedSearchResultsRenderer")
             .get("tabs")
@@ -60,8 +62,9 @@ public abstract class MusicClient implements Client {
             .orElse(JsonBrowser.NULL_BROWSER);
     }
 
-    protected List<AudioTrack> extractSearchResultTracks(YoutubeAudioSourceManager source,
-                                                         JsonBrowser json) {
+    @NotNull
+    protected List<AudioTrack> extractSearchResultTracks(@NotNull YoutubeAudioSourceManager source,
+                                                         @NotNull JsonBrowser json) {
         List<AudioTrack> tracks = new ArrayList<>();
 
         for (JsonBrowser track : json.values()) {
@@ -82,7 +85,7 @@ public abstract class MusicClient implements Client {
 
             if (videoId == null) {
                 // If the track is not available on YouTube Music, videoId will be empty
-                return null;
+                continue;
             }
 
             List<JsonBrowser> runs = columns.index(1)
@@ -110,7 +113,7 @@ public abstract class MusicClient implements Client {
     }
 
     @Override
-    public boolean canHandleRequest(String identifier) {
+    public boolean canHandleRequest(@NotNull String identifier) {
         return identifier.startsWith(YoutubeAudioSourceManager.MUSIC_SEARCH_PREFIX);
     }
 
@@ -125,7 +128,9 @@ public abstract class MusicClient implements Client {
     }
 
     @Override
-    public AudioItem loadSearchMusic(YoutubeAudioSourceManager source, HttpInterface httpInterface, String searchQuery) throws CannotBeLoaded, IOException {
+    public AudioItem loadSearchMusic(@NotNull YoutubeAudioSourceManager source,
+                                     @NotNull HttpInterface httpInterface,
+                                     @NotNull String searchQuery) {
         JsonBrowser json = getMusicSearchResult(httpInterface, searchQuery);
         JsonBrowser trackJson = extractSearchResultTrackJson(json);
         List<AudioTrack> tracks = extractSearchResultTracks(source, trackJson);
@@ -138,27 +143,39 @@ public abstract class MusicClient implements Client {
     }
 
     @Override
-    public TrackFormats loadFormats(YoutubeAudioSourceManager source, HttpInterface httpInterface, String videoId) throws IOException {
+    public TrackFormats loadFormats(@NotNull YoutubeAudioSourceManager source,
+                                    @NotNull HttpInterface httpInterface,
+                                    @NotNull String videoId) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public AudioItem loadVideo(YoutubeAudioSourceManager source, HttpInterface httpInterface, String videoId) throws CannotBeLoaded, IOException {
+    public AudioItem loadVideo(@NotNull YoutubeAudioSourceManager source,
+                               @NotNull HttpInterface httpInterface,
+                               @NotNull String videoId) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public AudioItem loadSearch(YoutubeAudioSourceManager source, HttpInterface httpInterface, String searchQuery) throws CannotBeLoaded {
+    public AudioItem loadSearch(@NotNull YoutubeAudioSourceManager source,
+                                @NotNull HttpInterface httpInterface,
+                                @NotNull String searchQuery) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public AudioItem loadMix(YoutubeAudioSourceManager source, HttpInterface httpInterface, String mixId, String selectedVideoId) throws CannotBeLoaded {
+    public AudioItem loadMix(@NotNull YoutubeAudioSourceManager source,
+                             @NotNull HttpInterface httpInterface,
+                             @NotNull String mixId,
+                             @Nullable String selectedVideoId) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public AudioItem loadPlaylist(YoutubeAudioSourceManager source, HttpInterface httpInterface, String playlistId, String selectedVideoId) throws CannotBeLoaded {
+    public AudioItem loadPlaylist(@NotNull YoutubeAudioSourceManager source,
+                                  @NotNull HttpInterface httpInterface,
+                                  @NotNull String playlistId,
+                                  @Nullable String selectedVideoId) {
         throw new UnsupportedOperationException();
     }
 }

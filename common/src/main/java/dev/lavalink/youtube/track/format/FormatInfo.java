@@ -1,6 +1,8 @@
 package dev.lavalink.youtube.track.format;
 
 import org.apache.http.entity.ContentType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.sedmelluq.discord.lavaplayer.container.Formats.*;
 
@@ -33,7 +35,8 @@ public enum FormatInfo {
      * @param contentType The content type to use for matching against known formats
      * @return The format info entry that matches the content type
      */
-    public static FormatInfo get(ContentType contentType) {
+    @Nullable
+    public static FormatInfo get(@NotNull ContentType contentType) {
         String mimeType = contentType.getMimeType();
         String codec = contentType.getParameter("codecs");
 

@@ -8,6 +8,8 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.track.format.TrackFormats;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,7 +37,8 @@ public interface Client {
     String SEARCH_PARAMS = "EgIQAfABAQ==";
     String MUSIC_SEARCH_PARAMS = "Eg-KAQwIARAAGAAgACgAMABqChADEAQQCRAFEAo=";
 
-    default PlayabilityStatus getPlayabilityStatus(JsonBrowser playabilityStatus,
+    @NotNull
+    default PlayabilityStatus getPlayabilityStatus(@NotNull JsonBrowser playabilityStatus,
                                                    boolean throwOnNotOk) throws CannotBeLoaded {
         String status = playabilityStatus.get("status").text();
 
@@ -56,6 +59,11 @@ public interface Client {
                 throw new FriendlyException(reason, COMMON, null);
             case "UNPLAYABLE":
                 String unplayableReason = getUnplayableReason(playabilityStatus);
+
+                if (unplayableReason == null) {
+                    // We should have a reason so this is suspicious.
+                    throw new FriendlyException("This video is unplayable.", SUSPICIOUS, null);
+                }
 
                 if (unplayableReason.contains("Playback on other websites has been disabled by the video owner") && !throwOnNotOk) {
                     return PlayabilityStatus.NON_EMBEDDABLE;
@@ -94,7 +102,8 @@ public interface Client {
         }
     }
 
-    default String getUnplayableReason(JsonBrowser statusBlock) {
+    @Nullable
+    default String getUnplayableReason(@NotNull JsonBrowser statusBlock) {
         JsonBrowser playerErrorMessage = statusBlock.get("errorScreen").get("playerErrorMessageRenderer");
 
         if (!playerErrorMessage.get("subreason").isNull()) {
@@ -112,8 +121,9 @@ public interface Client {
         return statusBlock.get("reason").text();
     }
 
-    default AudioTrack findSelectedTrack(List<AudioTrack> tracks,
-                                         String selectedVideoId) {
+    @Nullable
+    default AudioTrack findSelectedTrack(@NotNull List<AudioTrack> tracks,
+                                         @Nullable String selectedVideoId) {
         if (selectedVideoId != null) {
             return tracks.stream().filter(track -> selectedVideoId.equals(track.getIdentifier())).findFirst().orElse(null);
         }
@@ -124,8 +134,10 @@ public interface Client {
     /**
      * @return The unique identifier for this client.
      */
+    @NotNull
     String getIdentifier();
 
+    @NotNull
     String getPlayerParams();
 
     /**
@@ -134,7 +146,7 @@ public interface Client {
      * @param identifier The resource identifier. Could be an arbitrary string or a URL.
      * @return True, if this client can handle the request.
      */
-    boolean canHandleRequest(String identifier);
+    boolean canHandleRequest(@NotNull String identifier);
 
     /**
      * @return True, if this client can be used for loading playback URLs.
@@ -152,9 +164,10 @@ public interface Client {
      * @param videoId The ID of the video to load formats for.
      * @throws CannotBeLoaded If a video doesn't exist etc.
      */
-    TrackFormats loadFormats(YoutubeAudioSourceManager source,
-                             HttpInterface httpInterface,
-                             String videoId) throws CannotBeLoaded, IOException;
+    @Nullable
+    TrackFormats loadFormats(@NotNull YoutubeAudioSourceManager source,
+                             @NotNull HttpInterface httpInterface,
+                             @NotNull String videoId) throws CannotBeLoaded, IOException;
 
     /**
      * Loads a single video.
@@ -164,9 +177,10 @@ public interface Client {
      * @return An AudioItem.
      * @throws CannotBeLoaded If a video doesn't exist etc.
      */
-    AudioItem loadVideo(YoutubeAudioSourceManager source,
-                        HttpInterface httpInterface,
-                        String videoId) throws CannotBeLoaded, IOException;
+    @Nullable
+    AudioItem loadVideo(@NotNull YoutubeAudioSourceManager source,
+                        @NotNull HttpInterface httpInterface,
+                        @NotNull String videoId) throws CannotBeLoaded, IOException;
 
     /**
      * Loads search results for a query.
@@ -176,9 +190,10 @@ public interface Client {
      * @return An AudioItem.
      * @throws CannotBeLoaded If a video doesn't exist etc.
      */
-    AudioItem loadSearch(YoutubeAudioSourceManager source,
-                         HttpInterface httpInterface,
-                         String searchQuery) throws CannotBeLoaded, IOException;
+    @Nullable
+    AudioItem loadSearch(@NotNull YoutubeAudioSourceManager source,
+                         @NotNull HttpInterface httpInterface,
+                         @NotNull String searchQuery) throws CannotBeLoaded, IOException;
 
     /**
      * Loads search results for a query.
@@ -188,9 +203,10 @@ public interface Client {
      * @return An AudioItem.
      * @throws CannotBeLoaded If a video doesn't exist etc.
      */
-    AudioItem loadSearchMusic(YoutubeAudioSourceManager source,
-                              HttpInterface httpInterface,
-                              String searchQuery) throws CannotBeLoaded, IOException;
+    @Nullable
+    AudioItem loadSearchMusic(@NotNull YoutubeAudioSourceManager source,
+                              @NotNull HttpInterface httpInterface,
+                              @NotNull String searchQuery) throws CannotBeLoaded, IOException;
 
     /**
      * Loads a mix playlist.
@@ -200,10 +216,11 @@ public interface Client {
      * @return An AudioItem.
      * @throws CannotBeLoaded If a video doesn't exist etc.
      */
-    AudioItem loadMix(YoutubeAudioSourceManager source,
-                      HttpInterface httpInterface,
-                      String mixId,
-                      String selectedVideoId) throws CannotBeLoaded, IOException;
+    @Nullable
+    AudioItem loadMix(@NotNull YoutubeAudioSourceManager source,
+                      @NotNull HttpInterface httpInterface,
+                      @NotNull String mixId,
+                      @Nullable String selectedVideoId) throws CannotBeLoaded, IOException;
 
     /**
      * Loads a playlist.
@@ -213,10 +230,11 @@ public interface Client {
      * @return An AudioItem.
      * @throws CannotBeLoaded If a video doesn't exist etc.
      */
-    AudioItem loadPlaylist(YoutubeAudioSourceManager source,
-                           HttpInterface httpInterface,
-                           String playlistId,
-                           String selectedVideoId) throws CannotBeLoaded, IOException;
+    @Nullable
+    AudioItem loadPlaylist(@NotNull YoutubeAudioSourceManager source,
+                           @NotNull HttpInterface httpInterface,
+                           @NotNull String playlistId,
+                           @Nullable String selectedVideoId) throws CannotBeLoaded, IOException;
 
     enum PlayabilityStatus {
         OK,

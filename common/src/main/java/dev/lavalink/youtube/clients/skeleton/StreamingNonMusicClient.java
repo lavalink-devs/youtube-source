@@ -10,6 +10,7 @@ import dev.lavalink.youtube.cipher.SignatureCipherManager.CachedPlayerScript;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
 import org.apache.http.entity.ContentType;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,9 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
     protected static String DEFAULT_SIGNATURE_KEY = "signature";
 
     @Override
-    public TrackFormats loadFormats(YoutubeAudioSourceManager source, HttpInterface httpInterface, String videoId) throws CannotBeLoaded, IOException {
+    public TrackFormats loadFormats(@NotNull YoutubeAudioSourceManager source,
+                                    @NotNull HttpInterface httpInterface,
+                                    @NotNull String videoId) throws CannotBeLoaded, IOException {
         JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");

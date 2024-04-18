@@ -1,5 +1,7 @@
 package dev.lavalink.youtube.cipher;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * One cipher operation definition.
  */
@@ -17,7 +19,7 @@ public class CipherOperation {
      * @param type The type of the operation.
      * @param parameter The parameter for the operation.
      */
-    public CipherOperation(CipherOperationType type, int parameter) {
+    public CipherOperation(@NotNull CipherOperationType type, int parameter) {
         this.type = type;
         this.parameter = parameter;
     }

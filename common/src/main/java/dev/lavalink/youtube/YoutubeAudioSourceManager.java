@@ -24,6 +24,8 @@ import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
 import dev.lavalink.youtube.track.YoutubeAudioTrack;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +41,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 
 @SuppressWarnings("RegExpUnnecessaryNonCapturingGroup")
 public class YoutubeAudioSourceManager implements AudioSourceManager {
-    // TODO: consider adding notnull/nullable annotations
     // TODO: connect timeout = 16000ms, read timeout = 8000ms (as observed from scraped youtube config)
     // TODO: look at possibly scraping jsUrl from WEB config to save a request
     // TODO: search providers use cookieless httpinterfacemanagers. should this do the same?
@@ -58,12 +59,11 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     private static final Pattern mainDomainPattern = Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/.*");
     private static final Pattern shortHandPattern = Pattern.compile("^" + PROTOCOL_REGEX + "(?:" + DOMAIN_REGEX + "/(?:live|embed|shorts)|" + SHORT_DOMAIN_REGEX + ")/(?<id>.*)");
 
+    protected final HttpInterfaceManager httpInterfaceManager;
+    protected final boolean allowSearch;
+    protected final Client[] clients;
 
-    protected HttpInterfaceManager httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
-    protected boolean allowSearch;
-    protected Client[] clients;
-
-    protected SignatureCipherManager cipherManager;
+    protected final SignatureCipherManager cipherManager;
 
     public YoutubeAudioSourceManager() {
         this(true);
@@ -80,7 +80,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
      * @param clients The clients to use for track loading. They will be queried in
      *                the order they are provided.
      */
-    public YoutubeAudioSourceManager(Client... clients) {
+    public YoutubeAudioSourceManager(@NotNull Client... clients) {
         this(true, clients);
     }
 
@@ -92,7 +92,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
      * @param clients The clients to use for track loading. They will be queried in
      *                the order they are provided.
      */
-    public YoutubeAudioSourceManager(boolean allowSearch, Client... clients) {
+    public YoutubeAudioSourceManager(boolean allowSearch, @NotNull Client... clients) {
+        this.httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
         this.allowSearch = allowSearch;
         this.clients = clients == null ? new Client[0] : clients;
         this.cipherManager = new SignatureCipherManager();
@@ -115,7 +116,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     }
 
     @Override
-    public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
+    @Nullable
+    public AudioItem loadItem(@NotNull AudioPlayerManager manager, @NotNull AudioReference reference) {
         try {
             return loadItemOnce(reference);
         } catch (FriendlyException exception) {
@@ -128,11 +130,12 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         }
     }
 
-    public AudioItem loadItemOnce(AudioReference reference) {
+    @Nullable
+    protected AudioItem loadItemOnce(@NotNull AudioReference reference) {
         Throwable lastException = null;
 
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
-            Router router = getRouter(reference.identifier, httpInterface);
+            Router router = getRouter(httpInterface, reference.identifier);
 
             if (router == null) {
                 return null;
@@ -173,7 +176,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         return null;
     }
 
-    protected Router getRouter(String identifier, HttpInterface httpInterface) {
+    @Nullable
+    protected Router getRouter(@NotNull HttpInterface httpInterface, @NotNull String identifier) {
         if (identifier.startsWith(SEARCH_PREFIX)) {
             if (allowSearch) return (client) -> client.loadSearch(this, httpInterface, identifier.substring(SEARCH_PREFIX.length()).trim());
         } else if (identifier.startsWith(MUSIC_SEARCH_PREFIX)) {
@@ -187,7 +191,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 if ("/watch".equals(urlInfo.path)) {
                     String videoId = urlInfo.parameters.get("v");
 
-                    if (videoId != null) return routeFromVideoId(videoId, urlInfo, httpInterface);
+                    if (videoId != null) return routeFromVideoId(httpInterface, videoId, urlInfo);
                 } else if ("/playlist".equals(urlInfo.path)) {
                     String playlistId = urlInfo.parameters.get("list");
 
@@ -201,7 +205,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                             List<URI> redirects = httpInterface.getContext().getRedirectLocations();
 
                             if (redirects != null && !redirects.isEmpty()) {
-                                return getRouter(redirects.get(0).toString(), httpInterface);
+                                return getRouter(httpInterface, redirects.get(0).toString());
                             }
 
                             throw new FriendlyException("Unable to process youtube watch_videos link", SUSPICIOUS,
@@ -215,7 +219,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 Matcher shortHandMatcher = shortHandPattern.matcher(identifier);
 
                 if (shortHandMatcher.matches()) {
-                    return routeFromVideoId(shortHandMatcher.group("videoId"), null, httpInterface);
+                    return routeFromVideoId(httpInterface, shortHandMatcher.group("videoId"), null);
                 }
             }
         }
@@ -223,12 +227,15 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         return null;
     }
 
-    protected Router routeFromVideoId(String videoId, UrlInfo urlInfo, HttpInterface httpInterface) {
+    @Nullable
+    protected Router routeFromVideoId(@NotNull HttpInterface httpInterface,
+                                      @NotNull String videoId,
+                                      @Nullable UrlInfo urlInfo) {
         String trimmedId = videoId.length() > 11 ? videoId.substring(0, 11) : videoId;
 
         if (!directVideoIdPattern.matcher(trimmedId).matches()) {
             return Router.none;
-        } else if (urlInfo.parameters.containsKey("list")) {
+        } else if (urlInfo != null && urlInfo.parameters.containsKey("list")) {
             String playlistId = urlInfo.parameters.get("list");
 
             if (playlistId.startsWith("RD")) {
@@ -241,10 +248,12 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         return (client) -> client.loadVideo(this, httpInterface, trimmedId);
     }
 
+    @NotNull
     public YoutubeAudioTrack buildAudioTrack(AudioTrackInfo trackInfo) {
         return new YoutubeAudioTrack(trackInfo, this);
     }
 
+    @NotNull
     public SignatureCipherManager getCipherManager() {
         return cipherManager;
     }
@@ -254,7 +263,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
      * @param cls The class of the client to return.
      * @return The client instance, or null if it's not registered.
      */
-    public <T extends Client> T getClient(Class<T> cls) {
+    @Nullable
+    public <T extends Client> T getClient(@NotNull Class<T> cls) {
         for (Client client : clients) {
             if (cls.isAssignableFrom(client.getClass())) {
                 return cls.cast(client);
@@ -264,14 +274,17 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         return null;
     }
 
+    @NotNull
     public Client[] getClients() {
         return clients;
     }
 
+    @NotNull
     public HttpInterfaceManager getHttpInterfaceManager() {
         return httpInterfaceManager;
     }
 
+    @NotNull
     public HttpInterface getInterface() {
         return httpInterfaceManager.getInterface();
     }
@@ -287,7 +300,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     }
 
     @Override
-    public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) {
+    @NotNull
+    public AudioTrack decodeTrack(@NotNull AudioTrackInfo trackInfo, @NotNull DataInput input) {
         return new YoutubeAudioTrack(trackInfo, this);
     }
 
@@ -300,6 +314,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     protected interface Router {
         Router none = (unused) -> AudioReference.NO_TRACK;
 
-        AudioItem route(Client client) throws CannotBeLoaded, IOException;
+        @Nullable
+        AudioItem route(@NotNull Client client) throws CannotBeLoaded, IOException;
     }
 }

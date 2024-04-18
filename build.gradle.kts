@@ -28,5 +28,6 @@ allprojects {
         implementation("org.mozilla:rhino-engine:1.7.14")
         implementation("com.grack:nanojson:1.7")
         compileOnly("org.slf4j:slf4j-api:1.7.25")
+        compileOnly("org.jetbrains:annotations:24.1.0")
     }
 }

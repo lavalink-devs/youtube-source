@@ -1,6 +1,8 @@
 package dev.lavalink.youtube.track.format;
 
 import org.apache.http.entity.ContentType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -61,6 +63,7 @@ public class StreamFormat {
   /**
    * @return Format container and codec info
    */
+  @Nullable
   public FormatInfo getInfo() {
     return info;
   }
@@ -68,6 +71,7 @@ public class StreamFormat {
   /**
    * @return Mime type of the format
    */
+  @NotNull
   public ContentType getType() {
     return type;
   }
@@ -89,6 +93,7 @@ public class StreamFormat {
   /**
    * @return Base URL for the playback of this format
    */
+  @NotNull
   public URI getUrl() {
     try {
       return new URI(url);
@@ -107,6 +112,7 @@ public class StreamFormat {
   /**
    * @return n parameter for this format
    */
+  @Nullable
   public String getNParameter() {
     return nParameter;
   }
@@ -114,6 +120,7 @@ public class StreamFormat {
   /**
    * @return Cipher signature for this format
    */
+  @Nullable
   public String getSignature() {
     return signature;
   }
@@ -121,6 +128,7 @@ public class StreamFormat {
   /**
    * @return The key to use for deciphered signature in the final playback URL
    */
+  @Nullable
   public String getSignatureKey() {
     return signatureKey;
   }

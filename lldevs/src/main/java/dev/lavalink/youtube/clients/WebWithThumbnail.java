@@ -10,6 +10,8 @@ import dev.lavalink.youtube.clients.skeleton.ThumbnailStreamingNonMusicClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +28,7 @@ public class WebWithThumbnail extends ThumbnailStreamingNonMusicClient {
 
     protected volatile long lastConfigUpdate = -1;
 
-    protected void fetchClientConfig(HttpInterface httpInterface) {
+    protected void fetchClientConfig(@NotNull HttpInterface httpInterface) {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com"))) {
             HttpClientTools.assertSuccessWithContent(response, "client config fetch");
             lastConfigUpdate = System.currentTimeMillis();
@@ -84,7 +86,8 @@ public class WebWithThumbnail extends ThumbnailStreamingNonMusicClient {
     }
 
     @Override
-    public ClientConfig getBaseClientConfig(HttpInterface httpInterface) {
+    @NotNull
+    public ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
         if (lastConfigUpdate == -1) {
             synchronized (this) {
                 if (lastConfigUpdate == -1) {
@@ -97,7 +100,9 @@ public class WebWithThumbnail extends ThumbnailStreamingNonMusicClient {
     }
 
     @Override
-    protected List<AudioTrack> extractSearchResults(YoutubeAudioSourceManager source, JsonBrowser json) {
+    @NotNull
+    protected List<AudioTrack> extractSearchResults(@NotNull YoutubeAudioSourceManager source,
+                                                    @NotNull JsonBrowser json) {
         return json.get("contents")
             .get("twoColumnSearchResultsRenderer")
             .get("primaryContents")
@@ -112,7 +117,8 @@ public class WebWithThumbnail extends ThumbnailStreamingNonMusicClient {
     }
 
     @Override
-    protected JsonBrowser extractMixPlaylistData(JsonBrowser json) {
+    @NotNull
+    protected JsonBrowser extractMixPlaylistData(@NotNull JsonBrowser json) {
         return json.get("contents")
             .get("twoColumnWatchNextResults")
             .get("playlist") // this doesn't exist if mix is not found
@@ -120,11 +126,14 @@ public class WebWithThumbnail extends ThumbnailStreamingNonMusicClient {
     }
 
     @Override
-    protected String extractPlaylistName(JsonBrowser json) {
+    @Nullable
+    protected String extractPlaylistName(@NotNull JsonBrowser json) {
         return json.get("metadata").get("playlistMetadataRenderer").get("title").text();
     }
 
-    protected JsonBrowser extractPlaylistVideoList(JsonBrowser json) {
+    @Override
+    @NotNull
+    protected JsonBrowser extractPlaylistVideoList(@NotNull JsonBrowser json) {
         return json.get("contents")
             .get("twoColumnBrowseResultsRenderer")
             .get("tabs")
@@ -141,7 +150,8 @@ public class WebWithThumbnail extends ThumbnailStreamingNonMusicClient {
     }
 
     @Override
-    protected String extractPlaylistContinuationToken(JsonBrowser videoList) {
+    @Nullable
+    protected String extractPlaylistContinuationToken(@NotNull JsonBrowser videoList) {
         // WEB continuations seem to be slightly inconsistent.
         JsonBrowser contents = videoList.get("contents");
 
@@ -158,7 +168,8 @@ public class WebWithThumbnail extends ThumbnailStreamingNonMusicClient {
     }
 
     @Override
-    protected JsonBrowser extractPlaylistContinuationVideos(JsonBrowser continuationJson) {
+    @NotNull
+    protected JsonBrowser extractPlaylistContinuationVideos(@NotNull JsonBrowser continuationJson) {
         return continuationJson.get("onResponseReceivedActions")
             .index(0)
             .get("appendContinuationItemsAction")
@@ -166,11 +177,13 @@ public class WebWithThumbnail extends ThumbnailStreamingNonMusicClient {
     }
 
     @Override
+    @NotNull
     public String getPlayerParams() {
         return WEB_PLAYER_PARAMS;
     }
 
     @Override
+    @NotNull
     public String getIdentifier() {
         return Web.BASE_CONFIG.getName();
     }

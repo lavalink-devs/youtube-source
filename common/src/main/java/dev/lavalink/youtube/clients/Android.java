@@ -3,6 +3,7 @@ package dev.lavalink.youtube.clients;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.clients.ClientConfig.AndroidVersion;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
+import org.jetbrains.annotations.NotNull;
 
 public class Android extends StreamingNonMusicClient {
     public static String CLIENT_VERSION = "19.07.39";
@@ -17,16 +18,19 @@ public class Android extends StreamingNonMusicClient {
         .withUserField("lockedSafetyMode", false);
 
     @Override
-    protected ClientConfig getBaseClientConfig(HttpInterface httpInterface) {
+    @NotNull
+    protected ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
         return BASE_CONFIG.copy();
     }
 
     @Override
+    @NotNull
     public String getPlayerParams() {
         return MOBILE_PLAYER_PARAMS;
     }
 
     @Override
+    @NotNull
     public String getIdentifier() {
         return BASE_CONFIG.getName();
     }

@@ -8,6 +8,7 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
 
   private YoutubeAccessTokenTracker tokenTracker;
 
-  public void setTokenTracker(YoutubeAccessTokenTracker tokenTracker) {
+  public void setTokenTracker(@NotNull YoutubeAccessTokenTracker tokenTracker) {
     this.tokenTracker = tokenTracker;
   }
 
@@ -41,7 +42,9 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   }
 
   @Override
-  public void onRequest(HttpClientContext context, HttpUriRequest request, boolean isRepetition) {
+  public void onRequest(HttpClientContext context,
+                        HttpUriRequest request,
+                        boolean isRepetition) {
     if (!isRepetition) {
       context.removeAttribute(ATTRIBUTE_RESET_RETRY);
     }
@@ -77,7 +80,9 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   }
 
   @Override
-  public boolean onRequestResponse(HttpClientContext context, HttpUriRequest request, HttpResponse response) {
+  public boolean onRequestResponse(HttpClientContext context,
+                                   HttpUriRequest request,
+                                   HttpResponse response) {
     if (response.getStatusLine().getStatusCode() == 429) {
       throw new FriendlyException("This IP address has been blocked by YouTube (429).", COMMON, null);
     }
@@ -89,7 +94,9 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   }
 
   @Override
-  public boolean onRequestException(HttpClientContext context, HttpUriRequest request, Throwable error) {
+  public boolean onRequestException(HttpClientContext context,
+                                    HttpUriRequest request,
+                                    Throwable error) {
     // Always retry once in case of connection reset exception.
     if (HttpClientTools.isConnectionResetException(error)) {
       if (context.getAttribute(ATTRIBUTE_RESET_RETRY) == null) {

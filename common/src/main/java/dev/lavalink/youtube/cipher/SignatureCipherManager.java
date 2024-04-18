@@ -9,6 +9,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.util.EntityUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mozilla.javascript.engine.RhinoScriptEngineFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +78,7 @@ public class SignatureCipherManager {
   private static final Pattern slicePattern = Pattern.compile(PATTERN_PREFIX + SLICE_PART, Pattern.MULTILINE);
   private static final Pattern splicePattern = Pattern.compile(PATTERN_PREFIX + SPLICE_PART, Pattern.MULTILINE);
   private static final Pattern swapPattern = Pattern.compile(PATTERN_PREFIX + SWAP_PART, Pattern.MULTILINE);
-  private static final Pattern timestampPattern = Pattern.compile("(signatureTimestamp|sts)[\\:](\\d+)");
+  private static final Pattern timestampPattern = Pattern.compile("(signatureTimestamp|sts):(\\d+)");
   private static final Pattern nFunctionPattern = Pattern.compile(
       "function\\(\\s*(\\w+)\\s*\\)\\s*\\{var" +
           "\\s*(\\w+)=\\1\\.split\\(\"\"\\),\\s*(\\w+)=(\\[.*?\\]);\\s*\\3\\[\\d+\\]" +
@@ -109,8 +111,9 @@ public class SignatureCipherManager {
    * @return Valid playback URL
    * @throws IOException On network IO error
    */
-  public URI resolveFormatUrl(HttpInterface httpInterface, String playerScript,
-                              StreamFormat format) throws IOException {
+  @NotNull
+  public URI resolveFormatUrl(@NotNull HttpInterface httpInterface, @NotNull String playerScript,
+                              @NotNull StreamFormat format) throws IOException {
     String signature = format.getSignature();
     String nParameter = format.getNParameter();
     URI initialUrl = format.getUrl();
@@ -139,7 +142,7 @@ public class SignatureCipherManager {
     }
   }
 
-  private CachedPlayerScript getPlayerScript(HttpInterface httpInterface) {
+  private CachedPlayerScript getPlayerScript(@NotNull HttpInterface httpInterface) {
     synchronized (cipherLoadLock) {
       try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com/embed/"))) {
         HttpClientTools.assertSuccessWithContent(response, "fetch player script (embed)");
@@ -158,7 +161,7 @@ public class SignatureCipherManager {
     }
   }
 
-  public CachedPlayerScript getCachedPlayerScript(HttpInterface httpInterface) {
+  public CachedPlayerScript getCachedPlayerScript(@NotNull HttpInterface httpInterface) {
     if (cachedPlayerScript == null || System.currentTimeMillis() >= cachedPlayerScript.expireTimestampMs) {
       synchronized (cipherLoadLock) {
         if (cachedPlayerScript == null || System.currentTimeMillis() >= cachedPlayerScript.expireTimestampMs) {
@@ -170,7 +173,8 @@ public class SignatureCipherManager {
     return cachedPlayerScript;
   }
 
-  public SignatureCipher getCipherScript(HttpInterface httpInterface, String cipherScriptUrl) throws IOException {
+  public SignatureCipher getCipherScript(@NotNull HttpInterface httpInterface,
+                                         @NotNull String cipherScriptUrl) throws IOException {
     SignatureCipher cipherKey = cipherCache.get(cipherScriptUrl);
 
     if (cipherKey == null) {
@@ -194,14 +198,15 @@ public class SignatureCipherManager {
     return cipherKey;
   }
 
-  private List<String> getQuotedFunctions(String... functionNames) {
+  private List<String> getQuotedFunctions(@Nullable String... functionNames) {
     return Stream.of(functionNames)
         .filter(Objects::nonNull)
         .map(Pattern::quote)
         .collect(Collectors.toList());
   }
 
-  private void dumpProblematicScript(String script, String sourceUrl, String issue) {
+  private void dumpProblematicScript(@NotNull String script, @NotNull String sourceUrl,
+                                     @NotNull String issue) {
     if (!dumpedScriptUrls.add(sourceUrl)) {
       return;
     }
@@ -217,7 +222,7 @@ public class SignatureCipherManager {
     }
   }
 
-  private SignatureCipher extractFromScript(String script, String sourceUrl) {
+  private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl) {
     Matcher actions = actionsPattern.matcher(script);
     Matcher nFunctionMatcher = nFunctionPattern.matcher(script);
     Matcher scriptTimestamp = timestampPattern.matcher(script);
@@ -288,12 +293,12 @@ public class SignatureCipherManager {
     return cipherKey;
   }
 
-  private static String extractDollarEscapedFirstGroup(Pattern pattern, String text) {
+  private static String extractDollarEscapedFirstGroup(@NotNull Pattern pattern, @NotNull String text) {
     Matcher matcher = pattern.matcher(text);
     return matcher.find() ? matcher.group(1).replace("$", "\\$") : null;
   }
 
-  private static URI parseTokenScriptUrl(String urlString) {
+  private static URI parseTokenScriptUrl(@NotNull String urlString) {
     try {
       if (urlString.startsWith("//")) {
         return new URI("https:" + urlString);
@@ -308,10 +313,10 @@ public class SignatureCipherManager {
   }
 
   public static class CachedPlayerScript {
-    public String url;
-    public long expireTimestampMs;
+    public final String url;
+    public final long expireTimestampMs;
 
-    protected CachedPlayerScript(String url) {
+    protected CachedPlayerScript(@NotNull String url) {
       this.url = url;
       this.expireTimestampMs = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1);
     }

@@ -46,7 +46,9 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
      * @param httpInterface HTTP interface to use for loading segments
      * @param signedUrl URI of the base stream with signature resolved
      */
-    public YoutubeMpegStreamAudioTrack(AudioTrackInfo trackInfo, HttpInterface httpInterface, URI signedUrl) {
+    public YoutubeMpegStreamAudioTrack(AudioTrackInfo trackInfo,
+                                       HttpInterface httpInterface,
+                                       URI signedUrl) {
         super(trackInfo, null);
 
         this.httpInterface = httpInterface;
