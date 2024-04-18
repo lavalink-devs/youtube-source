@@ -1,2 +1,2 @@
-include("sedmelluq")
 include("lldevs")
+include("common")

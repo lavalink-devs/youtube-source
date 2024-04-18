@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
 }
 
-group = "me.devoxin"
+group = "dev.lavalink"
 
 allprojects {
     group = rootProject.group

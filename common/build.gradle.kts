@@ -3,17 +3,16 @@ plugins {
     `maven-publish`
 }
 
-val moduleName = "lldevs"
+val moduleName = "common"
 version = "1.0.0"
 
 dependencies {
-    compileOnly(project(":common"))
-    compileOnly("dev.arbjerg:lavaplayer:2.1.1")
+    compileOnly("dev.arbjerg:lavaplayer:1.5.3")
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")
-    from(sourceSets["main"].allSource)
+    from(sourceSets["common"].allSource)
 }
 
 publishing {

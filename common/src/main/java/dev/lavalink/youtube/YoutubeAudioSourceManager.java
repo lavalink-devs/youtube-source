@@ -1,4 +1,4 @@
-package me.devoxin.lpyts;
+package dev.lavalink.youtube;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
@@ -12,16 +12,16 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-import me.devoxin.lpyts.UrlTools.UrlInfo;
-import me.devoxin.lpyts.cipher.SignatureCipherManager;
+import dev.lavalink.youtube.UrlTools.UrlInfo;
+import dev.lavalink.youtube.cipher.SignatureCipherManager;
 import dev.lavalink.youtube.clients.Android;
 import dev.lavalink.youtube.clients.Music;
 import dev.lavalink.youtube.clients.TvHtml5Embedded;
 import dev.lavalink.youtube.clients.Web;
 import dev.lavalink.youtube.clients.skeleton.Client;
-import me.devoxin.lpyts.http.YoutubeAccessTokenTracker;
-import me.devoxin.lpyts.http.YoutubeHttpContextFilter;
-import me.devoxin.lpyts.track.YoutubeAudioTrack;
+import dev.lavalink.youtube.http.YoutubeAccessTokenTracker;
+import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
+import dev.lavalink.youtube.track.YoutubeAudioTrack;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package me.devoxin.lpyts.http;
+package dev.lavalink.youtube.http;
 
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;

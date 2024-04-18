@@ -1,4 +1,4 @@
-package me.devoxin.lpyts.track;
+package dev.lavalink.youtube.track;
 
 import com.sedmelluq.discord.lavaplayer.container.matroska.MatroskaAudioTrack;
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
@@ -11,13 +11,13 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
-import me.devoxin.lpyts.CannotBeLoaded;
-import me.devoxin.lpyts.UrlTools;
-import me.devoxin.lpyts.UrlTools.UrlInfo;
-import me.devoxin.lpyts.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.CannotBeLoaded;
+import dev.lavalink.youtube.UrlTools;
+import dev.lavalink.youtube.UrlTools.UrlInfo;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.Client;
-import me.devoxin.lpyts.track.format.StreamFormat;
-import me.devoxin.lpyts.track.format.TrackFormats;
+import dev.lavalink.youtube.track.format.StreamFormat;
+import dev.lavalink.youtube.track.format.TrackFormats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
