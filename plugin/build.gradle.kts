@@ -23,6 +23,11 @@ val sourcesJar by tasks.registering(Jar::class) {
     from(sourceSets["main"].allSource)
 }
 
+tasks.jar {
+    from(project(":common").sourceSets["main"].allSource)
+    from(project(":lldevs").sourceSets["main"].allSource)
+}
+
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
