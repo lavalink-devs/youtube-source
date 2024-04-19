@@ -24,8 +24,10 @@ val sourcesJar by tasks.registering(Jar::class) {
 }
 
 tasks.jar {
-    from(project(":common").sourceSets["main"].allSource)
-    from(project(":lldevs").sourceSets["main"].allSource)
+    dependsOn(project(":common").tasks.jar)
+    dependsOn(project(":lldevs").tasks.jar)
+    from(configurations.runtimeClasspath.get().map(::zipTree))
+    duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
 publishing {
