@@ -9,3 +9,18 @@ dependencies {
     compileOnly(project(":common"))
     compileOnly("dev.arbjerg:lavaplayer:2.1.1")
 }
+
+val sourcesJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("sources")
+    from(sourceSets["lldevs"].allSource)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifactId = moduleName
+            artifact(sourcesJar)
+        }
+    }
+}

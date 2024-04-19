@@ -11,3 +11,18 @@ dependencies {
     compileOnly(project(":common"))
     compileOnly(project(":lldevs"))
 }
+
+val sourcesJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("sources")
+    from(sourceSets["plugin"].allSource)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifactId = moduleName
+            artifact(sourcesJar)
+        }
+    }
+}
