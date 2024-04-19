@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "plugins.youtube")
 @Component
 public class YoutubeConfig {
-    private boolean enabled = false;
+    private boolean enabled = true;
     private boolean allowSearch = true;
     private String[] clients;
 
