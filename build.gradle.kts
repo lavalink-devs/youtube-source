@@ -3,16 +3,17 @@ plugins {
     `maven-publish`
 }
 
-group = "dev.lavalink"
+group = "dev.lavalink.youtube"
+version = "1.0.0"
 
 allprojects {
     group = rootProject.group
+    version = rootProject.version
 
     repositories {
         mavenLocal()
         mavenCentral()
         maven(url = "https://maven.lavalink.dev/releases")
-        maven(url = "https://m2.dv8tion.net/releases")
         maven(url = "https://jitpack.io")
     }
 

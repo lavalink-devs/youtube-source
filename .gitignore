@@ -28,3 +28,4 @@ replay_pid*
 .idea/*
 .DS_Store
 */build/*
+build
