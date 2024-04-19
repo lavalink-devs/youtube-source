@@ -37,11 +37,10 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
     // This entire thing is a hack BTW. Designed to support Lavalink v3 and v4
     // with a single plugin. Totally worth it!
     public YoutubePluginLoader(final YoutubeConfig youtubeConfig,
-                               final ServerConfig serverConfig,
-                               final RateLimitConfig ratelimitConfig) {
+                               final ServerConfig serverConfig) {
         this.youtubeConfig = youtubeConfig;
         this.serverConfig = serverConfig;
-        this.ratelimitConfig = ratelimitConfig;
+        this.ratelimitConfig = serverConfig.getRatelimit();
 
         final String providerName = isV4OrNewer()
             ? "ClientProviderV4"
