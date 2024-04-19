@@ -9,6 +9,8 @@ import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv6Block;
 import dev.arbjerg.lavalink.api.AudioPlayerManagerConfiguration;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.Client;
+import lavalink.server.config.RateLimitConfig;
+import lavalink.server.config.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,18 +30,18 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
     private static final Logger log = LoggerFactory.getLogger(YoutubePluginLoader.class);
 
     private final YoutubeConfig youtubeConfig;
-    private final RatelimitConfig ratelimitConfig;
     private final ServerConfig serverConfig;
+    private final RateLimitConfig ratelimitConfig;
     private final ClientProvider clientProvider;
 
     // This entire thing is a hack BTW. Designed to support Lavalink v3 and v4
     // with a single plugin. Totally worth it!
     public YoutubePluginLoader(final YoutubeConfig youtubeConfig,
-                               final RatelimitConfig ratelimitConfig,
-                               final ServerConfig serverConfig) {
+                               final ServerConfig serverConfig,
+                               final RateLimitConfig ratelimitConfig) {
         this.youtubeConfig = youtubeConfig;
-        this.ratelimitConfig = ratelimitConfig;
         this.serverConfig = serverConfig;
+        this.ratelimitConfig = ratelimitConfig;
 
         final String providerName = isV4OrNewer()
             ? "ClientProviderV4"
@@ -155,7 +157,12 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
             rotator.setup();
         }
 
-        source.setPlaylistPageCount(serverConfig.getYoutubePlaylistLoadLimit());
+        Integer playlistLoadLimit = serverConfig.getYoutubePlaylistLoadLimit();
+
+        if (playlistLoadLimit != null) {
+            source.setPlaylistPageCount(playlistLoadLimit);
+        }
+
         audioPlayerManager.registerSourceManager(source);
         return audioPlayerManager;
     }

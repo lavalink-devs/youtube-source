@@ -7,9 +7,15 @@ val moduleName = "plugin"
 
 dependencies {
     compileOnly("dev.arbjerg.lavalink:plugin-api:3.7.11")
+    compileOnly("dev.arbjerg.lavalink:Lavalink-Server:3.7.11")
     compileOnly("dev.arbjerg:lavaplayer-ext-youtube-rotator:1.5.3")
     compileOnly(project(":common"))
     compileOnly(project(":lldevs"))
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
