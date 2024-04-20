@@ -64,7 +64,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
           return; // stream played through successfully, short-circuit.
         } catch (FriendlyException e) {
           // usually thrown by getPlayabilityStatus when loading formats.
-          // these aren't considered fatal so we just store them and continue.
+          // these aren't considered fatal, so we just store them and continue.
           lastException = e;
         } catch (RuntimeException e) {
           // store exception so it can be thrown if we run out of clients to
@@ -73,7 +73,8 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
           String message = e.getMessage();
 
           if ("Not success status code: 403".equals(message) ||
-              "Invalid status code for player api response: 400".equals(message)) {
+              "Invalid status code for player api response: 400".equals(message) ||
+              message.contains("No supported audio streams available")) {
             continue; // try next client
           }
 

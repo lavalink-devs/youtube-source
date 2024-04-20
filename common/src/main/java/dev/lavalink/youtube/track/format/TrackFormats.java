@@ -44,7 +44,7 @@ public class TrackFormats {
         if (bestFormat == null) {
             StringJoiner joiner = new StringJoiner(", ");
             formats.forEach(format -> joiner.add(format.getType().toString()));
-            throw new IllegalStateException("No supported audio streams available, available types: " + joiner);
+            throw new RuntimeException("No supported audio streams available, available types: " + joiner);
         }
 
         return bestFormat;
