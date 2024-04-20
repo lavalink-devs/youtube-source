@@ -57,7 +57,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
     private static final Pattern directVideoIdPattern = Pattern.compile("^" + VIDEO_ID_REGEX + "$");
     private static final Pattern mainDomainPattern = Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/.*");
-    private static final Pattern shortHandPattern = Pattern.compile("^" + PROTOCOL_REGEX + "(?:" + DOMAIN_REGEX + "/(?:live|embed|shorts)|" + SHORT_DOMAIN_REGEX + ")/(?<id>.*)");
+    private static final Pattern shortHandPattern = Pattern.compile("^" + PROTOCOL_REGEX + "(?:" + DOMAIN_REGEX + "/(?:live|embed|shorts)|" + SHORT_DOMAIN_REGEX + ")/(?<videoId>.*)");
 
     protected final HttpInterfaceManager httpInterfaceManager;
     protected final boolean allowSearch;
