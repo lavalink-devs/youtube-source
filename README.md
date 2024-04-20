@@ -84,7 +84,8 @@ Currently, the following clients are available for use:
 - `WEB`
 - `ANDROID`
 - `ANDROID_TESTSUITE`
-  - NOTE: This client does NOT support loading of mixes or playlists.
+  - This client has restrictions imposed, notably: it does NOT support loading of mixes or playlists,
+    and it is unable to yield any supported formats when playing livestreams.
     It is advised not to use this client on its own for that reason, if playlists and mix support is required.
 - `IOS`
   - NOTE: This client does not receive Opus formats, so transcoding is required. This can
