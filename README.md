@@ -9,6 +9,22 @@ Which clients are used is entirely configurable.
 This module provides the base source manager, which can be used with any
 `com.sedmelluq.discord.lavaplayer` packages still on major version `1`.
 
+<details>
+<summary>Using in Gradle:</summary>
+
+```kotlin
+repositories {
+  // replace with https://maven.lavalink.dev/snapshots if you want to use a snapshot version.
+  maven(url = "https://maven.lavalink.dev/releases")
+}
+
+dependencies {
+  // Replace VERSION with the current version as shown by the Releases tab or a long commit hash `-SNAPSHOT` for snapshots.
+  implementation("dev.lavalink.youtube:common:VERSION")
+}
+```
+
+</details>
 Example usage:
 ```java
 YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager();
@@ -30,12 +46,29 @@ rotator.forConfiguration(youtube.getHttpInterfaceManager(), false)
     .setup();
 ```
 
-## lldevs
+## v2
 This modules expands on `common` by providing additional support for
 Lavaplayer `2.x` clients, such as [Lavalink-Devs/Lavaplayer](https://github.com/lavalink-devs/lavaplayer).
 Such features currently include thumbnail support within `AudioTrackInfo`.
 Additional clients are included that provide access to this additional information.
 These clients are suffixed with `Thumbnail`, such as `WebWithThumbnail`, `AndroidWithThumbnail` etc.
+
+<details>
+<summary>Using in Gradle:</summary>
+
+```kotlin
+repositories {
+  // replace with https://maven.lavalink.dev/snapshots if you want to use a snapshot version.
+  maven(url = "https://maven.lavalink.dev/releases")
+}
+
+dependencies {
+  // Replace VERSION with the current version as shown by the Releases tab or a long commit hash `-SNAPSHOT` for snapshots.
+  implementation("dev.lavalink.youtube:v2:VERSION")
+}
+```
+
+</details>
 
 Example usage:
 ```java
@@ -44,17 +77,35 @@ YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager(/*allowSearch:
 ```
 
 ## plugin
-This module serves as the plugin for use with [Lavalink](https://github.com/lavalink-devs/lavalink).
+This module serves as the plugin for use with [Lavalink](https://github.com/lavalink-devs/Lavalink).
 
 To use this plugin with Lavalink, you must declare the dependency.
+
+<details>
+<summary>Using with Lavalink v3:</summary>
+
 ```yaml
 lavalink:
-  # ...
   plugins:
-    # replace VERSION with the current version as shown by the Releases tab.
-    - dependency: "com.github.lavalink-devs.lavaplayer-youtube-source:plugin:VERSION"
-      repository: "https://jitpack.io"
+    # Replace VERSION with the current version as shown by the Releases tab or a long commit hash for snapshots.
+    - dependency: "dev.lavalink.youtube:youtube-plugin:VERSION"
+      repository: "https://maven.lavalink.dev/releases" # use https://maven.lavalink.dev/snapshots if you want to use a snapshot version.
 ```
+
+</details>
+
+<details>
+<summary>Using with Lavalink v4:</summary>
+
+```yaml
+lavalink:
+  plugins:
+    # Replace VERSION with the current version as shown by the Releases tab or a long commit hash for snapshots.
+    - dependency: "dev.lavalink.youtube:youtube-plugin:VERSION"
+      snapshot: false # Set to true if you want to use a snapshot version.
+```
+
+</details>
 
 Configuring the plugin:
 ```yaml

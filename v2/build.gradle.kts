@@ -7,12 +7,12 @@ plugins {
 }
 
 base {
-    archivesName = "youtube-common"
+    archivesName = "youtube-v2"
 }
 
 dependencies {
-    compileOnly(libs.lavaplayer.v1)
-
+    api(projects.common)
+    compileOnly(libs.lavaplayer.v2)
     implementation(libs.rhino.engine)
     implementation(libs.nanojson)
     compileOnly(libs.slf4j)
