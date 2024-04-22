@@ -54,8 +54,10 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     private static final String DOMAIN_REGEX = "(?:www\\.|m\\.|music\\.|)youtube\\.com";
     private static final String SHORT_DOMAIN_REGEX = "(?:www\\.|)youtu\\.be";
     private static final String VIDEO_ID_REGEX = "(?<v>[a-zA-Z0-9_-]{11})";
+    private static final String PLAYLIST_ID_REGEX = "(?<list>(PL|UU)[a-zA-Z0-9_-]+)";
 
     private static final Pattern directVideoIdPattern = Pattern.compile("^" + VIDEO_ID_REGEX + "$");
+    private static final Pattern directPlaylistIdPattern = Pattern.compile("^" + PLAYLIST_ID_REGEX + "$");
     private static final Pattern mainDomainPattern = Pattern.compile("^" + PROTOCOL_REGEX + DOMAIN_REGEX + "/.*");
     private static final Pattern shortHandPattern = Pattern.compile("^" + PROTOCOL_REGEX + "(?:" + DOMAIN_REGEX + "/(?:live|embed|shorts)|" + SHORT_DOMAIN_REGEX + ")/(?<videoId>.*)");
 
@@ -216,6 +218,12 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                     }
                 }
             } else {
+                Matcher playlistIdMatcher = directPlaylistIdPattern.matcher(identifier);
+
+                if (playlistIdMatcher.matches()) {
+                    return (client) -> client.loadPlaylist(this, httpInterface, identifier, null);
+                }
+
                 Matcher shortHandMatcher = shortHandPattern.matcher(identifier);
 
                 if (shortHandMatcher.matches()) {

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.lavalink.youtube"
-version = "1.0.2"
+version = "1.0.3"
 
 allprojects {
     group = rootProject.group
