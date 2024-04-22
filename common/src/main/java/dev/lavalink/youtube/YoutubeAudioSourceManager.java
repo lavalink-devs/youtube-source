@@ -250,7 +250,11 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 return (client) -> client.loadMix(this, httpInterface, playlistId, trimmedId);
             }
 
-            return (client) -> client.loadPlaylist(this, httpInterface, playlistId, trimmedId);
+            if (!playlistId.startsWith("LL") && // Liked videos (requires logged-in user)
+                !playlistId.startsWith("WL") && // Watch later (requires logged-in user)
+                !playlistId.startsWith("LM")) { // Liked music (requires logged-in user)
+                return (client) -> client.loadPlaylist(this, httpInterface, playlistId, trimmedId);
+            }
         }
 
         return (client) -> client.loadVideo(this, httpInterface, trimmedId);
