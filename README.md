@@ -81,14 +81,16 @@ Currently, the following clients are available for use:
 
 - `MUSIC`
   - Provides support for searching YouTube music (`ytmsearch:`)
+    **This client CANNOT be used to play tracks.** You must also register one of the
+    below clients for track playback.
 - `WEB`
 - `ANDROID`
 - `ANDROID_TESTSUITE`
   - This client has restrictions imposed, notably: it does NOT support loading of mixes or playlists,
     and it is unable to yield any supported formats when playing livestreams.
-    It is advised not to use this client on its own for that reason, if playlists and mix support is required.
+    It is advised not to use this client on its own for that reason, if those features are required.
 - `IOS`
-  - NOTE: This client does not receive Opus formats, so transcoding is required. This can
+  - This client does not receive Opus formats, so transcoding is required. This can
     increase resource consumption. It is recommended not to use this client unless it has
     the least priority (specified last), or where hardware usage is not a concern.
 - `TVHTML5EMBEDDED`
