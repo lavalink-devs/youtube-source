@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Map;
 
 import static com.sedmelluq.discord.lavaplayer.container.Formats.MIME_AUDIO_WEBM;
@@ -51,10 +52,17 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
+    Client[] clients = sourceManager.getClients();
+
+    if (Arrays.stream(clients).noneMatch(Client::supportsFormatLoading)) {
+      throw new FriendlyException("This video cannot be played", Severity.COMMON,
+          new RuntimeException("None of the registered clients supports loading of formats"));
+    }
+
     try (HttpInterface httpInterface = sourceManager.getInterface()) {
       Exception lastException = null;
 
-      for (Client client : sourceManager.getClients()) {
+      for (Client client : clients) {
         if (!client.supportsFormatLoading()) {
           continue;
         }
@@ -90,7 +98,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
         throw ExceptionTools.toRuntimeException(lastException);
       }
     } catch (CannotBeLoaded e) {
-      throw ExceptionTools.wrapUnfriendlyExceptions("This video is unavailable.", Severity.COMMON, e.getCause());
+      throw ExceptionTools.wrapUnfriendlyExceptions("This video is unavailable", Severity.COMMON, e.getCause());
     }
   }
 
@@ -175,7 +183,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     TrackFormats formats = client.loadFormats(sourceManager, httpInterface, getIdentifier());
 
     if (formats == null) {
-      throw new FriendlyException("This video is not available.", Severity.COMMON, null);
+      throw new FriendlyException("This video cannot be played", Severity.COMMON, null);
     }
 
     StreamFormat format = formats.getBestFormat();
