@@ -81,7 +81,7 @@ Currently, the following clients are available for use:
 
 - `MUSIC`
   - Provides support for searching YouTube music (`ytmsearch:`)
-    **This client CANNOT be used to play tracks.** You must also register one of the
+  - **This client CANNOT be used to play tracks.** You must also register one of the
     below clients for track playback.
 - `WEB`
 - `ANDROID`
