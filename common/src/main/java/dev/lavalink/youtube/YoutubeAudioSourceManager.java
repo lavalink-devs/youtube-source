@@ -217,18 +217,18 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                         }
                     }
                 }
-            } else {
-                Matcher playlistIdMatcher = directPlaylistIdPattern.matcher(identifier);
+            }
 
-                if (playlistIdMatcher.matches()) {
-                    return (client) -> client.loadPlaylist(this, httpInterface, identifier, null);
-                }
+            Matcher playlistIdMatcher = directPlaylistIdPattern.matcher(identifier);
 
-                Matcher shortHandMatcher = shortHandPattern.matcher(identifier);
+            if (playlistIdMatcher.matches()) {
+                return (client) -> client.loadPlaylist(this, httpInterface, identifier, null);
+            }
 
-                if (shortHandMatcher.matches()) {
-                    return routeFromVideoId(httpInterface, shortHandMatcher.group("videoId"), null);
-                }
+            Matcher shortHandMatcher = shortHandPattern.matcher(identifier);
+
+            if (shortHandMatcher.matches()) {
+                return routeFromVideoId(httpInterface, shortHandMatcher.group("videoId"), null);
             }
         }
 
