@@ -219,6 +219,12 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 }
             }
 
+            Matcher directVideoIdMatcher = directVideoIdPattern.matcher(identifier);
+
+            if (directVideoIdMatcher.matches()) {
+                return routeFromVideoId(httpInterface, identifier, null);
+            }
+
             Matcher playlistIdMatcher = directPlaylistIdPattern.matcher(identifier);
 
             if (playlistIdMatcher.matches()) {
@@ -229,12 +235,6 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
             if (shortHandMatcher.matches()) {
                 return routeFromVideoId(httpInterface, shortHandMatcher.group("videoId"), null);
-            }
-
-            Matcher directVideoIdMatcher = directVideoIdPattern.matcher(identifier);
-
-            if (directVideoIdMatcher.matches()) {
-                return routeFromVideoId(httpInterface, identifier, null);
             }
         }
 
