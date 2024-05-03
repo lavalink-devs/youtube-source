@@ -230,6 +230,12 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
             if (shortHandMatcher.matches()) {
                 return routeFromVideoId(httpInterface, shortHandMatcher.group("videoId"), null);
             }
+
+            Matcher directVideoIdMatcher = directVideoIdPattern.matcher(identifier);
+
+            if (directVideoIdMatcher.matches()) {
+                return routeFromVideoId(httpInterface, identifier, null);
+            }
         }
 
         return null;
