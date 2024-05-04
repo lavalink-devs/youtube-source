@@ -219,6 +219,12 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 }
             }
 
+            Matcher directVideoIdMatcher = directVideoIdPattern.matcher(identifier);
+
+            if (directVideoIdMatcher.matches()) {
+                return routeFromVideoId(httpInterface, identifier, null);
+            }
+
             Matcher playlistIdMatcher = directPlaylistIdPattern.matcher(identifier);
 
             if (playlistIdMatcher.matches()) {
