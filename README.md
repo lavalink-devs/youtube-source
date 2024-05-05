@@ -1,4 +1,4 @@
-# lavaplayer-youtube-source
+# youtube-source
 A rewritten YouTube source manager for Lavaplayer.
 
 This source aims to provide robustness by leveraging multiple InnerTube clients
@@ -26,6 +26,7 @@ dependencies {
 
 </details>
 Example usage:
+
 ```java
 YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager();
 // Optionally, you may instantiate the source with a custom options, such as toggling use of searching, and clients.
