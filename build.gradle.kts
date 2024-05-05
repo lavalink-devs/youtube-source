@@ -1,14 +1,23 @@
+import org.ajoberstar.grgit.Grgit
+
 plugins {
     java
-    `maven-publish`
+    id("org.ajoberstar.grgit") version "5.2.0"
+    alias(libs.plugins.maven.publish.base) apply false
 }
 
-group = "dev.lavalink.youtube"
-version = "1.0.7"
+val (gitVersion, release) = versionFromGit()
+logger.lifecycle("Version: $gitVersion (release: $release)")
 
 allprojects {
-    group = rootProject.group
-    version = rootProject.version
+    group = "dev.lavalink.youtube"
+    // The plugin project is the only one that should not have a snapshot version since lavalink expects the jar name to be specific
+    version = if (project.name == "plugin") {
+        gitVersion.removeSuffix("-SNAPSHOT")
+    } else {
+        gitVersion
+    }
+
 
     repositories {
         mavenLocal()
@@ -16,19 +25,48 @@ allprojects {
         maven(url = "https://maven.lavalink.dev/releases")
         maven(url = "https://jitpack.io")
     }
+}
 
-    apply(plugin = "java")
-    apply(plugin = "maven-publish")
+subprojects {
+    apply<JavaPlugin>()
+    apply<MavenPublishPlugin>()
 
-    java {
+    configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    dependencies {
-        implementation("org.mozilla:rhino-engine:1.7.14")
-        implementation("com.grack:nanojson:1.7")
-        compileOnly("org.slf4j:slf4j-api:1.7.25")
-        compileOnly("org.jetbrains:annotations:24.1.0")
+     configure<PublishingExtension> {
+        if (findProperty("MAVEN_PASSWORD") != null && findProperty("MAVEN_USERNAME") != null) {
+            repositories {
+                val snapshots = "https://maven.lavalink.dev/snapshots"
+                val releases = "https://maven.lavalink.dev/releases"
+
+                maven(if (release) releases else snapshots) {
+                    credentials {
+                        password = findProperty("MAVEN_PASSWORD") as String?
+                        username = findProperty("MAVEN_USERNAME") as String?
+                    }
+                }
+            }
+        } else {
+            logger.lifecycle("Not publishing to maven.lavalink.dev because credentials are not set")
+        }
+    }
+}
+
+@SuppressWarnings("GrMethodMayBeStatic")
+fun versionFromGit(): Pair<String, Boolean> {
+    Grgit.open(mapOf("currentDir" to project.rootDir)).use { git ->
+        val headTag = git.tag
+            .list()
+            .find { it.commit.id == git.head().id }
+
+        val clean = git.status().isClean || System.getenv("CI") != null
+        if (!clean) {
+            logger.lifecycle("Git state is dirty, version is a snapshot.")
+        }
+
+        return if (headTag != null && clean) headTag.name to true else "${git.head().id}-SNAPSHOT" to false
     }
 }
