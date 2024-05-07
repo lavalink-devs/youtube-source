@@ -130,16 +130,20 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
         final YoutubeAudioSourceManager source;
         final boolean allowSearch = youtubeConfig == null || youtubeConfig.getAllowSearch();
 
-        if (youtubeConfig == null || clientProvider == null) {
+        if (clientProvider == null) {
             log.warn("ClientProvider instance is missing. The YouTube source will be initialised with default clients.");
             source = new YoutubeAudioSourceManager(allowSearch);
         } else {
-            if (youtubeConfig.getClients() != null) {
-                Client[] clients = clientProvider.getClients(youtubeConfig.getClients());
-                source = new YoutubeAudioSourceManager(allowSearch, clients);
+            String[] clients;
+
+            if (youtubeConfig == null || youtubeConfig.getClients() == null) {
+                log.warn("youtubeConfig missing or 'clients' was not specified, default values will be used.");
+                clients = clientProvider.getDefaultClients();
             } else {
-                source = new YoutubeAudioSourceManager(allowSearch);
+                clients = youtubeConfig.getClients();
             }
+
+            source = new YoutubeAudioSourceManager(allowSearch, clientProvider.getClients(clients));
         }
 
         log.info("YouTube source initialised with clients: {} ", Arrays.stream(source.getClients()).map(Client::getIdentifier).collect(Collectors.joining(", ")));

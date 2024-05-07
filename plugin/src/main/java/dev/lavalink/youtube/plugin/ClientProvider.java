@@ -11,6 +11,13 @@ import java.util.List;
 public interface ClientProvider {
     Logger log = LoggerFactory.getLogger(ClientProvider.class);
 
+    default String[] getDefaultClients() {
+        // This is a default list of clients. This list matches that of the
+        // YoutubeAudioSourceManager. If that is updated, this should probably be
+        // updated too.
+        return new String[] { "MUSIC", "WEB", "ANDROID", "TVHTML5EMBEDDED" };
+    }
+
     Client[] getClients(String[] clients);
 
     default Client[] getClients(ClientReference[] clientValues, String[] clients) {

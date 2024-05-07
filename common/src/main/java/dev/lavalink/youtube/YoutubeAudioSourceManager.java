@@ -63,6 +63,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
     protected final HttpInterfaceManager httpInterfaceManager;
     protected final boolean allowSearch;
+    protected final boolean allowDirectVideoIds;
+    protected final boolean allowDirectPlaylistIds;
     protected final Client[] clients;
 
     protected final SignatureCipherManager cipherManager;
@@ -73,7 +75,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
     public YoutubeAudioSourceManager(boolean allowSearch) {
         // query order: music -> web -> android -> tvhtml5embedded
-        this(allowSearch, new Music(), new Web(), new Android(), new TvHtml5Embedded());
+        this(allowSearch, true, true, new Music(), new Web(), new Android(), new TvHtml5Embedded());
     }
 
     /**
@@ -83,7 +85,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
      *                the order they are provided.
      */
     public YoutubeAudioSourceManager(@NotNull Client... clients) {
-        this(true, clients);
+        this(true, true, true, clients);
     }
 
     /**
@@ -95,8 +97,29 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
      *                the order they are provided.
      */
     public YoutubeAudioSourceManager(boolean allowSearch, @NotNull Client... clients) {
+        this(allowSearch, true, true, clients);
+    }
+
+    /**
+     * Construct an instance of YoutubeAudioSourceManager with the given settings
+     * and clients.
+     * @param allowSearch Whether to allow searching for tracks. If disabled, the
+     *                    "ytsearch:" and "ytmsearch:" prefixes will return nothing.
+     * @param allowDirectVideoIds Whether this source will attempt to load video identifiers
+     *                            if they're provided without a complete URL (i.e. "dQw4w9WgXcQ")
+     * @param allowDirectPlaylistIds Whether this source will attempt to load playlist identifiers
+     *                               if they're provided without a complete URL.
+     * @param clients The clients to use for track loading. They will be queried in
+     *                the order they are provided.
+     */
+    public YoutubeAudioSourceManager(boolean allowSearch,
+                                     boolean allowDirectVideoIds,
+                                     boolean allowDirectPlaylistIds,
+                                     @NotNull Client... clients) {
         this.httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
         this.allowSearch = allowSearch;
+        this.allowDirectVideoIds = allowDirectVideoIds;
+        this.allowDirectPlaylistIds = allowDirectPlaylistIds;
         this.clients = clients == null ? new Client[0] : clients;
         this.cipherManager = new SignatureCipherManager();
 
@@ -221,13 +244,13 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
             Matcher directVideoIdMatcher = directVideoIdPattern.matcher(identifier);
 
-            if (directVideoIdMatcher.matches()) {
+            if (allowDirectVideoIds && directVideoIdMatcher.matches()) {
                 return routeFromVideoId(httpInterface, identifier, null);
             }
 
             Matcher playlistIdMatcher = directPlaylistIdPattern.matcher(identifier);
 
-            if (playlistIdMatcher.matches()) {
+            if (allowDirectPlaylistIds && playlistIdMatcher.matches()) {
                 return (client) -> client.loadPlaylist(this, httpInterface, identifier, null);
             }
 
