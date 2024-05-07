@@ -116,7 +116,9 @@ plugins:
     allowSearch: true # Whether "ytsearch:" and "ytmsearch:" can be used
     allowDirectVideoIds: true # Whether just video IDs can match. If false, only complete URLs will be loaded.
     allowDirectPlaylistIds: true # Whether just playlist IDs can match. If false, only complete URLs will be loaded.
-    clients: ["MUSIC", "ANDROID", "WEB"] # The clients to use for track loading. See below for a list of valid clients.
+    # The clients to use for track loading. See below for a list of valid clients.
+    # Clients are queried in the order they are given (left-to-right)
+    clients: ["MUSIC", "ANDROID", "WEB"]
 ```
 
 > [!IMPORTANT]
