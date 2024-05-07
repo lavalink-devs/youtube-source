@@ -75,7 +75,12 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
     public YoutubeAudioSourceManager(boolean allowSearch) {
         // query order: music -> web -> android -> tvhtml5embedded
-        this(allowSearch, true, true, new Music(), new Web(), new Android(), new TvHtml5Embedded());
+        this(allowSearch, true, true);
+    }
+
+    public YoutubeAudioSourceManager(boolean allowSearch, boolean allowDirectVideoIds, boolean allowDirectPlaylistIds) {
+        // query order: music -> web -> android -> tvhtml5embedded
+        this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, new Music(), new Web(), new Android(), new TvHtml5Embedded());
     }
 
     /**

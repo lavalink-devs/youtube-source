@@ -112,8 +112,11 @@ Configuring the plugin:
 ```yaml
 plugins:
   youtube:
-    enabled: true
-    clients: ["MUSIC", "ANDROID", "WEB"]
+    enabled: true # Whether this source can be used.
+    allowSearch: true # Whether "ytsearch:" and "ytmsearch:" can be used
+    allowDirectVideoIds: true # Whether just video IDs can match. If false, only complete URLs will be loaded.
+    allowDirectPlaylistIds: true # Whether just playlist IDs can match. If false, only complete URLs will be loaded.
+    clients: ["MUSIC", "ANDROID", "WEB"] # The clients to use for track loading. See below for a list of valid clients.
 ```
 
 > [!IMPORTANT]
