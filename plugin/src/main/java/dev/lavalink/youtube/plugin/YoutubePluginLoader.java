@@ -127,6 +127,10 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
 
     @Override
     public AudioPlayerManager configure(AudioPlayerManager audioPlayerManager) {
+        if (youtubeConfig != null && !youtubeConfig.getEnabled()) {
+            return audioPlayerManager;
+        }
+
         final YoutubeAudioSourceManager source;
         final boolean allowSearch = youtubeConfig == null || youtubeConfig.getAllowSearch();
         final boolean allowDirectVideoIds = youtubeConfig == null || youtubeConfig.getAllowDirectVideoIds();

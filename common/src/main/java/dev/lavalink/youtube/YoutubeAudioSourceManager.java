@@ -124,7 +124,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         this.allowSearch = allowSearch;
         this.allowDirectVideoIds = allowDirectVideoIds;
         this.allowDirectPlaylistIds = allowDirectPlaylistIds;
-        this.clients = clients == null ? new Client[0] : clients;
+        this.clients = clients;
         this.cipherManager = new SignatureCipherManager();
 
         YoutubeAccessTokenTracker tokenTracker = new YoutubeAccessTokenTracker(httpInterfaceManager);
