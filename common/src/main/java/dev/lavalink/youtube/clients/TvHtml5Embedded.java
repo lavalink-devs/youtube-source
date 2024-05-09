@@ -5,7 +5,6 @@ import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.jetbrains.annotations.NotNull;
@@ -61,8 +60,7 @@ public class TvHtml5Embedded extends StreamingNonMusicClient {
                 String author = authorJson.get("runs").index(0).get("text").textOrDefault("Unknown artist");
                 long duration = Units.secondsToMillis(item.get("lengthSeconds").asLong(Units.DURATION_SEC_UNKNOWN));
 
-                AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false, WATCH_URL + videoId);
-                tracks.add(source.buildAudioTrack(info));
+                tracks.add(buildAudioTrack(source, track, title, author, duration, videoId, false));
             }
         }
     }

@@ -19,6 +19,9 @@ import java.util.List;
 
 /**
  * The base class for a client that is used for everything except music.youtube.com.
+ * This class is deprecated.
+ * Extend the non-thumbnail counterpart and override the {@link Client#buildAudioTrack(YoutubeAudioSourceManager, JsonBrowser, String, String, long, String, boolean)}
+ * method instead.
  */
 public abstract class ThumbnailNonMusicClient extends NonMusicClient {
     protected void extractPlaylistTracks(@NotNull JsonBrowser json,
@@ -90,7 +93,7 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
             false
         );
 
-        String thumbnailUrl = ThumbnailTools.getYouTubeThumbnail(json, videoId);
+        String thumbnailUrl = ThumbnailTools.getYouTubeThumbnail(videoDetails, videoId);
 
         AudioTrackInfo info = new AudioTrackInfo(title, author, temporalInfo.durationMillis, videoId, temporalInfo.isActiveStream, WATCH_URL + videoId, thumbnailUrl, null);
         return source.buildAudioTrack(info);

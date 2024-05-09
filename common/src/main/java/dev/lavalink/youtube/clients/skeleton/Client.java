@@ -5,6 +5,7 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.track.format.TrackFormats;
@@ -129,6 +130,31 @@ public interface Client {
         }
 
         return null;
+    }
+
+    /**
+     * Builds an audio track with the given parameters.
+     * Hint: You can use {@link YoutubeAudioSourceManager#buildAudioTrack(AudioTrackInfo)} to
+     * build a track with the given AudioTrackInfo.
+     * @param source The source responsible for this track.
+     * @param json The video JSON. This can be used to extract extra metadata.
+     * @param title The title of the video.
+     * @param author The video uploader.
+     * @param duration The duration of the video.
+     * @param videoId The video identifier.
+     * @param isStream Whether this video is a livestream.
+     * @return The built audio track.
+     */
+    @NotNull
+    default AudioTrack buildAudioTrack(@NotNull YoutubeAudioSourceManager source,
+                                       @NotNull JsonBrowser json,
+                                       @NotNull String title,
+                                       @NotNull String author,
+                                       long duration,
+                                       @NotNull String videoId,
+                                       boolean isStream) {
+        AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, isStream, WATCH_URL + videoId);
+        return source.buildAudioTrack(info);
     }
 
     /**

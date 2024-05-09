@@ -23,6 +23,11 @@ import java.util.Map;
 import static com.sedmelluq.discord.lavaplayer.tools.DataFormatTools.decodeUrlEncodedItems;
 import static com.sedmelluq.discord.lavaplayer.tools.Units.CONTENT_LENGTH_UNKNOWN;
 
+/**
+ * This class is deprecated.
+ * Extend the non-thumbnail counterpart and override the {@link Client#buildAudioTrack(YoutubeAudioSourceManager, JsonBrowser, String, String, long, String, boolean)}
+ * method instead.
+ */
 public abstract class ThumbnailStreamingNonMusicClient extends ThumbnailNonMusicClient {
     private static final Logger log = LoggerFactory.getLogger(ThumbnailStreamingNonMusicClient.class);
 

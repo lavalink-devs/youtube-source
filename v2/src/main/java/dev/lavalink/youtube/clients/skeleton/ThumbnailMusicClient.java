@@ -10,6 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This class is deprecated.
+ */
 public abstract class ThumbnailMusicClient extends MusicClient {
     @Override
     @NotNull

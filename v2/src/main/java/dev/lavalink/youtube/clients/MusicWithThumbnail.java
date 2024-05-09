@@ -1,27 +1,80 @@
 package dev.lavalink.youtube.clients;
 
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import dev.lavalink.youtube.clients.skeleton.ThumbnailMusicClient;
+import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.ThumbnailTools;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import org.jetbrains.annotations.NotNull;
 
-public class MusicWithThumbnail extends ThumbnailMusicClient {
+import java.util.ArrayList;
+import java.util.List;
+
+public class MusicWithThumbnail extends Music {
     @Override
     @NotNull
-    public ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
-        return Music.BASE_CONFIG.copy();
+    protected List<AudioTrack> extractSearchResultTracks(@NotNull YoutubeAudioSourceManager source,
+                                                         @NotNull JsonBrowser json) {
+        List<AudioTrack> tracks = new ArrayList<>();
+
+        for (JsonBrowser track : json.values()) {
+            JsonBrowser thumbnail = track.get("musicResponsiveListItemRenderer").get("thumbnail").get("musicThumbnailRenderer");
+            JsonBrowser columns = track.get("musicResponsiveListItemRenderer").get("flexColumns");
+
+            if (columns.isNull()) {
+                continue;
+            }
+
+            JsonBrowser metadata = columns.index(0)
+                .get("musicResponsiveListItemFlexColumnRenderer")
+                .get("text")
+                .get("runs")
+                .index(0);
+
+            String title = metadata.get("text").text();
+            String videoId = metadata.get("navigationEndpoint").get("watchEndpoint").get("videoId").text();
+
+            if (videoId == null) {
+                // If the track is not available on YouTube Music, videoId will be empty
+                continue;
+            }
+
+            List<JsonBrowser> runs = columns.index(1)
+                .get("musicResponsiveListItemFlexColumnRenderer")
+                .get("text")
+                .get("runs")
+                .values();
+
+            String author = runs.get(0).get("text").text();
+            JsonBrowser lastElement = runs.get(runs.size() - 1);
+
+            if (!lastElement.get("navigationEndpoint").isNull()) {
+                // The duration element should not have this key. If it does,
+                // then duration is probably missing.
+                continue;
+            }
+
+            long duration = DataFormatTools.durationTextToMillis(lastElement.get("text").text());
+            String thumbnailUrl = ThumbnailTools.getYouTubeMusicThumbnail(thumbnail, videoId);
+
+            AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false, WATCH_URL + videoId, thumbnailUrl, null);
+            tracks.add(source.buildAudioTrack(info));
+        }
+
+        return tracks;
     }
 
     @Override
     @NotNull
-    public String getPlayerParams() {
-        // This client is not used for format loading so, we don't have
-        // any player parameters attached to it.
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    @NotNull
-    public String getIdentifier() {
-        return Music.BASE_CONFIG.getName();
+    public AudioTrack buildAudioTrack(@NotNull YoutubeAudioSourceManager source,
+                                      @NotNull JsonBrowser json,
+                                      @NotNull String title,
+                                      @NotNull String author,
+                                      long duration,
+                                      @NotNull String videoId,
+                                      boolean isStream) {
+        String thumbnail = ThumbnailTools.getYouTubeMusicThumbnail(json, videoId);
+        return source.buildAudioTrack(new AudioTrackInfo(title, author, duration, videoId, isStream, WATCH_URL + videoId, thumbnail, null));
     }
 }

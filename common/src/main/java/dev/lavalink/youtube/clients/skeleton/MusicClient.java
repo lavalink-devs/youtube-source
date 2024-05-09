@@ -104,9 +104,7 @@ public abstract class MusicClient implements Client {
             }
 
             long duration = DataFormatTools.durationTextToMillis(lastElement.get("text").text());
-
-            AudioTrackInfo info = new AudioTrackInfo(title, author, duration, videoId, false, WATCH_URL + videoId);
-            tracks.add(source.buildAudioTrack(info));
+            tracks.add(buildAudioTrack(source, track, title, author, duration, videoId, false));
         }
 
         return tracks;

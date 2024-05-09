@@ -17,6 +17,8 @@ dependencies {
     implementation(libs.nanojson)
     compileOnly(libs.slf4j)
     compileOnly(libs.annotations)
+
+    testImplementation(libs.lavaplayer.v2)
 }
 
 mavenPublishing {
