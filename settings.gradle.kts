@@ -19,7 +19,7 @@ dependencyResolutionManagement {
             library("lavalink-server", "dev.arbjerg.lavalink", "Lavalink-Server").versionRef("lavalink")
             library("lavaplayer-ext-youtube-rotator", "dev.arbjerg", "lavaplayer-ext-youtube-rotator").versionRef("lavaplayer-v1")
 
-            library("rhino-engine", "org.mozilla", "rhino-engine").version("1.7.14")
+            library("rhino-engine", "org.mozilla", "rhino-engine").version("1.7.15")
             library("nanojson", "com.grack", "nanojson").version("1.7")
             library("slf4j", "org.slf4j", "slf4j-api").version("1.7.25")
             library("annotations", "org.jetbrains", "annotations").version("24.1.0")
