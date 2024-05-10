@@ -208,9 +208,25 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     @Nullable
     protected Router getRouter(@NotNull HttpInterface httpInterface, @NotNull String identifier) {
         if (identifier.startsWith(SEARCH_PREFIX)) {
-            if (allowSearch) return (client) -> client.loadSearch(this, httpInterface, identifier.substring(SEARCH_PREFIX.length()).trim());
+            if (allowSearch) {
+                String trimmed = identifier.substring(SEARCH_PREFIX.length()).trim();
+
+                if (trimmed.isEmpty()) {
+                    return Router.none; // Equivalent to returning AudioReference.NO_TRACK.
+                }
+
+                return (client) -> client.loadSearch(this, httpInterface, identifier.substring(SEARCH_PREFIX.length()).trim());
+            }
         } else if (identifier.startsWith(MUSIC_SEARCH_PREFIX)) {
-            if (allowSearch) return (client) -> client.loadSearchMusic(this, httpInterface, identifier.substring(MUSIC_SEARCH_PREFIX.length()).trim());
+            if (allowSearch) {
+                String trimmed = identifier.substring(MUSIC_SEARCH_PREFIX.length()).trim();
+
+                if (trimmed.isEmpty()) {
+                    return Router.none; // Equivalent to returning AudioReference.NO_TRACK.
+                }
+
+                return (client) -> client.loadSearchMusic(this, httpInterface, identifier.substring(MUSIC_SEARCH_PREFIX.length()).trim());
+            }
         } else {
             Matcher mainDomainMatcher = mainDomainPattern.matcher(identifier);
 
