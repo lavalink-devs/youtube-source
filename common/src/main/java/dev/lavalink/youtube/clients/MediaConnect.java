@@ -1,6 +1,7 @@
 package dev.lavalink.youtube.clients;
 
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public class MediaConnect extends StreamingNonMusicClient {
     public boolean canHandleRequest(@NotNull String identifier) {
         // This client appears to be able to load livestreams and videos, but will
         // receive 400 bad request when loading playlists.
-        return !identifier.contains("list=") && super.canHandleRequest(identifier);
+        return !identifier.startsWith(YoutubeAudioSourceManager.SEARCH_PREFIX) && !identifier.contains("list=") && super.canHandleRequest(identifier);
     }
 
     @Override
