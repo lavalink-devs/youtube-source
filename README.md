@@ -146,6 +146,10 @@ Currently, the following clients are available for use:
   - This client has restrictions imposed, notably: it does NOT support loading of mixes or playlists,
     and it is unable to yield any supported formats when playing livestreams.
     It is advised not to use this client on its own for that reason, if those features are required.
+- `MEDIA_CONNECT`
+  - This client seems to be cipher-less, with Opus formats, possibly an extension of Android.
+    There are also restrictions with this client, including but possibly not limited to, the inability
+    to load playlists.
 - `IOS`
   - This client does not receive Opus formats, so transcoding is required. This can
     increase resource consumption. It is recommended not to use this client unless it has

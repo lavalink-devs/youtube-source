@@ -17,7 +17,8 @@ public class ClientProviderV3 implements ClientProvider {
         IOS(Ios::new),
         MUSIC(Music::new),
         TVHTML5EMBEDDED(TvHtml5Embedded::new),
-        WEB(Web::new);
+        WEB(Web::new),
+        MEDIA_CONNECT(MediaConnect::new);
 
         private final Supplier<Client> clientFactory;
 
