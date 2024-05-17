@@ -146,6 +146,9 @@ Currently, the following clients are available for use:
   - This client has restrictions imposed, notably: it does NOT support loading of mixes or playlists,
     and it is unable to yield any supported formats when playing livestreams.
     It is advised not to use this client on its own for that reason, if those features are required.
+- `ANDROID_LITE`
+  - Appears to have restrictions similar to that of `ANDROID_TESTSUITE` except livestreams which appear
+    to be playable with this client.
 - `MEDIA_CONNECT`
   - This client seems to be cipher-less, with Opus formats, possibly an extension of Android.
     There are also restrictions with this client, including but possibly not limited to, the inability

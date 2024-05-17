@@ -415,7 +415,7 @@ public abstract class NonMusicClient implements Client {
         if (tracks.isEmpty()) {
             // This isn't a CannotBeLoaded exception as if the response JSON changes, another
             // client that receives the expected response format may still be able to load it.
-            throw new FriendlyException("Could not find tracks from playlist.", SUSPICIOUS, null);
+            throw new FriendlyException("Could not find tracks from playlist.", SUSPICIOUS, new RuntimeException("JSON: " + json.format()));
         }
 
         return new BasicAudioPlaylist(playlistName, tracks, findSelectedTrack(tracks, selectedVideoId), false);
