@@ -14,7 +14,7 @@ public class ClientProviderV4 implements ClientProvider {
     private enum ClientMapping implements ClientReference {
         ANDROID(AndroidWithThumbnail::new),
         ANDROID_TESTSUITE(AndroidTestsuiteWithThumbnail::new),
-        ANDROID_LITE(AndroidLite::new),
+        ANDROID_LITE(AndroidLiteWithThumbnail::new),
         IOS(IosWithThumbnail::new),
         MUSIC(MusicWithThumbnail::new),
         TVHTML5EMBEDDED(TvHtml5EmbeddedWithThumbnail::new),
