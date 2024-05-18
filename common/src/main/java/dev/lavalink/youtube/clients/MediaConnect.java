@@ -10,7 +10,7 @@ public class MediaConnect extends StreamingNonMusicClient {
         .withClientName("MEDIA_CONNECT_FRONTEND")
         .withClientField("clientVersion", "0.1");
 
-    protected ClientOptions options; // todo: use
+    protected ClientOptions options;
 
     public MediaConnect() {
         this(ClientOptions.DEFAULT);

@@ -15,7 +15,7 @@ public class Ios extends StreamingNonMusicClient {
         .withClientField("clientVersion", CLIENT_VERSION)
         .withUserField("lockedSafetyMode", false);
 
-    protected ClientOptions options; // todo: use
+    protected ClientOptions options;
 
     public Ios() {
         this(ClientOptions.DEFAULT);

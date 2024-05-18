@@ -15,7 +15,7 @@ public class AndroidLite extends Android {
         .withClientField("clientVersion", "3.26.1")
         .withClientField("androidSdkVersion", ANDROID_VERSION.getSdkVersion());
 
-    protected ClientOptions options; // todo: use
+    protected ClientOptions options;
 
     public AndroidLite() {
         this(ClientOptions.DEFAULT);

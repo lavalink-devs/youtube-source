@@ -34,7 +34,7 @@ public class Web extends StreamingNonMusicClient {
 
     protected volatile long lastConfigUpdate = -1;
 
-    protected ClientOptions options; // todo: use
+    protected ClientOptions options;
 
     public Web() {
         this(ClientOptions.DEFAULT);

@@ -10,7 +10,7 @@ public class Music extends MusicClient {
         .withClientName("WEB_REMIX")
         .withClientField("clientVersion", "1.20240401.00.00");
 
-    protected ClientOptions options; // todo: use
+    protected ClientOptions options;
 
     public Music() {
         this(ClientOptions.DEFAULT);
