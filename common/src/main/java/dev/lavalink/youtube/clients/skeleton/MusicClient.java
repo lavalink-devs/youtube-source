@@ -112,7 +112,7 @@ public abstract class MusicClient implements Client {
 
     @Override
     public boolean canHandleRequest(@NotNull String identifier) {
-        return identifier.startsWith(YoutubeAudioSourceManager.MUSIC_SEARCH_PREFIX);
+        return identifier.startsWith(YoutubeAudioSourceManager.MUSIC_SEARCH_PREFIX) && getOptions().getSearching();
     }
 
     @Override
@@ -129,6 +129,11 @@ public abstract class MusicClient implements Client {
     public AudioItem loadSearchMusic(@NotNull YoutubeAudioSourceManager source,
                                      @NotNull HttpInterface httpInterface,
                                      @NotNull String searchQuery) {
+        if (!getOptions().getSearching()) {
+            // why would you even disable searching for this client lol
+            throw new RuntimeException("Searching is disabled for this client");
+        }
+
         JsonBrowser json = getMusicSearchResult(httpInterface, searchQuery);
         JsonBrowser trackJson = extractSearchResultTrackJson(json);
         List<AudioTrack> tracks = extractSearchResultTracks(source, trackJson);

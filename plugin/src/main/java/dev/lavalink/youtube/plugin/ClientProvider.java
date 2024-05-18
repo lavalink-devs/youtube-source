@@ -1,5 +1,6 @@
 package dev.lavalink.youtube.plugin;
 
+import dev.lavalink.youtube.clients.ClientOptions;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +19,15 @@ public interface ClientProvider {
         return new String[] { "MUSIC", "WEB", "ANDROID", "TVHTML5EMBEDDED" };
     }
 
-    Client[] getClients(String[] clients);
+    Client[] getClients(String[] clients, OptionsProvider optionsProvider);
 
-    default Client[] getClients(ClientReference[] clientValues, String[] clients) {
+    default Client[] getClients(ClientReference[] clientValues,
+                                String[] clients,
+                                OptionsProvider optionsProvider) {
         List<Client> resolved = new ArrayList<>();
 
         for (String clientName : clients) {
-            Client client = getClientByName(clientValues, clientName);
+            Client client = getClientByName(clientValues, clientName, optionsProvider);
 
             if (client == null) {
                 log.warn("Failed to resolve {} into a Client", clientName);
@@ -37,16 +40,22 @@ public interface ClientProvider {
         return resolved.toArray(new Client[0]);
     }
 
-    interface ClientReference {
-        String getName();
-        Client getClient();
-    }
-
-    static Client getClientByName(ClientReference[] enumValues, String name) {
+    static Client getClientByName(ClientReference[] enumValues,
+                                  String name,
+                                  OptionsProvider provider) {
         return Arrays.stream(enumValues)
             .filter(it -> it.getName().equals(name))
             .findFirst()
-            .map(ClientReference::getClient)
+            .map(ref -> ref.getClient(provider.getOptionsForClient(name)))
             .orElse(null);
+    }
+
+    interface ClientReference {
+        String getName();
+        Client getClient(ClientOptions clientOptions);
+    }
+
+    interface OptionsProvider {
+        ClientOptions getOptionsForClient(String clientName);
     }
 }

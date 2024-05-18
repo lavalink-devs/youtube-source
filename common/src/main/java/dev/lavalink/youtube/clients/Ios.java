@@ -15,6 +15,16 @@ public class Ios extends StreamingNonMusicClient {
         .withClientField("clientVersion", CLIENT_VERSION)
         .withUserField("lockedSafetyMode", false);
 
+    protected ClientOptions options; // todo: use
+
+    public Ios() {
+        this(ClientOptions.DEFAULT);
+    }
+
+    public Ios(@NotNull ClientOptions options) {
+        this.options = options;
+    }
+
     @Override
     @NotNull
     protected ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
@@ -43,6 +53,12 @@ public class Ios extends StreamingNonMusicClient {
     @NotNull
     public String getPlayerParams() {
         return MOBILE_PLAYER_PARAMS;
+    }
+
+    @Override
+    @NotNull
+    public ClientOptions getOptions() {
+        return this.options;
     }
 
     @Override

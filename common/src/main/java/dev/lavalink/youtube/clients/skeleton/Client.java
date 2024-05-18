@@ -8,6 +8,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.ClientOptions;
 import dev.lavalink.youtube.track.format.TrackFormats;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,6 +167,11 @@ public interface Client {
     @NotNull
     String getPlayerParams();
 
+    @NotNull
+    default ClientOptions getOptions() {
+        return ClientOptions.DEFAULT;
+    }
+
     /**
      * Returns a boolean determining whether this client can be used to handle
      * requests for the given identifier.
@@ -178,7 +184,7 @@ public interface Client {
      * @return True, if this client can be used for loading playback URLs.
      */
     default boolean supportsFormatLoading() {
-        return true;
+        return getOptions().getPlayback();
     }
 
     void setPlaylistPageCount(int count);

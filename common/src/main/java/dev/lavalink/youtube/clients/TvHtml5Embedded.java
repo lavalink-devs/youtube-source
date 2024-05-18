@@ -19,6 +19,16 @@ public class TvHtml5Embedded extends StreamingNonMusicClient {
         .withClientField("clientVersion", "2.0")
         .withThirdPartyEmbedUrl("https://www.youtube.com");
 
+    protected ClientOptions options; // todo: use
+
+    public TvHtml5Embedded() {
+        this(ClientOptions.DEFAULT);
+    }
+
+    public TvHtml5Embedded(@NotNull ClientOptions options) {
+        this.options = options;
+    }
+
     @Override
     @NotNull
     protected ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
@@ -69,6 +79,12 @@ public class TvHtml5Embedded extends StreamingNonMusicClient {
     @NotNull
     public String getPlayerParams() {
         return WEB_PLAYER_PARAMS;
+    }
+
+    @Override
+    @NotNull
+    public ClientOptions getOptions() {
+        return this.options;
     }
 
     @Override

@@ -10,6 +10,16 @@ public class Music extends MusicClient {
         .withClientName("WEB_REMIX")
         .withClientField("clientVersion", "1.20240401.00.00");
 
+    protected ClientOptions options; // todo: use
+
+    public Music() {
+        this(ClientOptions.DEFAULT);
+    }
+
+    public Music(@NotNull ClientOptions options) {
+        this.options = options;
+    }
+
     @Override
     @NotNull
     public ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
@@ -22,6 +32,12 @@ public class Music extends MusicClient {
         // This client is not used for format loading so, we don't have
         // any player parameters attached to it.
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    @NotNull
+    public ClientOptions getOptions() {
+        return this.options;
     }
 
     @Override

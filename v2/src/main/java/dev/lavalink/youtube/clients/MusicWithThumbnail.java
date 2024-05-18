@@ -8,6 +8,14 @@ import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import org.jetbrains.annotations.NotNull;
 
 public class MusicWithThumbnail extends Music {
+    public MusicWithThumbnail() {
+        super();
+    }
+
+    public MusicWithThumbnail(@NotNull ClientOptions options) {
+        super(options);
+    }
+
     @Override
     @NotNull
     public AudioTrack buildAudioTrack(@NotNull YoutubeAudioSourceManager source,

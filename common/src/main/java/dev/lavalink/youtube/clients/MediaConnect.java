@@ -10,6 +10,16 @@ public class MediaConnect extends StreamingNonMusicClient {
         .withClientName("MEDIA_CONNECT_FRONTEND")
         .withClientField("clientVersion", "0.1");
 
+    protected ClientOptions options; // todo: use
+
+    public MediaConnect() {
+        this(ClientOptions.DEFAULT);
+    }
+
+    public MediaConnect(@NotNull ClientOptions options) {
+        this.options = options;
+    }
+
     @Override
     @NotNull
     protected ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
@@ -20,6 +30,12 @@ public class MediaConnect extends StreamingNonMusicClient {
     @NotNull
     public String getPlayerParams() {
         return MOBILE_PLAYER_PARAMS;
+    }
+
+    @Override
+    @NotNull
+    public ClientOptions getOptions() {
+        return this.options;
     }
 
     @Override

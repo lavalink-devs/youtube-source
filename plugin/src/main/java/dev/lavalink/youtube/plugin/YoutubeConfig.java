@@ -1,7 +1,11 @@
 package dev.lavalink.youtube.plugin;
 
+import dev.lavalink.youtube.clients.ClientOptions;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @ConfigurationProperties(prefix = "plugins.youtube")
 @Component
@@ -11,6 +15,7 @@ public class YoutubeConfig {
     private boolean allowDirectVideoIds = true;
     private boolean allowDirectPlaylistIds = true;
     private String[] clients;
+    private Map<String, ClientOptions> clientOptions = new HashMap<>();
 
     public boolean getEnabled() {
         return this.enabled;
@@ -32,6 +37,10 @@ public class YoutubeConfig {
         return this.clients;
     }
 
+    public Map<String, ClientOptions> getClientOptions() {
+        return this.clientOptions;
+    }
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
@@ -50,5 +59,9 @@ public class YoutubeConfig {
 
     public void setClients(String[] clients) {
         this.clients = clients;
+    }
+
+    public void setClientOptions(Map<String, ClientOptions> clientOptions) {
+        this.clientOptions = clientOptions;
     }
 }

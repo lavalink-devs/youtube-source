@@ -312,6 +312,10 @@ public abstract class NonMusicClient implements Client {
     public AudioItem loadVideo(@NotNull YoutubeAudioSourceManager source,
                                @NotNull HttpInterface httpInterface,
                                @NotNull String videoId) throws CannotBeLoaded, IOException {
+        if (!getOptions().getVideoLoading()) {
+            throw new RuntimeException("Video loading is disabled for this client");
+        }
+
         JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
@@ -332,6 +336,10 @@ public abstract class NonMusicClient implements Client {
     public AudioItem loadSearch(@NotNull YoutubeAudioSourceManager source,
                                 @NotNull HttpInterface httpInterface,
                                 @NotNull String searchQuery) {
+        if (!getOptions().getSearching()) {
+            throw new RuntimeException("Searching is disabled for this client");
+        }
+
         JsonBrowser json = loadSearchResults(httpInterface, searchQuery);
         List<AudioTrack> tracks = extractSearchResults(source, json);
 
@@ -347,6 +355,10 @@ public abstract class NonMusicClient implements Client {
                              @NotNull HttpInterface httpInterface,
                              @NotNull String mixId,
                              @Nullable String selectedVideoId) {
+        if (!getOptions().getPlaylistLoading()) {
+            throw new RuntimeException("Mix loading is disabled for this client");
+        }
+
         JsonBrowser json = loadMixResult(httpInterface, mixId, selectedVideoId);
         JsonBrowser playlist = extractMixPlaylistData(json);
 
@@ -372,6 +384,10 @@ public abstract class NonMusicClient implements Client {
                                   @NotNull HttpInterface httpInterface,
                                   @NotNull String playlistId,
                                   @Nullable String selectedVideoId) {
+        if (!getOptions().getPlaylistLoading()) {
+            throw new RuntimeException("Playlist loading is disabled for this client");
+        }
+
         JsonBrowser json = loadPlaylistResult(httpInterface, playlistId);
         String error = extractPlaylistError(json);
 

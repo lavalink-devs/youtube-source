@@ -8,6 +8,7 @@ import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv4Block;
 import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv6Block;
 import dev.arbjerg.lavalink.api.AudioPlayerManagerConfiguration;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.ClientOptions;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import lavalink.server.config.RateLimitConfig;
 import lavalink.server.config.ServerConfig;
@@ -18,10 +19,7 @@ import org.springframework.stereotype.Service;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -69,6 +67,16 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
         } catch (ClassNotFoundException ignored) {
             return false;
         }
+    }
+
+    private ClientOptions getOptionsForClient(String clientName) {
+        Map<String, ClientOptions> clientOptions = youtubeConfig != null ? youtubeConfig.getClientOptions() : null;
+
+        if (clientOptions == null || !clientOptions.containsKey(clientName)) {
+            return ClientOptions.DEFAULT;
+        }
+
+        return clientOptions.get(clientName);
     }
 
     private IpBlock getIpBlock(String cidr) {
@@ -149,7 +157,7 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
                 clients = youtubeConfig.getClients();
             }
 
-            source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, clientProvider.getClients(clients));
+            source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, clientProvider.getClients(clients, this::getOptionsForClient));
         }
 
         log.info("YouTube source initialised with clients: {} ", Arrays.stream(source.getClients()).map(Client::getIdentifier).collect(Collectors.joining(", ")));

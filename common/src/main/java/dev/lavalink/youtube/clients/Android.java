@@ -17,6 +17,16 @@ public class Android extends StreamingNonMusicClient {
         .withClientField("androidSdkVersion", ANDROID_VERSION.getSdkVersion())
         .withUserField("lockedSafetyMode", false);
 
+    protected ClientOptions options;
+
+    public Android() {
+        this(ClientOptions.DEFAULT);
+    }
+
+    public Android(@NotNull ClientOptions options) {
+        this.options = options;
+    }
+
     @Override
     @NotNull
     protected ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
@@ -27,6 +37,12 @@ public class Android extends StreamingNonMusicClient {
     @NotNull
     public String getPlayerParams() {
         return MOBILE_PLAYER_PARAMS;
+    }
+
+    @Override
+    @NotNull
+    public ClientOptions getOptions() {
+        return this.options;
     }
 
     @Override

@@ -34,6 +34,16 @@ public class Web extends StreamingNonMusicClient {
 
     protected volatile long lastConfigUpdate = -1;
 
+    protected ClientOptions options; // todo: use
+
+    public Web() {
+        this(ClientOptions.DEFAULT);
+    }
+
+    public Web(@NotNull ClientOptions options) {
+        this.options = options;
+    }
+
     protected void fetchClientConfig(@NotNull HttpInterface httpInterface) {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com"))) {
             HttpClientTools.assertSuccessWithContent(response, "client config fetch");
@@ -184,6 +194,12 @@ public class Web extends StreamingNonMusicClient {
     @NotNull
     public String getPlayerParams() {
         return WEB_PLAYER_PARAMS;
+    }
+
+    @Override
+    @NotNull
+    public ClientOptions getOptions() {
+        return this.options;
     }
 
     @Override

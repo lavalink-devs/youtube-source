@@ -3,12 +3,10 @@ package dev.lavalink.youtube.plugin;
 import dev.lavalink.youtube.clients.*;
 import dev.lavalink.youtube.clients.skeleton.Client;
 
-import java.util.function.Supplier;
-
 public class ClientProviderV3 implements ClientProvider {
     @Override
-    public Client[] getClients(String[] clients) {
-        return getClients(ClientMapping.values(), clients);
+    public Client[] getClients(String[] clients, OptionsProvider optionsProvider) {
+        return getClients(ClientMapping.values(), clients, optionsProvider);
     }
 
     private enum ClientMapping implements ClientReference {
@@ -21,9 +19,9 @@ public class ClientProviderV3 implements ClientProvider {
         WEB(Web::new),
         MEDIA_CONNECT(MediaConnect::new);
 
-        private final Supplier<Client> clientFactory;
+        private final ClientWithOptions<Client> clientFactory;
 
-        ClientMapping(Supplier<Client> clientFactory) {
+        ClientMapping(ClientWithOptions<Client> clientFactory) {
             this.clientFactory = clientFactory;
         }
 
@@ -33,8 +31,8 @@ public class ClientProviderV3 implements ClientProvider {
         }
 
         @Override
-        public Client getClient() {
-            return clientFactory.get();
+        public Client getClient(ClientOptions options) {
+            return clientFactory.create(options);
         }
     }
 }
