@@ -186,3 +186,7 @@ This client is intended to be a drop-in replacement, however there are a couple 
   `TVHTML5EMBEDDED` client instead being the preferred workaround. There were a large number of
   reasons for this change, but not least the fact that logging in was slowly becoming problematic and deprecated
   on the YouTube backend. The amount of code to support this feature meant that it has been axed.
+
+## Additional Support
+If you need additional help with using this source, that's not covered here or in any of the issues, 
+[join our Discord server](https://discord.gg/ZW4s47Ppw4).
