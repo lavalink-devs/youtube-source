@@ -95,6 +95,7 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
 
             formats.add(new StreamFormat(
                 ContentType.parse(formatJson.get("mimeType").text()),
+                (int) formatJson.get("itag").asLong(-1L),
                 formatJson.get("bitrate").asLong(Units.BITRATE_UNKNOWN),
                 contentLength,
                 formatJson.get("audioChannels").asLong(2),

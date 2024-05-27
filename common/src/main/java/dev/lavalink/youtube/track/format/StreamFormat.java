@@ -13,6 +13,7 @@ import java.net.URISyntaxException;
 public class StreamFormat {
   private final FormatInfo info;
   private final ContentType type;
+  private final int itag;
   private final long bitrate;
   private final long contentLength;
   private final long audioChannels;
@@ -37,6 +38,7 @@ public class StreamFormat {
    */
   public StreamFormat(
       ContentType type,
+      int itag,
       long bitrate,
       long contentLength,
       long audioChannels,
@@ -49,6 +51,7 @@ public class StreamFormat {
   ) {
     this.info = FormatInfo.get(type);
     this.type = type;
+    this.itag = itag;
     this.bitrate = bitrate;
     this.contentLength = contentLength;
     this.audioChannels = audioChannels;
@@ -74,6 +77,10 @@ public class StreamFormat {
   @NotNull
   public ContentType getType() {
     return type;
+  }
+
+  public int getItag() {
+    return itag;
   }
 
   /**
@@ -150,7 +157,8 @@ public class StreamFormat {
   @Override
   public String toString() {
     return "YoutubeStreamFormat{" +
-        "type=" + type +
+        "itag=" + itag +
+        ", type=" + type +
         ", bitrate=" + bitrate +
         ", audioChannels=" + audioChannels +
         ", isDrc=" + isDrc +
