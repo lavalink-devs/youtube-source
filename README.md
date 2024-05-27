@@ -161,14 +161,15 @@ Currently, the following clients are available for use:
     and it is unable to yield any supported formats when playing livestreams.
     It is advised not to use this client on its own for that reason, if those features are required.
 - `ANDROID_LITE`
-  - Appears to have restrictions similar to that of `ANDROID_TESTSUITE` except livestreams which appear
-    to be playable with this client.
+  - This client **does not receive Opus formats** so transcoding is required.
+  - Similar restrictions to that of `ANDROID_TESTSUITE` except livestreams are playable.
 - `MEDIA_CONNECT`
+  - This client **does not receive Opus formats** so transcoding is required.
   - This client has restrictions imposed, including but possibly not limited to:
     - Unable to load playlists.
     - Unable to use search.
 - `IOS`
-  - This client does not receive Opus formats, so transcoding is required. This can
+  - This client **does not receive Opus formats**, so transcoding is required. This can
     increase resource consumption. It is recommended not to use this client unless it has
     the least priority (specified last), or where hardware usage is not a concern.
 - `TVHTML5EMBEDDED`
