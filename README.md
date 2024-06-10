@@ -183,8 +183,9 @@ however, it will continue to instantiate and register an instance unless otherwi
 Therefore, you may leverage the `excludeSources` parameter to prevent instantiation of the deprecated `YoutubeAudioSourceManager` class.
 ```java
 AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
-AudioSourceManagers.registerRemoteSources(playerManager,
-                                          com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager.class);
+AudioSourceManagers.registerRemoteSources(
+        playerManager, com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager.class
+);
 ```
 
 Then, create and register an instance of the supported `YoutubeAudioSourceManager` from the `youtube-source` package.
