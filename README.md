@@ -180,7 +180,8 @@ Currently, the following clients are available for use:
 
 This client is intended as a direct replacement for Lavaplayer's `YoutubeAudioSourceManager`, which the maintainers
 deprecated in release [2.1.2](https://github.com/lavalink-devs/lavaplayer/releases/tag/2.1.2).
-By default, Lavaplayer instantiates and registers a deprecated `YoutubeAudioSourceManager` unless explicitly excluded.
+By default, Lavaplayer instantiates and registers an instance of this deprecated `YoutubeAudioSourceManager` unless 
+explicitly excluded.
 
 Firstly, leverage the `excludeSources` parameter to prevent its instantiation during remote source registration.
 ```java
