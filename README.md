@@ -184,7 +184,8 @@ Therefore, you may leverage the `excludeSources` parameter to prevent instantiat
 ```java
 AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
 AudioSourceManagers.registerRemoteSources(
-        playerManager, com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager.class
+        playerManager, 
+        com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager.class
 );
 ```
 
