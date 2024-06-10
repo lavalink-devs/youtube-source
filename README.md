@@ -39,7 +39,7 @@ innertube clients) and `StreamingNonMusicClient` (for clients that can be used t
 
 Support for IP rotation has been included, and can be achieved using the following:
 ```java
-AbstractRouterPlanner routePlanner = new ...
+AbstractRoutePlanner routePlanner = new ...
 YoutubeIpRotatorSetup rotator = new YoutubeIpRotatorSetup(routePlanner);
 
 rotator.forConfiguration(youtube.getHttpInterfaceManager(), false)
