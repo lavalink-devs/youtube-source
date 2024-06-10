@@ -177,10 +177,10 @@ Currently, the following clients are available for use:
     client enabled, age-restricted tracks are **not** guaranteed to play.
 
 ## Migration from Lavaplayer's built-in YouTube source
-This client is intended as a direct replacement for Lavaplayer's `YoutubeAudioSourceManager`. Lavaplayer deprecated this class in release [2.1.2](https://github.com/lavalink-devs/lavaplayer/releases/tag/2.1.2); 
-however, it will continue to instantiate and register an instance unless explicitly excluded.
+This client is intended as a direct replacement for Lavaplayer's `YoutubeAudioSourceManager`, which the maintainers deprecated in release [2.1.2](https://github.com/lavalink-devs/lavaplayer/releases/tag/2.1.2).
+However, Lavaplayer will continue to instantiate and register an instance of this class unless explicitly excluded.
 
-Therefore, you may leverage the `excludeSources` parameter to prevent instantiation of the deprecated `YoutubeAudioSourceManager` class.
+Therefore, you may leverage the `excludeSources` parameter to prevent instantiation of this deprecated `YoutubeAudioSourceManager` class.
 ```java
 AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
 AudioSourceManagers.registerRemoteSources(playerManager,
