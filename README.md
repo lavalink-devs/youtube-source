@@ -183,7 +183,7 @@ deprecated in release [2.1.2](https://github.com/lavalink-devs/lavaplayer/releas
 By default, Lavaplayer instantiates and registers an instance of this deprecated `YoutubeAudioSourceManager` unless 
 explicitly excluded.
 
-Firstly, leverage the `excludeSources` parameter to prevent its instantiation during remote source registration.
+To avoid this unwanted instantiation, leverage the `excludeSources` parameter during remote source registration.
 ```java
 AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
 AudioSourceManagers.registerRemoteSources(playerManager,
