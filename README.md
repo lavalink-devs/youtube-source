@@ -179,7 +179,7 @@ Currently, the following clients are available for use:
 ## Migration from Lavaplayer's built-in YouTube source
 
 This client is intended as a direct replacement for Lavaplayer's `YoutubeAudioSourceManager`,
-which may be deprecated in more recent releases of Lavaplayer.
+which has been deprecated in a recent release of Lavaplayer.
 By default, Lavaplayer instantiates and registers an instance of its `YoutubeAudioSourceManager` unless
 explicitly excluded.
 
