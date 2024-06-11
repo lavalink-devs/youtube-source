@@ -200,12 +200,7 @@ AudioSourceManagers.registerRemoteSources(playerManager,
                                           com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager.class);
 ```
 
-Otherwise, you will need to register each source manager individually:
-```java
-playerManager.registerSourceManager(new dev.lavalink.youtube.YoutubeAudioSourceManager());
-// add your desired source managers after the Youtube source.
-// Be sure to register the HTTP source manager **LAST** if you want to support generic HTTP URLs.
-```
+Otherwise, you will need to register each source manager individually.
 
 In addition, there are a few significant changes to note:
 
