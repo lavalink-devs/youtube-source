@@ -177,7 +177,26 @@ Currently, the following clients are available for use:
     client enabled, age-restricted tracks are **not** guaranteed to play.
 
 ## Migration from Lavaplayer's built-in YouTube source
-This client is intended to be a drop-in replacement, however there are a couple of things to note:
+
+This client is intended as a direct replacement for Lavaplayer's `YoutubeAudioSourceManager`,
+which has been deprecated in a recent release of Lavaplayer.
+By default, Lavaplayer instantiates and registers an instance of its `YoutubeAudioSourceManager` unless
+explicitly excluded.
+
+First, create and register an instance of the supported `YoutubeAudioSourceManager` from the `youtube-source` package.
+```java
+AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+YoutubeAudioSourceManager ytSourceManager = new dev.lavalink.youtube.YoutubeAudioSourceManager();
+playerManager.registerSourceManager(ytSourceManager);
+```
+
+Next, leverage the `excludeSources` parameter to avoid unwanted instantiations during remote source registration.
+```java
+AudioSourceManagers.registerRemoteSources(playerManager,
+                                          com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager.class);
+```
+
+In addition, there are a few significant changes to note:
 
 - This source's class structure differs so if you had custom classes that you were initialising
   the source manager with (e.g. an overridden `YoutubeTrackDetailsLoader`), this **is not** compatible
