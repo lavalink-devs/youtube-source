@@ -186,7 +186,7 @@ explicitly excluded.
 First, create and register an instance of the supported `YoutubeAudioSourceManager` from the `youtube-source` package.
 ```java
 AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
-AudioSourceManager ytSourceManager = new dev.lavalink.youtube.YoutubeAudioSourceManager();
+YoutubeAudioSourceManager ytSourceManager = new dev.lavalink.youtube.YoutubeAudioSourceManager();
 playerManager.registerSourceManager(ytSourceManager);
 ```
 
