@@ -178,10 +178,13 @@ Currently, the following clients are available for use:
 
 ## Migration from Lavaplayer's built-in YouTube source
 
-This client is intended as a direct replacement for Lavaplayer's `YoutubeAudioSourceManager`,
-which has been deprecated in a recent release of Lavaplayer.
-By default, Lavaplayer instantiates and registers an instance of its `YoutubeAudioSourceManager` unless
-explicitly excluded.
+This client is intended as a direct replacement for Lavaplayer's built-in `YoutubeAudioSourceManager`,
+which has been deprecated in a recent release of [Lavalink-Devs/Lavaplayer](https://github.com/lavalink-devs/lavaplayer).
+
+When using `AudioSourceManagers.registerRemoteSources(AudioPlayerManager)`, Lavaplayer will register its own
+deprecated `YoutubeAudioSourceManager`, which must be disabled.
+Some versions of Lavaplayer may include an optional `excludeSources` parameter, allowing you to toggle the adding of the source.
+If the version you are using does not support this, you will need to manually register each `AudioSourceManager` yourself.
 
 First, create and register an instance of the supported `YoutubeAudioSourceManager` from the `youtube-source` package.
 ```java
@@ -190,10 +193,18 @@ YoutubeAudioSourceManager ytSourceManager = new dev.lavalink.youtube.YoutubeAudi
 playerManager.registerSourceManager(ytSourceManager);
 ```
 
-Next, leverage the `excludeSources` parameter to avoid unwanted instantiations during remote source registration.
+If your version of Lavaplayer supports an `excludeSources` parameter or equivalent, you may exclude the built-in
+`YoutubeAudioSourceManager` using the following:
 ```java
 AudioSourceManagers.registerRemoteSources(playerManager,
                                           com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager.class);
+```
+
+Otherwise, you will need to register each source manager individually:
+```java
+playerManager.registerSourceManager(new dev.lavalink.youtube.YoutubeAudioSourceManager());
+// add your desired source managers after the Youtube source.
+// Be sure to register the HTTP source manager **LAST** if you want to support generic HTTP URLs.
 ```
 
 In addition, there are a few significant changes to note:
