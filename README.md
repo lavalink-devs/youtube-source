@@ -124,8 +124,8 @@ plugins:
       - WEB
 
     # You can configure individual clients with the following.
-    # Any options or clients left unspecified will use their default values,
-    # which enables everything for all clients.
+    # Any options or clients left unspecified will use their default values
+    # for those individual clients.
     # Client configurations will ONLY take effect if the client is registered above,
     # otherwise they are ignored.
     # ---------------- WARNING ----------------
