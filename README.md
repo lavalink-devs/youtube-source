@@ -122,9 +122,17 @@ plugins:
       - MUSIC
       - ANDROID
       - WEB
+
     # You can configure individual clients with the following.
     # Any options or clients left unspecified will use their default values,
     # which enables everything for all clients.
+    # Client configurations will ONLY take effect if the client is registered above,
+    # otherwise they are ignored.
+    # ---------------- WARNING ----------------
+    # This part of the config is for DEMONSTRATION PURPOSES ONLY!
+    # Do NOT use this config before understanding what the options do.
+    # You do NOT need to copy this config just because it is published here.
+    # ---------------- WARNING ----------------
     WEB: # names are specified as they are written below under "Available Clients".
       # This will disable using the WEB client for video playback.
       playback: false
