@@ -31,6 +31,17 @@ body:
       placeholder: "Example: 1.3.0"
     validations:
       required: true
+  - type: input
+    attributes:
+      label: "The search query, URL, playlist or video ID that triggered the issue"
+      description: |-
+        If a search query failed to load and threw an error, provide the entire query, including
+        the search prefix if applicable (i.e. "ytsearch:"/"ytmsearch:").
+        For other identifiers, include the complete, unaltered input.
+        If the error occurred when trying to PLAY a track (separate to LOADING), include the
+        video ID or complete URL.
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: "Code Example"
