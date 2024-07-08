@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -57,19 +58,19 @@ public class SignatureCipherManager {
 
   private static final Pattern functionPattern = Pattern.compile(
       "function(?: " + VARIABLE_PART + ")?\\(a\\)\\{" +
-      "a=a\\.split\\(\"\"\\);\\s*" +
-      "((?:(?:a=)?" + VARIABLE_PART + VARIABLE_PART_ACCESS + "\\(a,\\d+\\);)+)" +
-      "return a\\.join\\(\"\"\\)" +
-      "\\}"
+          "a=a\\.split\\(\"\"\\);\\s*" +
+          "((?:(?:a=)?" + VARIABLE_PART + VARIABLE_PART_ACCESS + "\\(a,\\d+\\);)+)" +
+          "return a\\.join\\(\"\"\\)" +
+          "\\}"
   );
 
   private static final Pattern actionsPattern = Pattern.compile(
       "var (" + VARIABLE_PART + ")=\\{((?:(?:" +
-      VARIABLE_PART_DEFINE + REVERSE_PART + "|" +
-      VARIABLE_PART_DEFINE + SLICE_PART + "|" +
-      VARIABLE_PART_DEFINE + SPLICE_PART + "|" +
-      VARIABLE_PART_DEFINE + SWAP_PART +
-      "),?\\n?)+)\\};"
+          VARIABLE_PART_DEFINE + REVERSE_PART + "|" +
+          VARIABLE_PART_DEFINE + SLICE_PART + "|" +
+          VARIABLE_PART_DEFINE + SPLICE_PART + "|" +
+          VARIABLE_PART_DEFINE + SWAP_PART +
+          "),?\\n?)+)\\};"
   );
 
   private static final String PATTERN_PREFIX = "(?:^|,)\\\"?(" + VARIABLE_PART + ")\\\"?";
@@ -80,10 +81,12 @@ public class SignatureCipherManager {
   private static final Pattern swapPattern = Pattern.compile(PATTERN_PREFIX + SWAP_PART, Pattern.MULTILINE);
   private static final Pattern timestampPattern = Pattern.compile("(signatureTimestamp|sts):(\\d+)");
   private static final Pattern nFunctionPattern = Pattern.compile(
-      "function\\(\\s*(\\w+)\\s*\\)\\s*\\{var" +
-          "\\s*(\\w+)=\\1\\.split\\(\"\"\\),\\s*(\\w+)=(\\[.*?\\]);\\s*\\3\\[\\d+\\]" +
-          "(.*?try)(\\{.*?\\})catch\\(\\s*(\\w+)\\s*\\)\\s*\\" +
-          "{\\s*return\"enhanced_except_([A-z0-9-]+)\"\\s*\\+\\s*\\1\\s*}\\s*return\\s*\\2\\.join\\(\"\"\\)\\};", Pattern.DOTALL
+      "function\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
+          "var\\s*(\\w+)=(?:\\1\\.split\\(\"\"\\)|String\\.prototype\\.split\\.call\\(\\1,\"\"\\))," +
+          "\\s*(\\w+)=(\\[.*?]);\\s*\\3\\[\\d+]" +
+          "(.*?try)(\\{.*?})catch\\(\\s*(\\w+)\\s*\\)\\s*\\" +
+          "{\\s*return\"enhanced_except_([A-z0-9-]+)\"\\s*\\+\\s*\\1\\s*}" +
+          "\\s*return\\s*(\\2\\.join\\(\"\"\\)|Array\\.prototype\\.join\\.call\\(\\2,\"\"\\))};", Pattern.DOTALL
   );
 
   private final ConcurrentMap<String, SignatureCipher> cipherCache;
@@ -105,9 +108,10 @@ public class SignatureCipherManager {
 
   /**
    * Produces a valid playback URL for the specified track
+   *
    * @param httpInterface HTTP interface to use
-   * @param playerScript Address of the script which is used to decipher signatures
-   * @param format The track for which to get the URL
+   * @param playerScript  Address of the script which is used to decipher signatures
+   * @param format        The track for which to get the URL
    * @return Valid playback URL
    * @throws IOException On network IO error
    */
