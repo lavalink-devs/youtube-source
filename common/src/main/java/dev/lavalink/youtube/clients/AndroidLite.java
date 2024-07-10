@@ -15,26 +15,18 @@ public class AndroidLite extends Android {
         .withClientField("clientVersion", "3.26.1")
         .withClientField("androidSdkVersion", ANDROID_VERSION.getSdkVersion());
 
-    protected ClientOptions options;
-
     public AndroidLite() {
         this(ClientOptions.DEFAULT);
     }
 
     public AndroidLite(@NotNull ClientOptions options) {
-        this.options = options;
+        super(options, false);
     }
 
     @Override
     @NotNull
     protected ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
         return BASE_CONFIG.copy();
-    }
-
-    @Override
-    @NotNull
-    public ClientOptions getOptions() {
-        return this.options;
     }
 
     @Override

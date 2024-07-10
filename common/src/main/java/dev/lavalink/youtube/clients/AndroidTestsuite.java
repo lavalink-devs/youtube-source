@@ -18,26 +18,18 @@ public class AndroidTestsuite extends Android {
         .withClientField("clientVersion", CLIENT_VERSION)
         .withClientField("androidSdkVersion", ANDROID_VERSION.getSdkVersion());
 
-    protected ClientOptions options;
-
     public AndroidTestsuite() {
         this(ClientOptions.DEFAULT);
     }
 
     public AndroidTestsuite(@NotNull ClientOptions options) {
-        this.options = options;
+        super(options, false);
     }
 
     @Override
     @NotNull
     protected ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
         return BASE_CONFIG.copy();
-    }
-
-    @Override
-    @NotNull
-    public ClientOptions getOptions() {
-        return this.options;
     }
 
     @Override

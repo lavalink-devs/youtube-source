@@ -28,8 +28,15 @@ public class Android extends StreamingNonMusicClient {
     }
 
     public Android(@NotNull ClientOptions options) {
+        this(options, true);
+    }
+
+    protected Android(@NotNull ClientOptions options, boolean logWarning) {
         this.options = options;
-        log.warn("ANDROID is broken with no known fix. It is no longer advised to use this client.");
+
+        if (logWarning) {
+            log.warn("ANDROID is broken with no known fix. It is no longer advised to use this client.");
+        }
     }
 
     @Override
