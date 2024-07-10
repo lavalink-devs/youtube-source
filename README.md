@@ -164,6 +164,8 @@ Currently, the following clients are available for use:
     below clients for track playback.
 - `WEB`
 - `ANDROID`
+  - Usage of this client is no longer advised due to the frequency at which it breaks.
+    As of the time of writing, this client has been broken by YouTube with no known fix.
 - `ANDROID_TESTSUITE`
   - This client has restrictions imposed, notably: it does NOT support loading of mixes or playlists,
     and it is unable to yield any supported formats when playing livestreams.
