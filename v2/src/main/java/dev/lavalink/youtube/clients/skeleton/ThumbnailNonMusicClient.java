@@ -44,8 +44,8 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
             if (!item.get("isPlayable").isNull() && !authorJson.isNull()) {
                 String videoId = item.get("videoId").text();
                 JsonBrowser titleField = item.get("title");
-                String title = titleField.get("simpleText").textOrDefault(titleField.get("runs").index(0).get("text").text());
-                String author = authorJson.get("runs").index(0).get("text").textOrDefault("Unknown artist");
+                String title = DataFormatTools.defaultOnNull(titleField.get("simpleText").text(), titleField.get("runs").index(0).get("text").text());
+                String author = DataFormatTools.defaultOnNull(authorJson.get("runs").index(0).get("text").text(), "Unknown artist");
                 long duration = Units.secondsToMillis(item.get("lengthSeconds").asLong(Units.DURATION_SEC_UNKNOWN));
                 String thumbnailUrl = ThumbnailTools.getYouTubeThumbnail(item, videoId);
 
@@ -63,11 +63,11 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
 
         String videoId = json.get("videoId").text();
         JsonBrowser titleJson = json.get("title");
-        String title = titleJson.get("runs").index(0).get("text").textOrDefault(titleJson.get("simpleText").text());
+        String title = DataFormatTools.defaultOnNull(titleJson.get("runs").index(0).get("text").text(), titleJson.get("simpleText").text());
         String author = json.get("longBylineText").get("runs").index(0).get("text").text();
 
         JsonBrowser durationJson = json.get("lengthText");
-        String durationText = durationJson.get("runs").index(0).get("text").textOrDefault(durationJson.get("simpleText").text());
+        String durationText = DataFormatTools.defaultOnNull(durationJson.get("runs").index(0).get("text").text(), durationJson.get("simpleText").text());
 
         long duration = DataFormatTools.durationTextToMillis(durationText);
         String thumbnailUrl = ThumbnailTools.getYouTubeThumbnail(json, videoId);

@@ -208,12 +208,11 @@ public abstract class NonMusicClient implements Client {
 
                 if ("ERROR".equals(type)) {
                     JsonBrowser textObject = alertInner.get("text");
+                    String runs = textObject.get("runs").values().stream()
+                        .map(run -> run.get("text").text())
+                        .collect(Collectors.joining());
 
-                    return textObject.get("simpleText")
-                        .textOrDefault(textObject.get("runs").values().stream()
-                            .map(run -> run.get("text").text())
-                            .collect(Collectors.joining())
-                        );
+                    return DataFormatTools.defaultOnNull(textObject.get("simpleText").text(), runs);
                 }
             }
         }
@@ -270,8 +269,8 @@ public abstract class NonMusicClient implements Client {
             if (!item.get("isPlayable").isNull() && !authorJson.isNull()) {
                 String videoId = item.get("videoId").text();
                 JsonBrowser titleField = item.get("title");
-                String title = titleField.get("simpleText").textOrDefault(titleField.get("runs").index(0).get("text").text());
-                String author = authorJson.get("runs").index(0).get("text").textOrDefault("Unknown artist");
+                String title = DataFormatTools.defaultOnNull(titleField.get("simpleText").text(), titleField.get("runs").index(0).get("text").text());
+                String author = DataFormatTools.defaultOnNull(authorJson.get("runs").index(0).get("text").text(), "Unknown artist");
                 long duration = Units.secondsToMillis(item.get("lengthSeconds").asLong(Units.DURATION_SEC_UNKNOWN));
 
                 tracks.add(buildAudioTrack(source, item, title, author, duration, videoId, false));
@@ -287,11 +286,11 @@ public abstract class NonMusicClient implements Client {
 
         String videoId = json.get("videoId").text();
         JsonBrowser titleJson = json.get("title");
-        String title = titleJson.get("runs").index(0).get("text").textOrDefault(titleJson.get("simpleText").text());
+        String title = DataFormatTools.defaultOnNull(titleJson.get("runs").index(0).get("text").text(), titleJson.get("simpleText").text());
         String author = json.get("longBylineText").get("runs").index(0).get("text").text();
 
         JsonBrowser durationJson = json.get("lengthText");
-        String durationText = durationJson.get("runs").index(0).get("text").textOrDefault(durationJson.get("simpleText").text());
+        String durationText = DataFormatTools.defaultOnNull(durationJson.get("runs").index(0).get("text").text(), durationJson.get("simpleText").text());
 
         long duration = DataFormatTools.durationTextToMillis(durationText);
         return buildAudioTrack(source, json, title, author, duration, videoId, false);
