@@ -4,8 +4,12 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.clients.ClientConfig.AndroidVersion;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Android extends StreamingNonMusicClient {
+    private static final Logger log = LoggerFactory.getLogger(Android.class);
+
     public static String CLIENT_VERSION = "19.07.39";
     public static AndroidVersion ANDROID_VERSION = AndroidVersion.ANDROID_11;
 
@@ -25,6 +29,7 @@ public class Android extends StreamingNonMusicClient {
 
     public Android(@NotNull ClientOptions options) {
         this.options = options;
+        log.warn("ANDROID is broken with no known fix. It is no longer advised to use this client.");
     }
 
     @Override
