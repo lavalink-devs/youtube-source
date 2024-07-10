@@ -30,7 +30,7 @@ Example usage:
 ```java
 YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager();
 // Optionally, you may instantiate the source with a custom options, such as toggling use of searching, and clients.
-YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager(/*allowSearch:*/ true, new Client[] { new Music(), new Web(), new Android() });
+YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager(/*allowSearch:*/ true, new Client[] { new Music(), new Web(), new AndroidTestsuite() });
 ```
 
 You may also extend the `Client` interface to support additional InnerTube clients. There are a few abstract classes to
@@ -74,7 +74,7 @@ dependencies {
 Example usage:
 ```java
 // same as the 'common' module but there are additional clients that provide video thumbnails in the returned metadata.
-YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager(/*allowSearch:*/ true, new Client[] { new MusicWithThumbnail(), new WebWithThumbnail(), new AndroidWithThumbnail() });
+YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager(/*allowSearch:*/ true, new Client[] { new MusicWithThumbnail(), new WebWithThumbnail(), new AndroidTestsuiteWithThumbnail() });
 ```
 
 ## plugin
@@ -120,7 +120,7 @@ plugins:
     # Clients are queried in the order they are given (so the first client is queried first and so on...)
     clients:
       - MUSIC
-      - ANDROID
+      - ANDROID_TESTSUITE
       - WEB
 
     # You can configure individual clients with the following.

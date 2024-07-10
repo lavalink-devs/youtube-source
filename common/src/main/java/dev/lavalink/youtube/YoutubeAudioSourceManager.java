@@ -14,10 +14,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import dev.lavalink.youtube.UrlTools.UrlInfo;
 import dev.lavalink.youtube.cipher.SignatureCipherManager;
-import dev.lavalink.youtube.clients.Android;
-import dev.lavalink.youtube.clients.Music;
-import dev.lavalink.youtube.clients.TvHtml5Embedded;
-import dev.lavalink.youtube.clients.Web;
+import dev.lavalink.youtube.clients.*;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.http.YoutubeAccessTokenTracker;
 import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
@@ -78,8 +75,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     }
 
     public YoutubeAudioSourceManager(boolean allowSearch, boolean allowDirectVideoIds, boolean allowDirectPlaylistIds) {
-        // query order: music -> web -> android -> tvhtml5embedded
-        this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, new Music(), new Web(), new Android(), new TvHtml5Embedded());
+        // query order: music -> web -> androidtestsuite -> tvhtml5embedded
+        this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, new Music(), new Web(), new AndroidTestsuite(), new TvHtml5Embedded());
     }
 
     /**
