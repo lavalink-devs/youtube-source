@@ -18,6 +18,7 @@ import dev.lavalink.youtube.clients.*;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.http.YoutubeAccessTokenTracker;
 import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
+import dev.lavalink.youtube.http.YoutubeOauth2Handler;
 import dev.lavalink.youtube.track.YoutubeAudioTrack;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -58,12 +59,14 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     private static final Pattern shortHandPattern = Pattern.compile("^" + PROTOCOL_REGEX + "(?:" + DOMAIN_REGEX + "/(?:live|embed|shorts)|" + SHORT_DOMAIN_REGEX + ")/(?<videoId>.*)");
 
     protected final HttpInterfaceManager httpInterfaceManager;
+
     protected final boolean allowSearch;
     protected final boolean allowDirectVideoIds;
     protected final boolean allowDirectPlaylistIds;
     protected final Client[] clients;
 
-    protected final SignatureCipherManager cipherManager;
+    protected YoutubeOauth2Handler oauth2Handler;
+    protected SignatureCipherManager cipherManager;
 
     public YoutubeAudioSourceManager() {
         this(true);
@@ -123,10 +126,13 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         this.clients = clients;
         this.cipherManager = new SignatureCipherManager();
 
-        YoutubeAccessTokenTracker tokenTracker = new YoutubeAccessTokenTracker(httpInterfaceManager);
-        YoutubeHttpContextFilter youtubeHttpContextFilter = new YoutubeHttpContextFilter();
-        youtubeHttpContextFilter.setTokenTracker(tokenTracker);
-        httpInterfaceManager.setHttpContextFilter(youtubeHttpContextFilter);
+        this.oauth2Handler = new YoutubeOauth2Handler(httpInterfaceManager);
+
+        YoutubeHttpContextFilter contextFilter = new YoutubeHttpContextFilter();
+        contextFilter.setTokenTracker(new YoutubeAccessTokenTracker(httpInterfaceManager));
+        contextFilter.setOauth2Handler(oauth2Handler);
+
+        httpInterfaceManager.setHttpContextFilter(contextFilter);
     }
 
     @Override
@@ -138,6 +144,22 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         for (Client client : clients) {
             client.setPlaylistPageCount(count);
         }
+    }
+
+    /**
+     * Instructs this source to use Oauth2 integration.
+     * {@code null} is valid and will kickstart the oauth process.
+     * Providing a refresh token will likely skip having to authenticate your account prior to making requests,
+     * as long as the provided token is still valid.
+     * @param refreshToken The token to use for generating access tokens. Can be null.
+     */
+    public void useOauth2(@Nullable String refreshToken) {
+        oauth2Handler.setRefreshToken(refreshToken);
+    }
+
+    @Nullable
+    public String getOauth2RefreshToken() {
+        return oauth2Handler.getRefreshToken();
     }
 
     @Override
