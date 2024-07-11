@@ -18,6 +18,9 @@ public class YoutubeConfig {
     private String[] clients;
     private Map<String, ClientOptions> clientOptions = new HashMap<>();
 
+    private boolean useOauth2 = false;
+    private String oauth2RefreshToken = null;
+
     public boolean getEnabled() {
         return enabled;
     }
@@ -46,6 +49,14 @@ public class YoutubeConfig {
         return clientOptions;
     }
 
+    public boolean getUseOauth2() {
+        return this.useOauth2;
+    }
+
+    public String getOauth2RefreshToken() {
+        return this.oauth2RefreshToken;
+    }
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
@@ -72,5 +83,13 @@ public class YoutubeConfig {
 
     public void setClientOptions(Map<String, ClientOptions> clientOptions) {
         this.clientOptions = clientOptions;
+    }
+
+    public void setUseOauth2(boolean useOauth2) {
+        this.useOauth2 = useOauth2;
+    }
+
+    public void setOauth2RefreshToken(String oauth2RefreshToken) {
+        this.oauth2RefreshToken = oauth2RefreshToken;
     }
 }

@@ -4,6 +4,7 @@ import com.grack.nanojson.JsonObject;
 import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
 import com.grack.nanojson.JsonWriter;
+import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -14,7 +15,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,9 @@ public class YoutubeOauth2Handler {
         this.refreshToken = refreshToken;
         this.tokenExpires = System.currentTimeMillis(); // to trigger an access token refresh
 
-        if (refreshToken == null) {
+        // TODO: need to check what error is returned for invalid refresh tokens and fall back to
+        //       initialization if invalid.
+        if (DataFormatTools.isNullOrEmpty(refreshToken)) {
             initializeAccessToken();
         }
     }
@@ -173,8 +175,8 @@ public class YoutubeOauth2Handler {
     }
 
     private void refreshAccessToken() {
-        if (refreshToken == null) {
-            throw new IllegalStateException("Cannot refresh access token without a refresh token!");
+        if (DataFormatTools.isNullOrEmpty(refreshToken)) {
+            throw new IllegalStateException("Cannot fetch access token without a refresh token!");
         }
 
         // @formatter:off
@@ -214,7 +216,7 @@ public class YoutubeOauth2Handler {
     }
 
     public void applyToken(HttpUriRequest request) {
-        if (!enabled || refreshToken == null) {
+        if (!enabled || DataFormatTools.isNullOrEmpty(refreshToken)) {
             return;
         }
 
