@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class YoutubeOauth2Handler {
-    private static final Logger log = LoggerFactory.getLogger(YoutubeAccessTokenTracker.class);
+    private static final Logger log = LoggerFactory.getLogger(YoutubeOauth2Handler.class);
     private static int fetchErrorLogCount = 0;
 
     // no, i haven't leaked anything of mine
