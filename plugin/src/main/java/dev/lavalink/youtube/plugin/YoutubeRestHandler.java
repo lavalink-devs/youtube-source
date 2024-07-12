@@ -45,7 +45,7 @@ public class YoutubeRestHandler {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The YouTube source manager is not registered.");
         }
 
-        source.useOauth2(config.getRefreshToken());
+        source.useOauth2(config.getRefreshToken(), config.getSkipInitialization());
         log.debug("Updated YouTube OAuth2 refresh token to {}", config.getRefreshToken());
     }
 }
