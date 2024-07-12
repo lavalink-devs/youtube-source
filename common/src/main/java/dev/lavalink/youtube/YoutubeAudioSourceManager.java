@@ -65,6 +65,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     protected final boolean allowDirectPlaylistIds;
     protected final Client[] clients;
 
+    protected YoutubeHttpContextFilter contextFilter;
     protected YoutubeOauth2Handler oauth2Handler;
     protected SignatureCipherManager cipherManager;
 
@@ -139,7 +140,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
         this.oauth2Handler = new YoutubeOauth2Handler(httpInterfaceManager);
 
-        YoutubeHttpContextFilter contextFilter = new YoutubeHttpContextFilter();
+        contextFilter = new YoutubeHttpContextFilter();
         contextFilter.setTokenTracker(new YoutubeAccessTokenTracker(httpInterfaceManager));
         contextFilter.setOauth2Handler(oauth2Handler);
 
@@ -368,6 +369,11 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     @NotNull
     public Client[] getClients() {
         return clients;
+    }
+
+    @NotNull
+    public YoutubeHttpContextFilter getContextFilter() {
+        return contextFilter;
     }
 
     @NotNull

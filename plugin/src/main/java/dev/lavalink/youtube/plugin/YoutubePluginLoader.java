@@ -187,7 +187,7 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
             final int retryLimit = ratelimitConfig.getRetryLimit();
             final YoutubeIpRotatorSetup rotator = new YoutubeIpRotatorSetup(routePlanner)
                 .forConfiguration(source.getHttpInterfaceManager(), false)
-                .withMainDelegateFilter(null); // Necessary to avoid NPEs.
+                .withMainDelegateFilter(source.getContextFilter());
 
             if (retryLimit == 0) {
                 rotator.withRetryLimit(Integer.MAX_VALUE);
