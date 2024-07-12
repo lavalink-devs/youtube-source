@@ -48,13 +48,14 @@ public class YoutubeOauth2Handler {
         this.httpInterfaceManager = httpInterfaceManager;
     }
 
-    public void setRefreshToken(@Nullable String refreshToken) {
+    public void setRefreshToken(@Nullable String refreshToken, boolean skipInitialization) {
         this.refreshToken = refreshToken;
         this.tokenExpires = System.currentTimeMillis(); // to trigger an access token refresh
 
         // TODO: need to check what error is returned for invalid refresh tokens and fall back to
         //       initialization if invalid.
-        if (DataFormatTools.isNullOrEmpty(refreshToken)) {
+        // TODO: Check token validity?
+        if (DataFormatTools.isNullOrEmpty(refreshToken) && !skipInitialization) {
             initializeAccessToken();
         }
     }
