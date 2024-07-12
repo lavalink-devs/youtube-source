@@ -83,6 +83,7 @@ public class YoutubeOauth2Handler {
         String verificationUrl = response.getString("verification_url");
         String userCode = response.getString("user_code");
         String deviceCode = response.getString("device_code");
+        long interval = response.getLong("interval") * 1000;
 
         log.info("==================================================");
         log.info("!!! DO NOT AUTHORISE WITH YOUR MAIN ACCOUNT, USE A BURNER !!!");
@@ -91,7 +92,7 @@ public class YoutubeOauth2Handler {
         log.info("==================================================");
 
         // Should this be a daemon?
-        new Thread(() -> pollForToken(deviceCode), "youtube-source-token-poller").start();
+        new Thread(() -> pollForToken(deviceCode, interval == 0 ? 5000 : interval), "youtube-source-token-poller").start();
     }
 
     private JsonObject fetchDeviceCode() {
@@ -119,7 +120,7 @@ public class YoutubeOauth2Handler {
         }
     }
 
-    private void pollForToken(String deviceCode) {
+    private void pollForToken(String deviceCode, long interval) {
         // @formatter:off
         String requestJson = JsonWriter.string()
             .object()
@@ -146,14 +147,17 @@ public class YoutubeOauth2Handler {
                 if (parsed.has("error") && !parsed.isNull("error")) {
                     String error = parsed.getString("error");
 
-                    if (error.equals("authorization_pending")) {
-                        long interval = parsed.getLong("interval");
-                        Thread.sleep(Math.max(5000, interval * 1000));
-                        continue;
-                    } else if (error.equals("expired_token")) {
-                        log.error("OAUTH INTEGRATION: The device token has expired. OAuth integration has been canceled.");
-                    } else {
-                        log.error("Unhandled OAuth2 error: {}", error);
+                    switch (error) {
+                        case "authorization_pending":
+                        case "slow_down":
+                            Thread.sleep(interval);
+                            continue;
+                        case "expired_token":
+                            log.error("OAUTH INTEGRATION: The device token has expired. OAuth integration has been canceled.");
+                        case "access_denied":
+                            log.error("OAUTH INTEGRATION: Account linking was denied. OAuth integration has been canceled.");
+                        default:
+                            log.error("Unhandled OAuth2 error: {}", error);
                     }
 
                     return;
