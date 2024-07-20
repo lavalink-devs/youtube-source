@@ -128,8 +128,8 @@ plugins:
     # If an option, or client, is unspecified, then the default option value/client values will be used instead.
     # If a client is configured, but is not registered above, the options for that client will be ignored.
 
-    # WARNING!: THE BELOW CONFIG IS FOR ILLUSTRATION PURPOSES. DO NOT COPY OR USE THIS WITHOUT UNDERSTANDING WHAT IT DOES.
-    # WARNING!: MISCONFIGURATION WILL HINDER YOUTUBE-SOURCE'S ABILITY TO WORK PROPERLY.
+    # WARNING!: THE BELOW CONFIG IS FOR ILLUSTRATION PURPOSES. DO NOT COPY OR USE THIS WITHOUT
+    # WARNING!: UNDERSTANDING WHAT IT DOES. MISCONFIGURATION WILL HINDER YOUTUBE-SOURCE'S ABILITY TO WORK PROPERLY.
 
     # Write the names of clients as they are specified under the heading "Available Clients".
     WEB:
@@ -151,8 +151,9 @@ lavalink:
       youtube: false
 ```
 
-Existing options, such as `ratelimit` and `youtubePlaylistLoadLimit` will be picked up automatically by the plugin,
-so these don't need changing.
+> [!NOTE]
+> Existing options, such as `ratelimit` and `youtubePlaylistLoadLimit` will be picked up automatically by the plugin,
+> so these don't need changing.
 
 ## Available Clients
 Currently, the following clients are available for use:
