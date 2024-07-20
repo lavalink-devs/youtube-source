@@ -122,25 +122,24 @@ plugins:
       - MUSIC
       - ANDROID_TESTSUITE
       - WEB
+      - TVHTML5EMBEDDED
 
-    # You can configure individual clients with the following.
-    # Any options or clients left unspecified will use their default values
-    # for those individual clients.
-    # Client configurations will ONLY take effect if the client is registered above,
-    # otherwise they are ignored.
-    # ---------------- WARNING ----------------
-    # This part of the config is for DEMONSTRATION PURPOSES ONLY!
-    # Do NOT use this config before understanding what the options do.
-    # You do NOT need to copy this config just because it is published here.
-    # ---------------- WARNING ----------------
-    WEB: # names are specified as they are written below under "Available Clients".
-      # This will disable using the WEB client for video playback.
+    # The below section of the config allows setting specific options for each client, such as the requests they will handle.
+    # If an option, or client, is unspecified, then the default option value/client values will be used instead.
+    # If a client is configured, but is not registered above, the options for that client will be ignored.
+
+    # WARNING!: THE BELOW CONFIG IS FOR ILLUSTRATION PURPOSES. DO NOT COPY OR USE THIS WITHOUT UNDERSTANDING WHAT IT DOES.
+    # WARNING!: MISCONFIGURATION WILL HINDER YOUTUBE-SOURCE'S ABILITY TO WORK PROPERLY.
+
+    # Write the names of clients as they are specified under the heading "Available Clients".
+    WEB:
+      # Example: Disabling a client's playback capabilities.
       playback: false
     TVHTML5EMBEDDED:
-      # The below config disables everything except playback for this client.
-      playlistLoading: false # Disables loading of playlists and mixes for this client.
-      videoLoading: false # Disables loading of videos for this client (playback is still allowed).
-      searching: false # Disables the ability to search for videos for this client.
+      # Example: Configuring a client to exclusively be used for playback.
+      playlistLoading: false # Disables loading of playlists and mixes.
+      videoLoading: false # Disables loading of videos for this client (does not affect playback).
+      searching: false # Disables the ability to search for videos.
 ```
 
 > [!IMPORTANT]
@@ -159,32 +158,32 @@ so these don't need changing.
 Currently, the following clients are available for use:
 
 - `MUSIC`
-  - Provides support for searching YouTube music (`ytmsearch:`)
-  - **This client CANNOT be used to play tracks.** You must also register one of the
-    below clients for track playback.
+  - ✔ Provides support for searching YouTube music (`ytmsearch:`).
+  - ❌ Cannot be used for playback. 
 - `WEB`
+  - ✔ Opus formats.
 - `ANDROID`
-  - Usage of this client is no longer advised due to the frequency at which it breaks.
-    As of the time of writing, this client has been broken by YouTube with no known fix.
+  - ❌ Heavily restricted, frequently dysfunctional.
 - `ANDROID_TESTSUITE`
-  - This client has restrictions imposed, notably: it does NOT support loading of mixes or playlists,
-    and it is unable to yield any supported formats when playing livestreams.
-    It is advised not to use this client on its own for that reason, if those features are required.
+  - ✔ Opus formats.
+  - ❌ No mix/playlist/livestream support. Advised to use in conjunction with other clients.
 - `ANDROID_LITE`
-  - This client **does not receive Opus formats** so transcoding is required.
-  - Similar restrictions to that of `ANDROID_TESTSUITE` except livestreams are playable.
+  - ❌ No Opus formats (requires transcoding).
+  - ❌ Restricted similarly to `ANDROID_TESTSUITE` (except livestreams are playable).
+- `ANDROID_EMBEDDED`
+  - ✔ Opus formats.
+  - ❌ Restrictions currently unknown.
+- `ANDROID_MUSIC`
+  - ✔ Opus formats.
+  - ❌ Restrictions currently unknown.
 - `MEDIA_CONNECT`
-  - This client **does not receive Opus formats** so transcoding is required.
-  - This client has restrictions imposed, including but possibly not limited to:
-    - Unable to load playlists.
-    - Unable to use search.
+  - ❌ No Opus formats (requires transcoding).
+  - ❌ No playlist/search support.
 - `IOS`
-  - This client **does not receive Opus formats**, so transcoding is required. This can
-    increase resource consumption. It is recommended not to use this client unless it has
-    the least priority (specified last), or where hardware usage is not a concern.
+  - ❌ No Opus formats (requires transcoding).
 - `TVHTML5EMBEDDED`
-  - This client is useful for playing age-restricted tracks. Do keep in mind that, even with this
-    client enabled, age-restricted tracks are **not** guaranteed to play.
+  - ✔ Opus formats.
+  - ✔ Age-restricted video playback.
 
 ## Migration from Lavaplayer's built-in YouTube source
 

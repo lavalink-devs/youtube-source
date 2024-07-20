@@ -31,6 +31,8 @@ public class Music extends MusicClient {
     public String getPlayerParams() {
         // This client is not used for format loading so, we don't have
         // any player parameters attached to it.
+        // TODO?: This client *can* do playback, so maybe look into allowing
+        //        this client to be used in playback rotation.
         throw new UnsupportedOperationException();
     }
 
