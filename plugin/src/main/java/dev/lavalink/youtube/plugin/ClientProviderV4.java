@@ -15,6 +15,7 @@ public class ClientProviderV4 implements ClientProvider {
         ANDROID(AndroidWithThumbnail::new),
         ANDROID_TESTSUITE(AndroidTestsuiteWithThumbnail::new),
         ANDROID_LITE(AndroidLiteWithThumbnail::new),
+        ANDROID_MUSIC(AndroidMusicWithThumbnail::new),
         IOS(IosWithThumbnail::new),
         MUSIC(MusicWithThumbnail::new),
         TVHTML5EMBEDDED(TvHtml5EmbeddedWithThumbnail::new),

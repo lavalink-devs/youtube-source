@@ -1,6 +1,8 @@
 package dev.lavalink.youtube.clients;
 
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -110,6 +112,7 @@ public class TvHtml5Embedded extends StreamingNonMusicClient {
                                   @NotNull HttpInterface httpInterface,
                                   @NotNull String playlistId,
                                   @Nullable String selectedVideoId) {
-        throw new UnsupportedOperationException();
+        throw new FriendlyException("This client cannot load playlists", Severity.COMMON,
+            new RuntimeException("TVHTML5_EMBEDDED cannot be used to load playlists"));
     }
 }
