@@ -40,7 +40,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public class YoutubeAudioSourceManager implements AudioSourceManager {
     // TODO: connect timeout = 16000ms, read timeout = 8000ms (as observed from scraped youtube config)
     // TODO: look at possibly scraping jsUrl from WEB config to save a request
-    // TODO: search providers use cookieless httpinterfacemanagers. should this do the same?
     // TODO(music): scrape config? it's identical to WEB.
 
     private static final Logger log = LoggerFactory.getLogger(YoutubeAudioSourceManager.class);

@@ -171,12 +171,9 @@ Currently, the following clients are available for use:
 - `ANDROID_LITE`
   - ❌ No Opus formats (requires transcoding).
   - ❌ Restricted similarly to `ANDROID_TESTSUITE` (except livestreams are playable).
-- `ANDROID_EMBEDDED`
-  - ✔ Opus formats.
-  - ❌ Restrictions currently unknown.
 - `ANDROID_MUSIC`
   - ✔ Opus formats.
-  - ❌ Restrictions currently unknown.
+  - ❌ No playlist support.
 - `MEDIA_CONNECT`
   - ❌ No Opus formats (requires transcoding).
   - ❌ No playlist/search support.

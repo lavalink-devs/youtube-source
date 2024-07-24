@@ -1,9 +1,13 @@
 package dev.lavalink.youtube.clients;
 
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MediaConnect extends StreamingNonMusicClient {
     public static ClientConfig BASE_CONFIG = new ClientConfig()
@@ -49,5 +53,23 @@ public class MediaConnect extends StreamingNonMusicClient {
     @NotNull
     public String getIdentifier() {
         return BASE_CONFIG.getName();
+    }
+
+    @Override
+    public AudioItem loadSearch(@NotNull YoutubeAudioSourceManager source, @NotNull HttpInterface httpInterface, @NotNull String searchQuery) {
+        throw new FriendlyException("This client cannot load searches", Severity.COMMON,
+            new RuntimeException("MEDIA_CONNECT cannot be used to load searches"));
+    }
+
+    @Override
+    public AudioItem loadPlaylist(@NotNull YoutubeAudioSourceManager source, @NotNull HttpInterface httpInterface, @NotNull String playlistId, @Nullable String selectedVideoId) {
+        throw new FriendlyException("This client cannot load playlists", Severity.COMMON,
+            new RuntimeException("MEDIA_CONNECT cannot be used to load playlists"));
+    }
+
+    @Override
+    public AudioItem loadMix(@NotNull YoutubeAudioSourceManager source, @NotNull HttpInterface httpInterface, @NotNull String mixId, @Nullable String selectedVideoId) {
+        throw new FriendlyException("This client cannot load mixes", Severity.COMMON,
+            new RuntimeException("MEDIA_CONNECT cannot be used to load mixes"));
     }
 }
