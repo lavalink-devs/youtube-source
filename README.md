@@ -176,7 +176,7 @@ Currently, the following clients are available for use:
   - ❌ No playlist support.
 - `MEDIA_CONNECT`
   - ❌ No Opus formats (requires transcoding).
-  - ❌ No playlist/search support.
+  - ❌ No mix/playlist/search support.
 - `IOS`
   - ❌ No Opus formats (requires transcoding).
 - `TVHTML5EMBEDDED`

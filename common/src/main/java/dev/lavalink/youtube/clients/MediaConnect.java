@@ -45,7 +45,7 @@ public class MediaConnect extends StreamingNonMusicClient {
     @Override
     public boolean canHandleRequest(@NotNull String identifier) {
         // This client appears to be able to load livestreams and videos, but will
-        // receive 400 bad request when loading playlists.
+        // receive 400 bad request when loading playlists. mixes do return JSON, but does not contain mix videos.
         return !identifier.startsWith(YoutubeAudioSourceManager.SEARCH_PREFIX) && !identifier.contains("list=") && super.canHandleRequest(identifier);
     }
 
