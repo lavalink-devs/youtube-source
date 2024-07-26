@@ -123,11 +123,13 @@ plugins:
       - ANDROID_TESTSUITE
       - WEB
       - TVHTML5EMBEDDED
+```
 
+**Advanced Options**
+```yaml
     # The below section of the config allows setting specific options for each client, such as the requests they will handle.
     # If an option, or client, is unspecified, then the default option value/client values will be used instead.
     # If a client is configured, but is not registered above, the options for that client will be ignored.
-
     # WARNING!: THE BELOW CONFIG IS FOR ILLUSTRATION PURPOSES. DO NOT COPY OR USE THIS WITHOUT
     # WARNING!: UNDERSTANDING WHAT IT DOES. MISCONFIGURATION WILL HINDER YOUTUBE-SOURCE'S ABILITY TO WORK PROPERLY.
 
