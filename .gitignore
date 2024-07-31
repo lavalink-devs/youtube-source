@@ -30,3 +30,4 @@ replay_pid*
 build
 
 application.yml
+playerconfigs/*
