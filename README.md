@@ -42,8 +42,9 @@ Support for IP rotation has been included, and can be achieved using the followi
 AbstractRoutePlanner routePlanner = new ...
 YoutubeIpRotatorSetup rotator = new YoutubeIpRotatorSetup(routePlanner);
 
+// 'youtube' is the variable holding your YoutubeAudioSourceManager instance.
 rotator.forConfiguration(youtube.getHttpInterfaceManager(), false)
-    .withMainDelegateFilter(null) // This is important, otherwise you may get NullPointerExceptions.
+    .withMainDelegateFilter(youtube.getContextFilter()) // IMPORTANT
     .setup();
 ```
 
