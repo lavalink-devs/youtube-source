@@ -184,7 +184,7 @@ Currently, the following clients are available for use:
 - `TVHTML5EMBEDDED`
   - ✔ Opus formats.
   - ✔ Age-restricted video playback.
-  - ❌ No playlist/mix support.
+  - ❌ No playlist support.
 
 ## Migration from Lavaplayer's built-in YouTube source
 
