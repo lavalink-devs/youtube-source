@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class AndroidMusic extends Android {
-    public static String CLIENT_VERSION = "6.42.52";
+    public static String CLIENT_VERSION = "7.11.50";
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
         .withApiKey(Android.BASE_CONFIG.getApiKey())

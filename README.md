@@ -162,7 +162,7 @@ Currently, the following clients are available for use:
 
 - `MUSIC`
   - ✔ Provides support for searching YouTube music (`ytmsearch:`).
-  - ❌ Cannot be used for playback. 
+  - ❌ No playback support. 
 - `WEB`
   - ✔ Opus formats.
 - `ANDROID`
@@ -184,6 +184,7 @@ Currently, the following clients are available for use:
 - `TVHTML5EMBEDDED`
   - ✔ Opus formats.
   - ✔ Age-restricted video playback.
+  - ❌ No playlist/mix support.
 
 ## Migration from Lavaplayer's built-in YouTube source
 
