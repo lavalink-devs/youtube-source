@@ -1,5 +1,6 @@
 import com.vanniktech.maven.publish.JavaLibrary
 import com.vanniktech.maven.publish.JavadocJar
+import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
     `java-library`
@@ -38,4 +39,14 @@ java {
 mavenPublishing {
     coordinates("dev.lavalink.youtube", "youtube-plugin", version.toString())
     configure(JavaLibrary(JavadocJar.None(), sourcesJar = false))
+}
+
+tasks {
+    processResources {
+        filter<ReplaceTokens>(
+            "tokens" to mapOf(
+                "version" to project.version
+            )
+        )
+    }
 }

@@ -53,6 +53,12 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
         }
 
         this.clientProvider = provider;
+
+        try {
+            PluginInfo.checkForNewRelease();
+        } catch (Throwable ignored) {
+
+        }
     }
 
     private ClientProvider getClientProvider(String name) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {

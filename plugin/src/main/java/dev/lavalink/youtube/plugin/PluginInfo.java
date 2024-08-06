@@ -17,14 +17,6 @@ import java.util.Properties;
 public class PluginInfo {
     private static final Logger log = LoggerFactory.getLogger(PluginInfo.class);
 
-    static {
-        try {
-            checkForNewRelease();
-        } catch (Throwable ignored) {
-
-        }
-    }
-
     public static void checkForNewRelease() throws IOException, JsonParserException {
         String versionS = YoutubeSource.VERSION;
 
