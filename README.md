@@ -137,10 +137,10 @@ plugins:
     WEB:
       # Example: Disabling a client's playback capabilities.
       playback: false
+      videoLoading: false # Disables loading of videos for this client. A client may still be used for playback even if this is set to 'false'.
     TVHTML5EMBEDDED:
-      # Example: Configuring a client to exclusively be used for playback.
+      # Example: Configuring a client to exclusively be used for video loading and playback.
       playlistLoading: false # Disables loading of playlists and mixes.
-      videoLoading: false # Disables loading of videos for this client (does not affect playback).
       searching: false # Disables the ability to search for videos.
 ```
 
