@@ -4,6 +4,7 @@ import com.grack.nanojson.JsonArray;
 import com.grack.nanojson.JsonObject;
 import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
+import dev.lavalink.youtube.YoutubeSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,6 @@ import java.util.Properties;
 
 public class PluginInfo {
     private static final Logger log = LoggerFactory.getLogger(PluginInfo.class);
-    public static final String VERSION = getPluginVersion();
 
     static {
         try {
@@ -25,27 +25,14 @@ public class PluginInfo {
         }
     }
 
-    public static String getPluginVersion() {
-        try (InputStream properties = PluginInfo.class.getClassLoader().getResourceAsStream("lavalink-plugins/youtube-plugin.properties")) {
-            Properties props = new Properties();
-            props.load(properties);
-
-            if (props.containsKey("version")) {
-                return props.getProperty("version");
-            }
-        } catch (IOException ignored) {
-
-        }
-
-        return "Unknown";
-    }
-
     public static void checkForNewRelease() throws IOException, JsonParserException {
-        if ("Unknown".equals(VERSION)) {
+        String versionS = YoutubeSource.VERSION;
+
+        if ("Unknown".equals(versionS)) {
             return; // Cannot compare versions.
         }
 
-        Version currentVersion = Version.parse(VERSION);
+        Version currentVersion = Version.parse(versionS);
 
         URL url = new URL("https://api.github.com/repos/lavalink-devs/youtube-source/releases");
 

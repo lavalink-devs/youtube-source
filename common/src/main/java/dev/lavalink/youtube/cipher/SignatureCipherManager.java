@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import dev.lavalink.youtube.YoutubeSource;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -218,8 +219,8 @@ public class SignatureCipherManager {
       Path path = Files.createTempFile("lavaplayer-yt-player-script", ".js");
       Files.write(path, script.getBytes(StandardCharsets.UTF_8));
 
-      log.error("Problematic YouTube player script {} detected (issue detected with script: {}). Dumped to {}",
-          sourceUrl, issue, path.toAbsolutePath());
+      log.error("Problematic YouTube player script {} detected (issue detected with script: {}). Dumped to {} (Source version: {})",
+          sourceUrl, issue, path.toAbsolutePath(), YoutubeSource.VERSION);
     } catch (Exception e) {
       log.error("Failed to dump problematic YouTube player script {} (issue detected with script: {})", sourceUrl, issue);
     }

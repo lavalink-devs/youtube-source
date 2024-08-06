@@ -1,5 +1,6 @@
 import com.vanniktech.maven.publish.JavaLibrary
 import com.vanniktech.maven.publish.JavadocJar
+import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
     `java-library`
@@ -23,4 +24,14 @@ dependencies {
 
 mavenPublishing {
     configure(JavaLibrary(JavadocJar.Javadoc()))
+}
+
+tasks {
+    processResources {
+        filter<ReplaceTokens>(
+            "tokens" to mapOf(
+                "version" to project.version
+            )
+        )
+    }
 }
