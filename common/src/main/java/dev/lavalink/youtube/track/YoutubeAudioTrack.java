@@ -82,7 +82,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
           if ("Not success status code: 403".equals(message) ||
               "Invalid status code for player api response: 400".equals(message) ||
-              message.contains("No supported audio streams available")) {
+              (message != null && message.contains("No supported audio streams available"))) {
             continue; // try next client
           }
 
