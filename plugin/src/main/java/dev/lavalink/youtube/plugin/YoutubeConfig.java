@@ -16,6 +16,7 @@ public class YoutubeConfig {
     private boolean allowDirectPlaylistIds = true;
     private String[] clients;
     private Map<String, ClientOptions> clientOptions = new HashMap<>();
+    private YoutubeOauthConfig oauthConfig = null;
 
     public boolean getEnabled() {
         return this.enabled;
@@ -41,6 +42,10 @@ public class YoutubeConfig {
         return this.clientOptions;
     }
 
+    public YoutubeOauthConfig getOauthConfig() {
+        return this.oauthConfig;
+    }
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
@@ -63,5 +68,9 @@ public class YoutubeConfig {
 
     public void setClientOptions(Map<String, ClientOptions> clientOptions) {
         this.clientOptions = clientOptions;
+    }
+
+    public void setOauthConfig(YoutubeOauthConfig oauthConfig) {
+        this.oauthConfig = oauthConfig;
     }
 }

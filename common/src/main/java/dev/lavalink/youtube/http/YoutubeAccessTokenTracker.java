@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import dev.lavalink.youtube.clients.Android;
 import dev.lavalink.youtube.clients.ClientConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -69,16 +70,10 @@ public class YoutubeAccessTokenTracker {
     try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
       httpInterface.getContext().setAttribute(TOKEN_FETCH_CONTEXT_ATTRIBUTE, true);
 
-      ClientConfig clientConfig = new ClientConfig()
-          .withUserAgent("com.google.android.youtube/19.07.39 (Linux; U; Android 11) gzip")
-          .withClientName("ANDROID")
-          .withClientField("clientVersion", "19.07.39")
-          .withClientField("androidSdkVersion", 30)
-          .withUserField("lockedSafetyMode", false)
-          .setAttributes(httpInterface);
+      ClientConfig client = Android.BASE_CONFIG.setAttributes(httpInterface);
 
       HttpPost visitorIdPost = new HttpPost("https://youtubei.googleapis.com/youtubei/v1/visitor_id");
-      visitorIdPost.setEntity(new StringEntity(clientConfig.toJsonString(), "UTF-8"));
+      visitorIdPost.setEntity(new StringEntity(client.toJsonString(), "UTF-8"));
 
       try (CloseableHttpResponse response = httpInterface.execute(visitorIdPost)) {
         HttpClientTools.assertSuccessWithContent(response, "youtube visitor id");
