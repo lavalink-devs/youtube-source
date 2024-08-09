@@ -2,9 +2,7 @@ package dev.lavalink.youtube.plugin;
 
 import dev.lavalink.youtube.clients.*;
 import dev.lavalink.youtube.clients.skeleton.Client;
-import dev.lavalink.youtube.clients.skeleton.WebEmbeddedWithThumbnail;
-
-import java.util.function.Supplier;
+import dev.lavalink.youtube.clients.WebEmbeddedWithThumbnail;
 
 public class ClientProviderV4 implements ClientProvider {
     @Override
@@ -20,6 +18,7 @@ public class ClientProviderV4 implements ClientProvider {
         IOS(IosWithThumbnail::new),
         MUSIC(MusicWithThumbnail::new),
         TVHTML5EMBEDDED(TvHtml5EmbeddedWithThumbnail::new),
+        WEB(WebWithThumbnail::new),
         WEBEMBEDDED(WebEmbeddedWithThumbnail::new),
         MEDIA_CONNECT(MediaConnectWithThumbnail::new);
 
