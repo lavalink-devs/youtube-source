@@ -73,9 +73,31 @@ public class ClientConfig {
         return this;
     }
 
-    public ClientConfig withVisitorData(@NotNull String visitorData) {
+    public ClientConfig withVisitorData(@Nullable String visitorData) {
         this.visitorData = visitorData;
-        withClientField("visitorData", visitorData);
+
+        if (visitorData != null) {
+            withClientField("visitorData", visitorData);
+        } else {
+            Map<String, Object> context = (Map<String, Object>) root.get("context");
+
+            if (context != null) {
+                Map<String, Object> client = (Map<String, Object>) context.get("client");
+
+                if (client != null) {
+                    client.remove("visitorData");
+
+                    if (client.isEmpty()) {
+                        context.remove("client");
+                    }
+                }
+
+                if (context.isEmpty()) {
+                    root.remove("context");
+                }
+            }
+        }
+
         return this;
     }
 

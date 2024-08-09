@@ -51,16 +51,18 @@ public class Web extends StreamingNonMusicClient {
         this.options = options;
     }
 
-    public static void setPoToken(String poToken) {
+    public static void setPoTokenAndVisitorData(String poToken, String visitorData) {
         Web.poToken = poToken;
 
-        if (poToken == null) {
+        if (poToken == null || visitorData == null) {
             BASE_CONFIG.getRoot().remove("serviceIntegrityDimensions");
+            BASE_CONFIG.withVisitorData(null);
             return;
         }
 
         Map<String, Object> sid = BASE_CONFIG.putOnceAndJoin(BASE_CONFIG.getRoot(), "serviceIntegrityDimensions");
         sid.put("poToken", poToken);
+        BASE_CONFIG.withVisitorData(visitorData);
     }
 
     protected void fetchClientConfig(@NotNull HttpInterface httpInterface) {
@@ -109,12 +111,11 @@ public class Web extends StreamingNonMusicClient {
                     BASE_CONFIG.withClientField("clientVersion", clientVersion);
                 }
 
-                String visitorData = client.get("visitorData").text();
-
-                if (visitorData != null && !visitorData.isEmpty() && BASE_CONFIG.getVisitorData() == null) {
-                    // don't overwrite if visitorData was already set.
-                    BASE_CONFIG.withVisitorData(visitorData);
-                }
+//                String visitorData = client.get("visitorData").text();
+//
+//                if (visitorData != null && !visitorData.isEmpty()) {
+//                    BASE_CONFIG.withVisitorData(visitorData);
+//                }
             }
         } catch (IOException e) {
             throw ExceptionTools.toRuntimeException(e);

@@ -203,9 +203,10 @@ Specifying the token is as simple as doing:
 ```yaml
 plugins:
   youtube:
-    poToken: "paste your token here"
+    pot:
+      token: "paste your po_token here"
+      visitorData: "paste your visitor_data here"
 ```
-You do **not** need the `visitor_data` that is also produced by the script.
 
 > [!NOTE]
 > A `poToken` is not a silver bullet, and currently it only applies to requests made via the `WEB` client.

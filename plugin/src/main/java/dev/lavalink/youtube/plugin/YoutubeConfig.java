@@ -14,7 +14,7 @@ public class YoutubeConfig {
     private boolean allowSearch = true;
     private boolean allowDirectVideoIds = true;
     private boolean allowDirectPlaylistIds = true;
-    private String poToken;
+    private Pot pot = null;
     private String[] clients;
     private Map<String, ClientOptions> clientOptions = new HashMap<>();
 
@@ -34,8 +34,8 @@ public class YoutubeConfig {
         return allowDirectPlaylistIds;
     }
 
-    public String getPoToken() {
-        return poToken;
+    public Pot getPot() {
+        return pot;
     }
 
     public String[] getClients() {
@@ -62,8 +62,8 @@ public class YoutubeConfig {
         this.allowDirectPlaylistIds = allowDirectPlaylistIds;
     }
 
-    public void setPoToken(String poToken) {
-        this.poToken = poToken;
+    public void setPot(Pot pot) {
+        this.pot = pot;
     }
 
     public void setClients(String[] clients) {
