@@ -15,9 +15,11 @@ import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.UrlTools;
 import dev.lavalink.youtube.UrlTools.UrlInfo;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.Web;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
+import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -190,6 +192,13 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     URI signedUrl = sourceManager.getCipherManager()
         .resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), format);
+
+    if (client.getIdentifier().equals(Web.BASE_CONFIG.getName()) && Web.poToken != null) {
+      log.debug("Format origin is {}, setting 'pot' parameter.", client.getIdentifier());
+      URIBuilder builder = new URIBuilder(signedUrl);
+      builder.addParameter("pot", Web.poToken);
+      signedUrl = builder.build();
+    }
 
     return new FormatWithUrl(format, signedUrl);
   }

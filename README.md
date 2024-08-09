@@ -190,9 +190,15 @@ Currently, the following clients are available for use:
   - ❌ No playlist support.
 
 ## Using a `poToken`
-First off, you'll need to obtain a `poToken`. This can be done using https://github.com/iv-org/youtube-trusted-session-generator,
-by running the Python script or the docker image. Both methods will print a `poToken` after a successful run,
-which you can supply to `youtube-source` to try and work around having automated requests blocked.
+A `poToken`, also known as a "Proof of Origin Token" is a way to identify what requests originate from.
+In YouTube's case, this is sent as a JavaScript challenge that browsers must evaluate, and send back the resolved
+string. Typically, this challenge would remain unsolved for bots as more often than not, they don't simulate an entire
+browser environment, instead only evaluating the minimum amount of JS required to do its job. Therefore, it's a reasonable
+assumption that if the challenge is not fulfilled, the request origin is a bot.
+
+To obtain a `poToken`, you can use https://github.com/iv-org/youtube-trusted-session-generator, by running the Python script
+or the docker image. Both methods will print a `poToken` after a successful run, which you can supply to `youtube-source`
+to try and work around having automated requests blocked.
 Specifying the token is as simple as doing:
 ```yaml
 plugins:

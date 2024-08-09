@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 public class Web extends StreamingNonMusicClient {
     private static final Logger log = LoggerFactory.getLogger(Web.class);
+
     protected static Pattern CONFIG_REGEX = Pattern.compile("ytcfg\\.set\\((\\{.+})\\);");
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
@@ -32,6 +33,8 @@ public class Web extends StreamingNonMusicClient {
         .withClientName("WEB")
         .withClientField("clientVersion", "2.20240224.11.00")
         .withUserField("lockedSafetyMode", false);
+
+    public static String poToken;
 
     protected volatile long lastConfigUpdate = -1;
 
@@ -46,6 +49,8 @@ public class Web extends StreamingNonMusicClient {
     }
 
     public static void setPoToken(String poToken) {
+        Web.poToken = poToken;
+
         if (poToken == null) {
             BASE_CONFIG.getRoot().remove("serviceIntegrityDimensions");
             return;
