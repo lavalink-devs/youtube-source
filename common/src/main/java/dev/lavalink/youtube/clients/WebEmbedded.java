@@ -48,7 +48,7 @@ public class WebEmbedded extends Web {
                                 @NotNull HttpInterface httpInterface,
                                 @NotNull String searchQuery) {
         throw new FriendlyException("This client cannot load searches", Severity.COMMON,
-            new RuntimeException("WEB_EMBEDDED cannot be used to load searches"));
+            new RuntimeException("WEBEMBEDDED cannot be used to load searches"));
     }
 
     @Override
@@ -57,7 +57,7 @@ public class WebEmbedded extends Web {
                                   @NotNull String playlistId,
                                   @Nullable String selectedVideoId) {
         throw new FriendlyException("This client cannot load playlists", Severity.COMMON,
-            new RuntimeException("WEB_EMBEDDED cannot be used to load playlists"));
+            new RuntimeException("WEBEMBEDDED cannot be used to load playlists"));
     }
 
     @Override
@@ -66,6 +66,6 @@ public class WebEmbedded extends Web {
                              @NotNull String mixId,
                              @Nullable String selectedVideoId) {
         throw new FriendlyException("This client cannot load mixes", Severity.COMMON,
-            new RuntimeException("WEB_EMBEDDED cannot be used to load mixes"));
+            new RuntimeException("WEBEMBEDDED cannot be used to load mixes"));
     }
 }
