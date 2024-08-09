@@ -19,6 +19,7 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
 
   private static final String ATTRIBUTE_RESET_RETRY = "isResetRetry";
   public static final String ATTRIBUTE_USER_AGENT_SPECIFIED = "clientUserAgent";
+  public static final String ATTRIBUTE_VISITOR_DATA_SPECIFIED = "clientVisitorData";
 
   private static final HttpContextRetryCounter retryCounter = new HttpContextRetryCounter("yt-token-retry");
 
@@ -60,7 +61,11 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
 
     if (userAgent != null) {
       request.setHeader("User-Agent", userAgent);
-      request.setHeader("X-Goog-Visitor-Id", tokenTracker.getVisitorId());
+
+      String visitorData = context.getAttribute(ATTRIBUTE_VISITOR_DATA_SPECIFIED, String.class);
+      request.setHeader("X-Goog-Visitor-Id", visitorData != null ? visitorData : tokenTracker.getVisitorId());
+
+      context.removeAttribute(ATTRIBUTE_VISITOR_DATA_SPECIFIED);
       context.removeAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED);
     }
 

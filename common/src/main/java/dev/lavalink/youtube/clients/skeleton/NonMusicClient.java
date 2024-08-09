@@ -35,7 +35,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public abstract class NonMusicClient implements Client {
     private static final Logger log = LoggerFactory.getLogger(NonMusicClient.class);
 
-    protected static String WEB_PLAYER_PARAMS = "ygUEbmF0dA%3D%3D";
+    protected static String WEB_PLAYER_PARAMS = "2AMB";
     protected static String MOBILE_PLAYER_PARAMS = "CgIIAdgDAQ%3D%3D";
 
     protected int playlistPageCount = 6;
@@ -86,6 +86,7 @@ public abstract class NonMusicClient implements Client {
             .withRootField("contentCheckOk", true)
             .withRootField("params", getPlayerParams())
             .withPlaybackSignatureTimestamp(signatureCipher.scriptTimestamp)
+            .setAttributes(httpInterface)
             .toJsonString();
 
         log.debug("Requesting {} with payload {}", PLAYER_URL, payload);
@@ -127,7 +128,8 @@ public abstract class NonMusicClient implements Client {
                                             @NotNull String searchQuery) {
         ClientConfig clientConfig = getBaseClientConfig(httpInterface)
             .withRootField("query", searchQuery)
-            .withRootField("params", SEARCH_PARAMS);
+            .withRootField("params", SEARCH_PARAMS)
+            .setAttributes(httpInterface);
 
         HttpPost request = new HttpPost(SEARCH_URL); // This *had* a key parameter. Doesn't seem needed though.
         request.setEntity(new StringEntity(clientConfig.toJsonString(), "UTF-8"));

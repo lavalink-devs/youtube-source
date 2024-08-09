@@ -90,11 +90,11 @@ public class Web extends StreamingNonMusicClient {
                     BASE_CONFIG.withClientField("clientVersion", clientVersion);
                 }
 
-//                String visitorData = client.get("visitorData").text();
-//
-//                if (!visitorData.isEmpty()) {
-//                    baseConfig.withClientField("visitorData", visitorData);
-//                }
+                String visitorData = client.get("visitorData").text();
+
+                if (visitorData != null && !visitorData.isEmpty()) {
+                    BASE_CONFIG.withVisitorData(visitorData);
+                }
             }
         } catch (IOException e) {
             throw ExceptionTools.toRuntimeException(e);

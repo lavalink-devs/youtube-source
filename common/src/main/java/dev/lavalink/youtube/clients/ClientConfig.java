@@ -17,25 +17,29 @@ public class ClientConfig {
 
     private String name;
     private String userAgent;
+    private String visitorData;
     private String apiKey;
     private final Map<String, Object> root;
 
     public ClientConfig() {
-        this.root = new HashMap<>();
-        this.userAgent = null;
         this.name = null;
+        this.userAgent = null;
+        this.visitorData = null;
+        this.root = new HashMap<>();
     }
 
     private ClientConfig(@NotNull Map<String, Object> context,
                          @NotNull String userAgent,
+                         @NotNull String visitorData,
                          @NotNull String name) {
-        this.root = context;
-        this.userAgent = userAgent;
         this.name = name;
+        this.userAgent = userAgent;
+        this.visitorData = visitorData;
+        this.root = context;
     }
 
     public ClientConfig copy() {
-        return new ClientConfig(new HashMap<>(this.root), this.userAgent, this.name);
+        return new ClientConfig(new HashMap<>(this.root), this.userAgent, this.visitorData, this.name);
     }
 
     public ClientConfig withClientName(@NotNull String name) {
@@ -55,6 +59,12 @@ public class ClientConfig {
 
     public String getUserAgent() {
         return this.userAgent;
+    }
+
+    public ClientConfig withVisitorData(@NotNull String visitorData) {
+        this.visitorData = visitorData;
+        withClientField("visitorData", visitorData);
+        return this;
     }
 
     public ClientConfig withApiKey(@NotNull String apiKey) {
@@ -117,6 +127,10 @@ public class ClientConfig {
     public ClientConfig setAttributes(@NotNull HttpInterface httpInterface) {
         if (userAgent != null) {
             httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.ATTRIBUTE_USER_AGENT_SPECIFIED, userAgent);
+
+            if (visitorData != null) {
+                httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.ATTRIBUTE_VISITOR_DATA_SPECIFIED, visitorData);
+            }
         }
 
         return this;
