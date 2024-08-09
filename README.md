@@ -189,6 +189,22 @@ Currently, the following clients are available for use:
   - ✔ Age-restricted video playback.
   - ❌ No playlist support.
 
+## Using a `poToken`
+First off, you'll need to obtain a `poToken`. This can be done using https://github.com/iv-org/youtube-trusted-session-generatorrun,
+by running the Python script or the docker image. Both methods will print a `poToken` after a successful run,
+which you can supply to `youtube-source` to try and work around having automated requests blocked.
+Specifying the token is as simple as doing:
+```yaml
+plugins:
+  youtube:
+    poToken: "paste your token here"
+```
+You do **not** need the `visitor_data` that is also produced by the script.
+
+> [!NOTE]
+> A `poToken` is not a silver bullet, and currently it only applies to requests made via the `WEB` client.
+> Currently, the most effective method for working around automated request blocking is to use IPv6 rotation.
+
 ## Migration from Lavaplayer's built-in YouTube source
 
 This client is intended as a direct replacement for Lavaplayer's built-in `YoutubeAudioSourceManager`,
