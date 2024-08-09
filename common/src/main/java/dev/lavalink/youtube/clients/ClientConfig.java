@@ -38,6 +38,26 @@ public class ClientConfig {
         this.root = context;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
+    public String getUserAgent() {
+        return this.userAgent;
+    }
+
+    public String getVisitorData() {
+        return this.visitorData;
+    }
+
+    public String getApiKey() {
+        return this.apiKey;
+    }
+
+    public Map<String, Object> getRoot() {
+        return this.root;
+    }
+
     public ClientConfig copy() {
         return new ClientConfig(new HashMap<>(this.root), this.userAgent, this.visitorData, this.name);
     }
@@ -48,17 +68,9 @@ public class ClientConfig {
         return this;
     }
 
-    public String getName() {
-        return this.name;
-    }
-
     public ClientConfig withUserAgent(@NotNull String userAgent) {
         this.userAgent = userAgent;
         return this;
-    }
-
-    public String getUserAgent() {
-        return this.userAgent;
     }
 
     public ClientConfig withVisitorData(@NotNull String visitorData) {
@@ -70,10 +82,6 @@ public class ClientConfig {
     public ClientConfig withApiKey(@NotNull String apiKey) {
         this.apiKey = apiKey;
         return this;
-    }
-
-    public String getApiKey() {
-        return this.apiKey;
     }
 
     public Map<String, Object> putOnceAndJoin(@NotNull Map<String, Object> on,

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +45,16 @@ public class Web extends StreamingNonMusicClient {
         this.options = options;
     }
 
+    public static void setPoToken(String poToken) {
+        if (poToken == null) {
+            BASE_CONFIG.getRoot().remove("serviceIntegrityDimensions");
+            return;
+        }
+
+        Map<String, Object> sid = BASE_CONFIG.putOnceAndJoin(BASE_CONFIG.getRoot(), "serviceIntegrityDimensions");
+        sid.put("poToken", poToken);
+    }
+
     protected void fetchClientConfig(@NotNull HttpInterface httpInterface) {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com"))) {
             HttpClientTools.assertSuccessWithContent(response, "client config fetch");
@@ -53,7 +64,7 @@ public class Web extends StreamingNonMusicClient {
             Matcher m = CONFIG_REGEX.matcher(page);
 
             if (!m.find()) {
-                log.warn("Unable to find youtube client config in base page, html: " + page);
+                log.warn("Unable to find youtube client config in base page, html: {}", page);
                 return;
             }
 
@@ -92,7 +103,8 @@ public class Web extends StreamingNonMusicClient {
 
                 String visitorData = client.get("visitorData").text();
 
-                if (visitorData != null && !visitorData.isEmpty()) {
+                if (visitorData != null && !visitorData.isEmpty() && BASE_CONFIG.getVisitorData() == null) {
+                    // don't overwrite if visitorData was already set.
                     BASE_CONFIG.withVisitorData(visitorData);
                 }
             }
