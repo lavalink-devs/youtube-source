@@ -190,7 +190,7 @@ Currently, the following clients are available for use:
   - ❌ No playlist support.
 
 ## Using a `poToken`
-First off, you'll need to obtain a `poToken`. This can be done using https://github.com/iv-org/youtube-trusted-session-generatorrun,
+First off, you'll need to obtain a `poToken`. This can be done using https://github.com/iv-org/youtube-trusted-session-generator,
 by running the Python script or the docker image. Both methods will print a `poToken` after a successful run,
 which you can supply to `youtube-source` to try and work around having automated requests blocked.
 Specifying the token is as simple as doing:
