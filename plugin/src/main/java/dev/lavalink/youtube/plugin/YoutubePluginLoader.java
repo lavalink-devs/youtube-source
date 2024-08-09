@@ -8,7 +8,9 @@ import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv4Block;
 import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv6Block;
 import dev.arbjerg.lavalink.api.AudioPlayerManagerConfiguration;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.ClientConfig;
 import dev.lavalink.youtube.clients.ClientOptions;
+import dev.lavalink.youtube.clients.Web;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import lavalink.server.config.RateLimitConfig;
 import lavalink.server.config.ServerConfig;
@@ -161,6 +163,12 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
                 clients = clientProvider.getDefaultClients();
             } else {
                 clients = youtubeConfig.getClients();
+                String poToken = youtubeConfig.getPoToken();
+
+                if (poToken != null && !poToken.isEmpty()) {
+                    log.debug("Setting poToken for WEB client to {}", poToken);
+                    Web.setPoToken(poToken);
+                }
             }
 
             source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, clientProvider.getClients(clients, this::getOptionsForClient));
