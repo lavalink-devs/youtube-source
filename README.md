@@ -165,6 +165,9 @@ Currently, the following clients are available for use:
   - ❌ No playback support. 
 - `WEB`
   - ✔ Opus formats.
+- `WEBEMBEDDED`
+  - ✔ Opus formats.
+  - ❌ No mix/playlist/search support.
 - `ANDROID`
   - ❌ Heavily restricted, frequently dysfunctional.
 - `ANDROID_TESTSUITE`
