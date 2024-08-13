@@ -12,7 +12,7 @@ public class Pot {
         return visitorData != null && !visitorData.isEmpty() ? visitorData : null;
     }
 
-    public void setPoToken(String token) {
+    public void setToken(String token) {
         this.token = token;
     }
 
