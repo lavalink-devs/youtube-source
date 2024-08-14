@@ -199,7 +199,16 @@ assumption that if the challenge is not fulfilled, the request origin is a bot.
 To obtain a `poToken`, you can use https://github.com/iv-org/youtube-trusted-session-generator, by running the Python script
 or the docker image. Both methods will print a `poToken` after a successful run, which you can supply to `youtube-source`
 to try and work around having automated requests blocked.
+
 Specifying the token is as simple as doing:
+
+### Lavaplayer
+```java
+// Web is dev.lavalink.youtube.clients.Web
+Web.setPoTokenAndVisitorData("your po_token", "your visitor_data");
+```
+
+### Lavalink
 ```yaml
 plugins:
   youtube:
