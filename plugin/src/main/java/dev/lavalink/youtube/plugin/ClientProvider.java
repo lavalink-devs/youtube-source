@@ -46,7 +46,12 @@ public interface ClientProvider {
         return Arrays.stream(enumValues)
             .filter(it -> it.getName().equals(name))
             .findFirst()
-            .map(ref -> ref.getClient(provider.getOptionsForClient(name)))
+            .map(ref -> {
+                ClientOptions options = provider.getOptionsForClient(name);
+
+                log.debug("Initialising client {} with options {}", ref.getName(), options);
+                return ref.getClient(options);
+            })
             .orElse(null);
     }
 

@@ -48,4 +48,10 @@ public class ClientOptions {
         options.setSearching(this.searching);
         return options;
     }
+
+    @Override
+    public String toString() {
+        return String.format("ClientOptions{playback=%s, playlistLoading=%s, videoLoading=%s, searching=%s}",
+            playback, playlistLoading, videoLoading, searching);
+    }
 }

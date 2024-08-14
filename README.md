@@ -163,14 +163,15 @@ plugins:
     # WARNING!: UNDERSTANDING WHAT IT DOES. MISCONFIGURATION WILL HINDER YOUTUBE-SOURCE'S ABILITY TO WORK PROPERLY.
 
     # Write the names of clients as they are specified under the heading "Available Clients".
-    WEB:
-      # Example: Disabling a client's playback capabilities.
-      playback: false
-      videoLoading: false # Disables loading of videos for this client. A client may still be used for playback even if this is set to 'false'.
-    TVHTML5EMBEDDED:
-      # Example: Configuring a client to exclusively be used for video loading and playback.
-      playlistLoading: false # Disables loading of playlists and mixes.
-      searching: false # Disables the ability to search for videos.
+    clientOptions:
+      WEB:
+        # Example: Disabling a client's playback capabilities.
+        playback: false
+        videoLoading: false # Disables loading of videos for this client. A client may still be used for playback even if this is set to 'false'.
+      TVHTML5EMBEDDED:
+        # Example: Configuring a client to exclusively be used for video loading and playback.
+        playlistLoading: false # Disables loading of playlists and mixes.
+        searching: false # Disables the ability to search for videos.
 ```
 
 ## Available Clients
