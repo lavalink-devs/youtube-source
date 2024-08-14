@@ -5,6 +5,22 @@ This source aims to provide robustness by leveraging multiple InnerTube clients
 for requests. Where one client fails, another will try to load the request.
 Which clients are used is entirely configurable.
 
+## README contents
+- [Common](#common)
+  - Information about the `common` module and usage of.
+- [V2](#v2)
+  - Information about the `v2` module and usage of.
+- [Plugin](#plugin)
+  - Information about the `plugin` module and usage of.
+- [Available Clients](#available-clients)
+  - Information about the clients provided by `youtube-source`, as well as their advantages/disadvantages.
+- [Using a poToken](#using-a-potoken)
+  - Information on using a `poToken` with `youtube-source`.
+- [Migration Information](#migration-from-lavaplayers-built-in-youtube-source)
+  - Information on migrating from Lavaplayer's built-in Youtube source manager.
+- [Additional Support](#additional-support)
+  - For everything else.
+
 ## common
 This module provides the base source manager, which can be used with any
 `com.sedmelluq.discord.lavaplayer` packages still on major version `1`.
@@ -125,7 +141,7 @@ plugins:
       - TVHTML5EMBEDDED
 ```
 
-**Advanced Options**
+### Advanced Options
 ```yaml
     # The below section of the config allows setting specific options for each client, such as the requests they will handle.
     # If an option, or client, is unspecified, then the default option value/client values will be used instead.
