@@ -9,6 +9,7 @@ import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +28,7 @@ import java.util.stream.Collectors;
 
 public class Web extends StreamingNonMusicClient {
     private static final Logger log = LoggerFactory.getLogger(Web.class);
+
     protected static Pattern CONFIG_REGEX = Pattern.compile("ytcfg\\.set\\((\\{.+})\\);");
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
@@ -31,6 +36,8 @@ public class Web extends StreamingNonMusicClient {
         .withClientName("WEB")
         .withClientField("clientVersion", "2.20240224.11.00")
         .withUserField("lockedSafetyMode", false);
+
+    public static String poToken;
 
     protected volatile long lastConfigUpdate = -1;
 
@@ -44,6 +51,20 @@ public class Web extends StreamingNonMusicClient {
         this.options = options;
     }
 
+    public static void setPoTokenAndVisitorData(String poToken, String visitorData) {
+        Web.poToken = poToken;
+
+        if (poToken == null || visitorData == null) {
+            BASE_CONFIG.getRoot().remove("serviceIntegrityDimensions");
+            BASE_CONFIG.withVisitorData(null);
+            return;
+        }
+
+        Map<String, Object> sid = BASE_CONFIG.putOnceAndJoin(BASE_CONFIG.getRoot(), "serviceIntegrityDimensions");
+        sid.put("poToken", poToken);
+        BASE_CONFIG.withVisitorData(visitorData);
+    }
+
     protected void fetchClientConfig(@NotNull HttpInterface httpInterface) {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com"))) {
             HttpClientTools.assertSuccessWithContent(response, "client config fetch");
@@ -53,7 +74,7 @@ public class Web extends StreamingNonMusicClient {
             Matcher m = CONFIG_REGEX.matcher(page);
 
             if (!m.find()) {
-                log.warn("Unable to find youtube client config in base page, html: " + page);
+                log.warn("Unable to find youtube client config in base page, html: {}", page);
                 return;
             }
 
@@ -90,11 +111,11 @@ public class Web extends StreamingNonMusicClient {
                     BASE_CONFIG.withClientField("clientVersion", clientVersion);
                 }
 
-                String visitorData = client.get("visitorData").text();
-
-                if (visitorData != null && !visitorData.isEmpty()) {
-                    BASE_CONFIG.withVisitorData(visitorData);
-                }
+//                String visitorData = client.get("visitorData").text();
+//
+//                if (visitorData != null && !visitorData.isEmpty()) {
+//                    BASE_CONFIG.withVisitorData(visitorData);
+//                }
             }
         } catch (IOException e) {
             throw ExceptionTools.toRuntimeException(e);
@@ -113,6 +134,25 @@ public class Web extends StreamingNonMusicClient {
         }
 
         return BASE_CONFIG.copy();
+    }
+
+    @Override
+    @NotNull
+    public URI transformPlaybackUri(@NotNull URI originalUri, @NotNull URI resolvedPlaybackUri) {
+        if (poToken == null) {
+            return resolvedPlaybackUri;
+        }
+
+        log.debug("Applying 'pot' parameter on playback URI: {}", resolvedPlaybackUri);
+        URIBuilder builder = new URIBuilder(resolvedPlaybackUri);
+        builder.addParameter("pot", poToken);
+
+        try {
+            return builder.build();
+        } catch (URISyntaxException e) {
+            log.debug("Failed to apply 'pot' parameter.", e);
+            return resolvedPlaybackUri;
+        }
     }
 
     @Override

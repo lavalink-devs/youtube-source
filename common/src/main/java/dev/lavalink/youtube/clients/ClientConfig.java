@@ -38,6 +38,26 @@ public class ClientConfig {
         this.root = context;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
+    public String getUserAgent() {
+        return this.userAgent;
+    }
+
+    public String getVisitorData() {
+        return this.visitorData;
+    }
+
+    public String getApiKey() {
+        return this.apiKey;
+    }
+
+    public Map<String, Object> getRoot() {
+        return this.root;
+    }
+
     public ClientConfig copy() {
         return new ClientConfig(new HashMap<>(this.root), this.userAgent, this.visitorData, this.name);
     }
@@ -48,32 +68,42 @@ public class ClientConfig {
         return this;
     }
 
-    public String getName() {
-        return this.name;
-    }
-
     public ClientConfig withUserAgent(@NotNull String userAgent) {
         this.userAgent = userAgent;
         return this;
     }
 
-    public String getUserAgent() {
-        return this.userAgent;
-    }
-
-    public ClientConfig withVisitorData(@NotNull String visitorData) {
+    public ClientConfig withVisitorData(@Nullable String visitorData) {
         this.visitorData = visitorData;
-        withClientField("visitorData", visitorData);
+
+        if (visitorData != null) {
+            withClientField("visitorData", visitorData);
+        } else {
+            Map<String, Object> context = (Map<String, Object>) root.get("context");
+
+            if (context != null) {
+                Map<String, Object> client = (Map<String, Object>) context.get("client");
+
+                if (client != null) {
+                    client.remove("visitorData");
+
+                    if (client.isEmpty()) {
+                        context.remove("client");
+                    }
+                }
+
+                if (context.isEmpty()) {
+                    root.remove("context");
+                }
+            }
+        }
+
         return this;
     }
 
     public ClientConfig withApiKey(@NotNull String apiKey) {
         this.apiKey = apiKey;
         return this;
-    }
-
-    public String getApiKey() {
-        return this.apiKey;
     }
 
     public Map<String, Object> putOnceAndJoin(@NotNull Map<String, Object> on,

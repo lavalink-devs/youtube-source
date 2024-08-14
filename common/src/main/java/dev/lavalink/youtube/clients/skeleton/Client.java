@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -131,6 +132,21 @@ public interface Client {
         }
 
         return null;
+    }
+
+    /**
+     * Transforms a given playback URL as necessary. For example, you can add query parameters
+     * or resolve any challenge parameters that might be needed.
+     * @param originalUri The original stream URI. This will be completely unmodified, and is
+     *                    provided as it has been received from YouTube.
+     * @param resolvedPlaybackUri The playback URI. This will have already been
+     *                            transformed by the SignatureCipherManager.
+     * @return The new playback URI.
+     */
+    @NotNull
+    default URI transformPlaybackUri(@NotNull URI originalUri,
+                                     @NotNull URI resolvedPlaybackUri) {
+        return resolvedPlaybackUri;
     }
 
     /**

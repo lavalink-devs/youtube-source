@@ -116,10 +116,21 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                                      boolean allowDirectVideoIds,
                                      boolean allowDirectPlaylistIds,
                                      @NotNull Client... clients) {
+        this(
+            new YoutubeSourceOptions()
+                .setAllowSearch(allowSearch)
+                .setAllowDirectVideoIds(allowDirectVideoIds)
+                .setAllowDirectPlaylistIds(allowDirectPlaylistIds),
+            clients
+        );
+    }
+
+    public YoutubeAudioSourceManager(YoutubeSourceOptions options,
+                                     @NotNull Client... clients) {
         this.httpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
-        this.allowSearch = allowSearch;
-        this.allowDirectVideoIds = allowDirectVideoIds;
-        this.allowDirectPlaylistIds = allowDirectPlaylistIds;
+        this.allowSearch = options.isAllowSearch();
+        this.allowDirectVideoIds = options.isAllowDirectVideoIds();
+        this.allowDirectPlaylistIds = options.isAllowDirectPlaylistIds();
         this.clients = clients;
         this.cipherManager = new SignatureCipherManager();
 

@@ -14,31 +14,36 @@ public class YoutubeConfig {
     private boolean allowSearch = true;
     private boolean allowDirectVideoIds = true;
     private boolean allowDirectPlaylistIds = true;
+    private Pot pot = null;
     private String[] clients;
     private Map<String, ClientOptions> clientOptions = new HashMap<>();
 
     public boolean getEnabled() {
-        return this.enabled;
+        return enabled;
     }
 
     public boolean getAllowSearch() {
-        return this.allowSearch;
+        return allowSearch;
     }
 
     public boolean getAllowDirectVideoIds() {
-        return this.allowDirectVideoIds;
+        return allowDirectVideoIds;
     }
 
     public boolean getAllowDirectPlaylistIds() {
-        return this.allowDirectPlaylistIds;
+        return allowDirectPlaylistIds;
+    }
+
+    public Pot getPot() {
+        return pot;
     }
 
     public String[] getClients() {
-        return this.clients;
+        return clients;
     }
 
     public Map<String, ClientOptions> getClientOptions() {
-        return this.clientOptions;
+        return clientOptions;
     }
 
     public void setEnabled(boolean enabled) {
@@ -55,6 +60,10 @@ public class YoutubeConfig {
 
     public void setAllowDirectPlaylistIds(boolean allowDirectPlaylistIds) {
         this.allowDirectPlaylistIds = allowDirectPlaylistIds;
+    }
+
+    public void setPot(Pot pot) {
+        this.pot = pot;
     }
 
     public void setClients(String[] clients) {
