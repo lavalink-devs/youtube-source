@@ -125,6 +125,19 @@ lavalink:
 </details>
 
 Configuring the plugin:
+> [!IMPORTANT]
+> You must make sure to disable the built-in YouTube source like so:
+```yaml
+lavalink:
+  server:
+    sources:
+      youtube: false
+```
+
+> [!NOTE]
+> Existing options, such as `ratelimit` and `youtubePlaylistLoadLimit` will be picked up automatically by the plugin,
+> so these don't need changing.
+> 
 ```yaml
 plugins:
   youtube:
@@ -159,19 +172,6 @@ plugins:
       playlistLoading: false # Disables loading of playlists and mixes.
       searching: false # Disables the ability to search for videos.
 ```
-
-> [!IMPORTANT]
-> You must make sure to disable the built-in YouTube source like so:
-```yaml
-lavalink:
-  server:
-    sources:
-      youtube: false
-```
-
-> [!NOTE]
-> Existing options, such as `ratelimit` and `youtubePlaylistLoadLimit` will be picked up automatically by the plugin,
-> so these don't need changing.
 
 ## Available Clients
 Currently, the following clients are available for use:
