@@ -5,7 +5,7 @@ This source aims to provide robustness by leveraging multiple InnerTube clients
 for requests. Where one client fails, another will try to load the request.
 Which clients are used is entirely configurable.
 
-## README contents
+## Table of Contents
 - [Common](#common)
   - Information about the `common` module and usage of.
 - [V2](#v2)
