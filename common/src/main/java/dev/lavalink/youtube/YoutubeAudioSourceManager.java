@@ -198,6 +198,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                     throw ExceptionTools.wrapUnfriendlyExceptions("This video cannot be loaded.", Severity.SUSPICIOUS, cbl.getCause());
                 } catch (Throwable t) {
                     log.debug("Client \"{}\" threw a non-fatal exception, storing and proceeding...", client.getIdentifier(), t);
+                    t.addSuppressed(ClientInformation.create(client));
                     lastException = t;
                 }
             }
