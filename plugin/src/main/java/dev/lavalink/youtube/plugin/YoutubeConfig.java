@@ -17,7 +17,7 @@ public class YoutubeConfig {
     private Pot pot = null;
     private String[] clients;
     private Map<String, ClientOptions> clientOptions = new HashMap<>();
-    private YoutubeOauthConfig oauthConfig = null;
+    private YoutubeOauthConfig oauth = null;
 
     public boolean getEnabled() {
         return enabled;
@@ -47,8 +47,8 @@ public class YoutubeConfig {
         return clientOptions;
     }
 
-    public YoutubeOauthConfig getOauthConfig() {
-        return this.oauthConfig;
+    public YoutubeOauthConfig getOauth() {
+        return this.oauth;
     }
 
     public void setEnabled(boolean enabled) {
@@ -79,7 +79,7 @@ public class YoutubeConfig {
         this.clientOptions = clientOptions;
     }
 
-    public void setOauthConfig(YoutubeOauthConfig oauthConfig) {
-        this.oauthConfig = oauthConfig;
+    public void setOauth(YoutubeOauthConfig oauth) {
+        this.oauth = oauth;
     }
 }

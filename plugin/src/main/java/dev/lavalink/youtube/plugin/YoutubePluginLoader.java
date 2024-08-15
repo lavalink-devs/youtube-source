@@ -204,8 +204,8 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
             source.setPlaylistPageCount(playlistLoadLimit);
         }
 
-        if (youtubeConfig != null && youtubeConfig.getOauthConfig() != null) {
-            YoutubeOauthConfig oauthConfig = youtubeConfig.getOauthConfig();
+        if (youtubeConfig != null && youtubeConfig.getOauth() != null) {
+            YoutubeOauthConfig oauthConfig = youtubeConfig.getOauth();
 
             if (oauthConfig.getEnabled()) {
                 log.debug("Configuring youtube oauth integration with token: \"{}\" skipInitialization: {}", oauthConfig.getRefreshToken(), oauthConfig.getSkipInitialization());

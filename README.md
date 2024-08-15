@@ -241,7 +241,7 @@ source.useOauth2("your refresh token", true);
 plugins:
   youtube:
     enabled: true
-    oauthConfig:
+    oauth:
       # setting "enabled: true" is the bare minimum to get OAuth working.
       enabled: true
 
