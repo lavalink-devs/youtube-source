@@ -137,7 +137,6 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         this.allowDirectPlaylistIds = options.isAllowDirectPlaylistIds();
         this.clients = clients;
         this.cipherManager = new SignatureCipherManager();
-
         this.oauth2Handler = new YoutubeOauth2Handler(httpInterfaceManager);
 
         contextFilter = new YoutubeHttpContextFilter();
@@ -377,6 +376,11 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     @NotNull
     public YoutubeHttpContextFilter getContextFilter() {
         return contextFilter;
+    }
+
+    @NotNull
+    public YoutubeOauth2Handler getOauth2Handler() {
+        return oauth2Handler;
     }
 
     @NotNull

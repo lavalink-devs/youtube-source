@@ -38,7 +38,7 @@ public class YoutubeRestHandler {
 
     @PostMapping("/v4/youtube")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateRefreshToken(@RequestBody YoutubeOauthConfig config) {
+    public void updateOauth(@RequestBody YoutubeOauthConfig config) {
         YoutubeAudioSourceManager source = playerManager.source(YoutubeAudioSourceManager.class);
 
         if (source == null) {
@@ -48,4 +48,6 @@ public class YoutubeRestHandler {
         source.useOauth2(config.getRefreshToken(), config.getSkipInitialization());
         log.debug("Updated YouTube OAuth2 refresh token to {}", config.getRefreshToken());
     }
+
+
 }

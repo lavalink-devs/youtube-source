@@ -59,10 +59,11 @@ public class YoutubeOauth2Handler {
 
             // if refreshAccessToken() fails, enabled will never be flipped, so we don't use
             // oauth tokens erroneously.
-            // TODO?: This should fall back to access token initialization if refresh isn't valid,
-            //        provided "skipInitialization" is not true.
             enabled = true;
-        } else if (!skipInitialization) {
+            return;
+        }
+
+        if (!skipInitialization) {
             initializeAccessToken();
         }
     }
@@ -189,22 +190,26 @@ public class YoutubeOauth2Handler {
      * @param force Whether to forcefully renew the access token, even if it doesn't necessarily
      *              need to be refreshed yet.
      */
-    private void refreshAccessToken(boolean force) {
-        if (!shouldRefreshAccessToken() && !force) {
-            return;
-        }
+    public void refreshAccessToken(boolean force) {
+        log.debug("Refreshing access token (force: {})", force);
 
         if (DataFormatTools.isNullOrEmpty(refreshToken)) {
             throw new IllegalStateException("Cannot fetch access token without a refresh token!");
         }
 
-        synchronized (this) {
-            if (!shouldRefreshAccessToken() && !force) {
-                return;
-            }
+        if (!shouldRefreshAccessToken() && !force) {
+            log.debug("Access token does not need to be refreshed yet.");
+            return;
+        }
 
+        synchronized (this) {
             if (DataFormatTools.isNullOrEmpty(refreshToken)) {
                 throw new IllegalStateException("Cannot fetch access token without a refresh token!");
+            }
+
+            if (!shouldRefreshAccessToken() && !force) {
+                log.debug("Access token does not need to be refreshed yet.");
+                return;
             }
 
             // @formatter:off
@@ -260,8 +265,8 @@ public class YoutubeOauth2Handler {
             try {
                 refreshAccessToken(false);
             } catch (Throwable t) {
-                if (fetchErrorLogCount++ <= 3) {
-                    // log fetch errors up to 3 times to avoid spamming logs. in theory requests can still be made
+                if (++fetchErrorLogCount <= 3) {
+                    // log fetch errors up to 3 consecutive times to avoid spamming logs. in theory requests can still be made
                     // without an access token, but they are less likely to succeed. regardless, we shouldn't bloat a
                     // user's logs just in case YT changed something and broke oauth integration.
                     log.error("Refreshing YouTube access token failed", t);
@@ -273,6 +278,8 @@ public class YoutubeOauth2Handler {
                 tokenExpires = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(15);
                 return;
             }
+
+            fetchErrorLogCount = 0;
         }
 
         // check again to ensure updating worked as expected.
