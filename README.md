@@ -14,6 +14,8 @@ Which clients are used is entirely configurable.
   - Information about the `plugin` module and usage of.
 - [Available Clients](#available-clients)
   - Information about the clients provided by `youtube-source`, as well as their advantages/disadvantages.
+- [Using OAuth tokens](#using-oauth-tokens)
+  - Information on using OAuth tokens with `youtube-source`.
 - [Using a poToken](#using-a-potoken)
   - Information on using a `poToken` with `youtube-source`.
 - [Migration Information](#migration-from-lavaplayers-built-in-youtube-source)
@@ -206,6 +208,52 @@ Currently, the following clients are available for use:
   - ✔ Opus formats.
   - ✔ Age-restricted video playback.
   - ❌ No playlist support.
+
+## Using OAuth Tokens
+You may notice that some requests are flagged by YouTube, causing an error message asking you to sign in to confirm you're not a bot.
+With OAuth integration, you can request that `youtube-source` use your account credentials to appear as a normal user, with varying degrees
+of efficacy. You can instruct `youtube-source` to use OAuth with the following:
+
+> [!WARNING]
+> Similar to the `poToken` method, this is NOT a silver bullet solution, and worst case could get your account terminated!
+> For this reason, it is advised that **you use burner accounts and NOT your primary!**.
+> This method may also trigger ratelimit errors if used in a high traffic environment.
+> USE WITH CAUTION!
+
+### Lavaplayer
+```java
+YoutubeAudioSourceManager source = new YoutubeAudioSourceManager();
+// This will trigger an OAuth flow, where you will be instructed to head to YouTube's OAuth page and input a code.
+// This is safe, as it only uses YouTube's official OAuth flow. No tokens are seen or stored by us.
+source.useOauth2(null, false);
+
+// If you already have a refresh token, you can instruct the source to use it, skipping the OAuth flow entirely.
+// You can also set the `skipInitialization` parameter, which skips the OAuth flow. This should only be used
+// if you intend to supply a refresh token later on. You **must** either complete the OAuth flow or supply
+// a refresh token for OAuth integration to work.
+source.useOauth2("your refresh token", true);
+```
+
+<!-- TODO document rest routes -->
+
+### Lavalink
+```yaml
+plugins:
+  youtube:
+    enabled: true
+    oauthConfig:
+      # setting "enabled: true" is the bare minimum to get OAuth working.
+      enabled: true
+
+      # you may optionally set your refresh token if you have one, which skips the OAuth flow entirely.
+      # once you have completed the oauth flow at least once, you should see your refresh token within your
+      # lavalink logs, which can be used here.
+      refreshToken: "your refresh token, only supply this if you have one!"
+
+      # Set this if you don't want the OAuth flow to be triggered, if you intend to supply a refresh token
+      # later on via REST routes. Initialization is skipped automatically if a valid refresh token is supplied.
+      skipInitialization: true
+```
 
 ## Using a `poToken`
 A `poToken`, also known as a "Proof of Origin Token" is a way to identify what requests originate from.

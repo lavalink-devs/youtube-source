@@ -59,6 +59,8 @@ public class YoutubeOauth2Handler {
 
             // if refreshAccessToken() fails, enabled will never be flipped, so we don't use
             // oauth tokens erroneously.
+            // TODO?: This should fall back to access token initialization if refresh isn't valid,
+            //        provided "skipInitialization" is not true.
             enabled = true;
         } else if (!skipInitialization) {
             initializeAccessToken();
