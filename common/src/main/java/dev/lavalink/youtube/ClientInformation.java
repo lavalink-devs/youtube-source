@@ -1,7 +1,7 @@
 package dev.lavalink.youtube;
 
-import com.sedmelluq.discord.lavaplayer.tools.exception.DetailMessageBuilder;
 import dev.lavalink.youtube.clients.skeleton.Client;
+import dev.lavalink.youtube.polyfill.DetailMessageBuilder;
 
 public class ClientInformation extends Exception {
     private ClientInformation(String message) {
