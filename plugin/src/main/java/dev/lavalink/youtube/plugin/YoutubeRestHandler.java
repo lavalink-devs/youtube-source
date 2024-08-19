@@ -48,6 +48,4 @@ public class YoutubeRestHandler {
         source.useOauth2(config.getRefreshToken(), config.getSkipInitialization());
         log.debug("Updated YouTube OAuth2 refresh token to {}", config.getRefreshToken());
     }
-
-
 }
