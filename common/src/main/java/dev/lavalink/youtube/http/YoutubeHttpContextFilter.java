@@ -24,9 +24,14 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   private static final HttpContextRetryCounter retryCounter = new HttpContextRetryCounter("yt-token-retry");
 
   private YoutubeAccessTokenTracker tokenTracker;
+  private YoutubeOauth2Handler oauth2Handler;
 
   public void setTokenTracker(@NotNull YoutubeAccessTokenTracker tokenTracker) {
     this.tokenTracker = tokenTracker;
+  }
+
+  public void setOauth2Handler(@NotNull YoutubeOauth2Handler oauth2Handler) {
+    this.oauth2Handler = oauth2Handler;
   }
 
   @Override
@@ -57,16 +62,24 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
       return;
     }
 
+    if (oauth2Handler.isOauthFetchContext(context)) {
+      return;
+    }
+
     String userAgent = context.getAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED, String.class);
 
-    if (userAgent != null) {
-      request.setHeader("User-Agent", userAgent);
+    if (!request.getURI().getHost().contains("googlevideo")) {
+      if (userAgent != null) {
+        request.setHeader("User-Agent", userAgent);
 
-      String visitorData = context.getAttribute(ATTRIBUTE_VISITOR_DATA_SPECIFIED, String.class);
-      request.setHeader("X-Goog-Visitor-Id", visitorData != null ? visitorData : tokenTracker.getVisitorId());
+        String visitorData = context.getAttribute(ATTRIBUTE_VISITOR_DATA_SPECIFIED, String.class);
+        request.setHeader("X-Goog-Visitor-Id", visitorData != null ? visitorData : tokenTracker.getVisitorId());
 
-      context.removeAttribute(ATTRIBUTE_VISITOR_DATA_SPECIFIED);
-      context.removeAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED);
+        context.removeAttribute(ATTRIBUTE_VISITOR_DATA_SPECIFIED);
+        context.removeAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED);
+      }
+
+      oauth2Handler.applyToken(request);
     }
 
 //    try {
