@@ -2,15 +2,13 @@ package dev.lavalink.youtube.plugin;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.plugin.rest.MinimalConfigResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Collections;
-import java.util.Map;
 
 @Service
 @RestController
@@ -24,14 +22,14 @@ public class YoutubeRestHandler {
     }
 
     @GetMapping("/youtube")
-    public Map<String, String> getYoutubeConfig() {
+    public MinimalConfigResponse getYoutubeConfig() {
         YoutubeAudioSourceManager source = playerManager.source(YoutubeAudioSourceManager.class);
 
         if (source == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The YouTube source manager is not registered.");
         }
 
-        return Collections.singletonMap("refreshToken", source.getOauth2RefreshToken());
+        return MinimalConfigResponse.from(source);
     }
 
     @PostMapping("/youtube")

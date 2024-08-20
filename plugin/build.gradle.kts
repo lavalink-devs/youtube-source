@@ -12,7 +12,7 @@ lavalinkPlugin {
     name = "youtube-plugin"
     path = "dev.lavalink.youtube.plugin"
     apiVersion = libs.versions.lavalink
-    serverVersion = "4.0.4"
+    serverVersion = "4.0.7"
     configurePublishing = false
 }
 

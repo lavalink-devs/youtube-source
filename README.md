@@ -308,6 +308,11 @@ Body:
 ```
 
 Response:
+
+If the YouTube source is not enabled, or the `refreshToken` is invalid:
+`500 - Internal Server Error`
+
+Otherwise:
 `204 - No Content`
 
 ### `GET` `/youtube`
@@ -315,7 +320,7 @@ Response:
 Response:
 
 If the YouTube source is not enabled:
-`400 - Bad Request`
+`500 - Internal Server Error`
 
 Otherwise:
 ```json
@@ -323,8 +328,6 @@ Otherwise:
   "refreshToken": "your current refresh token, or null"
 }
 ```
-
-
 
 ## Migration from Lavaplayer's built-in YouTube source
 
