@@ -297,7 +297,7 @@ plugins:
 > A `poToken` is not a silver bullet, and currently it only applies to requests made via the `WEB` client.
 
 ## REST routes (`plugin` only)
-`POST` `/youtube`
+### `POST` `/youtube`
 
 Body:
 ```json
@@ -310,7 +310,7 @@ Body:
 Response:
 `204 - No Content`
 
-`GET` `/youtube`
+### `GET` `/youtube`
 
 Response:
 
