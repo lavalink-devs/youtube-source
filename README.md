@@ -214,7 +214,7 @@ Currently, the following clients are available for use:
 ## Using OAuth Tokens
 You may notice that some requests are flagged by YouTube, causing an error message asking you to sign in to confirm you're not a bot.
 With OAuth integration, you can request that `youtube-source` use your account credentials to appear as a normal user, with varying degrees
-of efficacy. You can instruct `youtube-source` to use OAuth with the following:
+of efficacy. **You do _not_ need to use `poToken` with OAuth.**
 
 > [!WARNING]
 > Similar to the `poToken` method, this is NOT a silver bullet solution, and worst case could get your account terminated!
@@ -230,6 +230,8 @@ of efficacy. You can instruct `youtube-source` to use OAuth with the following:
 > If you do not have a refresh token, then do not supply one. The source will output your refresh token into your terminal upon
 > successfully completing the OAuth flow at least **once**. If you do not see your token, you may need to configure your
 > logging (see above note).
+
+You can instruct `youtube-source` to use OAuth with the following:
 
 ### Lavaplayer
 ```java
@@ -276,6 +278,11 @@ To obtain a `poToken`, you can use https://github.com/iv-org/youtube-trusted-ses
 or the docker image. Both methods will print a `poToken` after a successful run, which you can supply to `youtube-source`
 to try and work around having automated requests blocked.
 
+
+> [!NOTE]
+> A `poToken` is not a silver bullet, and currently it only applies to requests made via the `WEB` client.
+> You do not need to specify a `poToken` if using OAuth, and vice versa.
+
 Specifying the token is as simple as doing:
 
 ### Lavaplayer
@@ -293,17 +300,22 @@ plugins:
       visitorData: "paste your visitor_data here"
 ```
 
-> [!NOTE]
-> A `poToken` is not a silver bullet, and currently it only applies to requests made via the `WEB` client.
-
 ## REST routes (`plugin` only)
 ### `POST` `/youtube`
 
 Body:
+
+> [!NOTE]
+> You do not need to provide everything as it is shown.
+> For example, you can specify just `refreshToken` and `skipInitialization`, or just `poToken` and `visitorData`.
+> You do **not** need to use `poToken` with OAuth and vice versa.
+
 ```json
 {
   "refreshToken": "your new refresh token",
-  "skipInitialization": true
+  "skipInitialization": true,
+  "poToken": "your po_token",
+  "visitorData": "your visitor_data"
 }
 ```
 
