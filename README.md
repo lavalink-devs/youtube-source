@@ -220,6 +220,15 @@ of efficacy. You can instruct `youtube-source` to use OAuth with the following:
 > This method may also trigger ratelimit errors if used in a high traffic environment.
 > USE WITH CAUTION!
 
+> [!NOTE]
+> You may need to set your log level for `dev.lavalink.youtube.http.YoutubeOauth2Handler` to `INFO`, to see additional information
+> within your terminal regarding completing the OAuth flow.
+
+> [!NOTE]
+> If you do not have a refresh token, then do not supply one. The source will output your refresh token into your terminal upon
+> successfully completing the OAuth flow at least **once**. If you do not see your token, you may need to configure your
+> logging (see above note).
+
 ### Lavaplayer
 ```java
 YoutubeAudioSourceManager source = new YoutubeAudioSourceManager();
@@ -234,8 +243,6 @@ source.useOauth2(null, false);
 source.useOauth2("your refresh token", true);
 ```
 
-<!-- TODO document rest routes -->
-
 ### Lavalink
 ```yaml
 plugins:
@@ -245,14 +252,15 @@ plugins:
       # setting "enabled: true" is the bare minimum to get OAuth working.
       enabled: true
 
-      # you may optionally set your refresh token if you have one, which skips the OAuth flow entirely.
-      # once you have completed the oauth flow at least once, you should see your refresh token within your
-      # lavalink logs, which can be used here.
-      refreshToken: "your refresh token, only supply this if you have one!"
+      # if you have a refresh token, you may set it below (make sure to uncomment the line to apply it).
+      # setting a valid refresh token will skip the OAuth flow entirely. See above note on how to retrieve
+      # your refreshToken.
+      # refreshToken: "paste your refresh token here if applicable"
 
-      # Set this if you don't want the OAuth flow to be triggered, if you intend to supply a refresh token
-      # later on via REST routes. Initialization is skipped automatically if a valid refresh token is supplied.
-      skipInitialization: true
+      # Set this if you don't want the OAuth flow to be triggered, if you intend to supply a refresh token later.
+      # Initialization is skipped automatically if a valid refresh token is supplied. Leave this commented if you're
+      # completing the OAuth flow for the first time/do not have a refresh token.
+      # skipInitialization: true
 ```
 
 ## Using a `poToken`
@@ -285,8 +293,36 @@ plugins:
 
 > [!NOTE]
 > A `poToken` is not a silver bullet, and currently it only applies to requests made via the `WEB` client.
-> 
-> At the time of writing, the most effective method for working around automated request blocking is to use IPv6 rotation.
+
+## REST routes (`plugin` only)
+`POST` `/youtube`
+
+Body:
+```json
+{
+  "refreshToken": "your new refresh token",
+  "skipInitialization": true
+}
+```
+
+Response:
+`204 - No Content`
+
+`GET` `/youtube`
+
+Response:
+
+If the YouTube source is not enabled:
+`400 - Bad Request`
+
+Otherwise:
+```json
+{
+  "refreshToken": "your current refresh token, or null"
+}
+```
+
+
 
 ## Migration from Lavaplayer's built-in YouTube source
 
