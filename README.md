@@ -18,6 +18,8 @@ Which clients are used is entirely configurable.
   - Information on using OAuth tokens with `youtube-source`.
 - [Using a poToken](#using-a-potoken)
   - Information on using a `poToken` with `youtube-source`.
+- [REST Routes (`plugin` only)](#rest-routes-plugin-only)
+  - Information on the REST routes provided by the `youtube-source` plugin module.
 - [Migration Information](#migration-from-lavaplayers-built-in-youtube-source)
   - Information on migrating from Lavaplayer's built-in Youtube source manager.
 - [Additional Support](#additional-support)
