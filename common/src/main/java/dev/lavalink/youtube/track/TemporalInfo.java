@@ -16,10 +16,10 @@ public class TemporalInfo {
     }
 
     @NotNull
-    public static TemporalInfo fromRawData(boolean wasLiveStream, JsonBrowser durationSecondsField, boolean legacy) {
+    public static TemporalInfo fromRawData(boolean hasLivestreamability, JsonBrowser durationSecondsField, boolean isLive) {
         long durationValue = durationSecondsField.asLong(0L);
 
-        if (wasLiveStream && !legacy) {
+        if (hasLivestreamability) {
             // Premieres have duration information, but act as a normal stream. When we play it, we don't know the
             // current position of it since YouTube doesn't provide such information, so assume duration is unknown.
             durationValue = 0;
@@ -27,7 +27,7 @@ public class TemporalInfo {
 
         // VODs are not really live streams, even though the response JSON indicates that it is.
         // If it is actually live, then duration is also missing or 0.
-        boolean isActiveStream = wasLiveStream && durationValue == 0;
+        boolean isActiveStream = hasLivestreamability || isLive;
 
         return new TemporalInfo(
             isActiveStream,

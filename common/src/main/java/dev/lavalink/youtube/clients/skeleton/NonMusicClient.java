@@ -327,7 +327,7 @@ public abstract class NonMusicClient implements Client {
         TemporalInfo temporalInfo = TemporalInfo.fromRawData(
             !playabilityStatus.get("liveStreamability").isNull(),
             videoDetails.get("lengthSeconds"),
-            false
+            videoDetails.get("isLive").asBoolean(false)
         );
 
         return buildAudioTrack(source, videoDetails, title, author, temporalInfo.durationMillis, videoId, temporalInfo.isActiveStream);

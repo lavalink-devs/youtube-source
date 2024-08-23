@@ -32,8 +32,12 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.CONTENT_LENGTH_UNKNOW
  * responds to a segment request with 204.
  */
 public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
-    private static final Logger log = LoggerFactory.getLogger(com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeMpegStreamAudioTrack.class);
-    private static final RequestConfig streamingRequestConfig = RequestConfig.custom().setSocketTimeout(3000).setConnectionRequestTimeout(3000).setConnectTimeout(3000).build();
+    private static final Logger log = LoggerFactory.getLogger(YoutubeMpegStreamAudioTrack.class);
+    private static final RequestConfig streamingRequestConfig = RequestConfig.custom()
+        .setSocketTimeout(3000)
+        .setConnectionRequestTimeout(3000)
+        .setConnectTimeout(3000)
+        .build();
     private static final long EMPTY_RETRY_THRESHOLD_MS = 400;
     private static final long EMPTY_RETRY_INTERVAL_MS = 50;
     private static final long MAX_REWIND_TIME = 43200; // Seconds
