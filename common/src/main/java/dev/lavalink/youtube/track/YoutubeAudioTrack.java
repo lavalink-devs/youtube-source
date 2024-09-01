@@ -97,13 +97,18 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
       if (lastException != null) {
         if (lastException instanceof FriendlyException) {
+          if (!"YouTube WebM streams are currently not supported.".equals(lastException.getMessage())) {
+            // Rethrow certain FriendlyExceptions as suspicious to ensure LavaPlayer logs them.
+            throw new FriendlyException(lastException.getMessage(), Severity.SUSPICIOUS, lastException.getCause());
+          }
+
           throw lastException;
         }
 
         throw ExceptionTools.toRuntimeException(lastException);
       }
     } catch (CannotBeLoaded e) {
-      throw ExceptionTools.wrapUnfriendlyExceptions("This video is unavailable", Severity.COMMON, e.getCause());
+      throw ExceptionTools.wrapUnfriendlyExceptions("This video is unavailable", Severity.SUSPICIOUS, e.getCause());
     }
   }
 
@@ -188,7 +193,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     TrackFormats formats = client.loadFormats(sourceManager, httpInterface, getIdentifier());
 
     if (formats == null) {
-      throw new FriendlyException("This video cannot be played", Severity.COMMON, null);
+      throw new FriendlyException("This video cannot be played", Severity.SUSPICIOUS, null);
     }
 
     StreamFormat format = formats.getBestFormat();
