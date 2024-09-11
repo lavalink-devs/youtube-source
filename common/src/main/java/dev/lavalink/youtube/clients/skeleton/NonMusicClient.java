@@ -75,8 +75,10 @@ public abstract class NonMusicClient implements Client {
 
         ClientConfig config = getBaseClientConfig(httpInterface);
 
-        config.withClientField("clientScreen", "EMBED")
-            .withThirdPartyEmbedUrl("https://google.com");
+        if (config.getName() == "WEB_EMBEDDED_PLAYER" || status == null) {    
+            config.withClientField("clientScreen", "EMBED")
+                .withThirdPartyEmbedUrl("https://google.com");
+        }
 
         String payload = config.withRootField("videoId", videoId)
             .withRootField("racyCheckOk", true)
