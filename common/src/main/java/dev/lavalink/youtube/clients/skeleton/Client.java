@@ -203,6 +203,11 @@ public interface Client {
         return getOptions().getPlayback();
     }
 
+    
+    default boolean isEmbedded() {
+        return false;
+    }
+
     void setPlaylistPageCount(int count);
 
     /**

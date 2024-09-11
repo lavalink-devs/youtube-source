@@ -44,6 +44,11 @@ public class WebEmbedded extends Web {
     }
 
     @Override
+    public boolean isEmbedded() {
+        return true;
+    }
+
+    @Override
     @NotNull
     public URI transformPlaybackUri(@NotNull URI originalUri, @NotNull URI resolvedPlaybackUri) {
         if (poToken == null) {
