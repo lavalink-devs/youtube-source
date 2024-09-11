@@ -9,7 +9,7 @@ import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv6Block;
 import dev.arbjerg.lavalink.api.AudioPlayerManagerConfiguration;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.ClientOptions;
-import dev.lavalink.youtube.clients.Web;
+import dev.lavalink.youtube.clients.WebEmbedded;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import lavalink.server.config.RateLimitConfig;
 import lavalink.server.config.ServerConfig;
@@ -170,7 +170,7 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
 
                     if (token != null && visitorData != null) {
                         log.debug("Applying poToken and visitorData to WEB client (token: {}, vd: {})", token, visitorData);
-                        Web.setPoTokenAndVisitorData(token, visitorData);
+                        WebEmbedded.setPoTokenAndVisitorData(token, visitorData);
                     } else if (token != null || visitorData != null) {
                         log.warn("Both pot.token and pot.visitorData must be specified and valid for pot to apply.");
                     }

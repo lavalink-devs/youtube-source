@@ -37,8 +37,6 @@ public class Web extends StreamingNonMusicClient {
         .withClientField("clientVersion", "2.20240224.11.00")
         .withUserField("lockedSafetyMode", false);
 
-    public static String poToken;
-
     protected volatile long lastConfigUpdate = -1;
 
     protected ClientOptions options;
@@ -49,20 +47,6 @@ public class Web extends StreamingNonMusicClient {
 
     public Web(@NotNull ClientOptions options) {
         this.options = options;
-    }
-
-    public static void setPoTokenAndVisitorData(String poToken, String visitorData) {
-        Web.poToken = poToken;
-
-        if (poToken == null || visitorData == null) {
-            BASE_CONFIG.getRoot().remove("serviceIntegrityDimensions");
-            BASE_CONFIG.withVisitorData(null);
-            return;
-        }
-
-        Map<String, Object> sid = BASE_CONFIG.putOnceAndJoin(BASE_CONFIG.getRoot(), "serviceIntegrityDimensions");
-        sid.put("poToken", poToken);
-        BASE_CONFIG.withVisitorData(visitorData);
     }
 
     protected void fetchClientConfig(@NotNull HttpInterface httpInterface) {
@@ -134,25 +118,6 @@ public class Web extends StreamingNonMusicClient {
         }
 
         return BASE_CONFIG.copy();
-    }
-
-    @Override
-    @NotNull
-    public URI transformPlaybackUri(@NotNull URI originalUri, @NotNull URI resolvedPlaybackUri) {
-        if (poToken == null) {
-            return resolvedPlaybackUri;
-        }
-
-        log.debug("Applying 'pot' parameter on playback URI: {}", resolvedPlaybackUri);
-        URIBuilder builder = new URIBuilder(resolvedPlaybackUri);
-        builder.addParameter("pot", poToken);
-
-        try {
-            return builder.build();
-        } catch (URISyntaxException e) {
-            log.debug("Failed to apply 'pot' parameter.", e);
-            return resolvedPlaybackUri;
-        }
     }
 
     @Override

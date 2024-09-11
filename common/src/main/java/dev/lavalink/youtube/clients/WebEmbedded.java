@@ -7,8 +7,12 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.net.URISyntaxException;
+import java.util.Map;
+import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.net.URI;
 
 public class WebEmbedded extends Web {
     private static final Logger log = LoggerFactory.getLogger(WebEmbedded.class);
@@ -21,6 +25,41 @@ public class WebEmbedded extends Web {
 
     public WebEmbedded() {
         super(ClientOptions.DEFAULT);
+    }
+
+    public static String poToken;    
+
+    public static void setPoTokenAndVisitorData(String poToken, String visitorData) {
+        WebEmbedded.poToken = poToken;
+
+        if (poToken == null || visitorData == null) {
+            BASE_CONFIG.getRoot().remove("serviceIntegrityDimensions");
+            BASE_CONFIG.withVisitorData(null);
+            return;
+        }
+
+        Map<String, Object> sid = BASE_CONFIG.putOnceAndJoin(BASE_CONFIG.getRoot(), "serviceIntegrityDimensions");
+        sid.put("poToken", poToken);
+        BASE_CONFIG.withVisitorData(visitorData);
+    }
+
+    @Override
+    @NotNull
+    public URI transformPlaybackUri(@NotNull URI originalUri, @NotNull URI resolvedPlaybackUri) {
+        if (poToken == null) {
+            return resolvedPlaybackUri;
+        }
+
+        log.debug("Applying 'pot' parameter on playback URI: {}", resolvedPlaybackUri);
+        URIBuilder builder = new URIBuilder(resolvedPlaybackUri);
+        builder.addParameter("pot", poToken);
+
+        try {
+            return builder.build();
+        } catch (URISyntaxException e) {
+            log.debug("Failed to apply 'pot' parameter.", e);
+            return resolvedPlaybackUri;
+        }
     }
 
     public WebEmbedded(@NotNull ClientOptions options) {
