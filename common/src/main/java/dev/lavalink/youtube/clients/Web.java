@@ -37,6 +37,8 @@ public class Web extends StreamingNonMusicClient {
         .withClientField("clientVersion", "2.20240224.11.00")
         .withUserField("lockedSafetyMode", false);
 
+    public static String poToken;
+
     protected volatile long lastConfigUpdate = -1;
 
     protected ClientOptions options;
@@ -47,6 +49,10 @@ public class Web extends StreamingNonMusicClient {
 
     public Web(@NotNull ClientOptions options) {
         this.options = options;
+    }
+
+    public static void setPoTokenAndVisitorData(String poToken, String visitorData) {
+        log.warn("poToken on WEB Client has no effect, please use WebEmbedded!");
     }
 
     protected void fetchClientConfig(@NotNull HttpInterface httpInterface) {
