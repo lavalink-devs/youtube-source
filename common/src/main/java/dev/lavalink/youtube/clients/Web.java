@@ -65,25 +65,6 @@ public class Web extends StreamingNonMusicClient {
         BASE_CONFIG.withVisitorData(visitorData);
     }
 
-    @Override
-    @NotNull
-    public URI transformPlaybackUri(@NotNull URI originalUri, @NotNull URI resolvedPlaybackUri) {
-        if (poToken == null) {
-            return resolvedPlaybackUri;
-        }
-
-        log.debug("Applying 'pot' parameter on playback URI: {}", resolvedPlaybackUri);
-        URIBuilder builder = new URIBuilder(resolvedPlaybackUri);
-        builder.addParameter("pot", poToken);
-
-        try {
-            return builder.build();
-        } catch (URISyntaxException e) {
-            log.debug("Failed to apply 'pot' parameter.", e);
-            return resolvedPlaybackUri;
-        }
-    }
-
     protected void fetchClientConfig(@NotNull HttpInterface httpInterface) {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com"))) {
             HttpClientTools.assertSuccessWithContent(response, "client config fetch");
@@ -153,6 +134,25 @@ public class Web extends StreamingNonMusicClient {
         }
 
         return BASE_CONFIG.copy();
+    }
+
+    @Override
+    @NotNull
+    public URI transformPlaybackUri(@NotNull URI originalUri, @NotNull URI resolvedPlaybackUri) {
+        if (poToken == null) {
+            return resolvedPlaybackUri;
+        }
+
+        log.debug("Applying 'pot' parameter on playback URI: {}", resolvedPlaybackUri);
+        URIBuilder builder = new URIBuilder(resolvedPlaybackUri);
+        builder.addParameter("pot", poToken);
+
+        try {
+            return builder.build();
+        } catch (URISyntaxException e) {
+            log.debug("Failed to apply 'pot' parameter.", e);
+            return resolvedPlaybackUri;
+        }
     }
 
     @Override
