@@ -68,14 +68,15 @@ public abstract class NonMusicClient implements Client {
     protected JsonBrowser loadTrackInfoFromInnertube(@NotNull YoutubeAudioSourceManager source,
                                                      @NotNull HttpInterface httpInterface,
                                                      @NotNull String videoId,
-                                                     @Nullable PlayabilityStatus status) throws CannotBeLoaded, IOException {
+                                                     @Nullable PlayabilityStatus status) throws CannotBeLoaded, IOException, RuntimeException {
         SignatureCipherManager cipherManager = source.getCipherManager();
         CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
         SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, playerScript.url);
 
         ClientConfig config = getBaseClientConfig(httpInterface);
 
-        if (status == null || this.isEmbedded()) {    
+        if (status == null) {
+            // Only add embed info if the status is not NON_EMBEDDABLE.
             config.withClientField("clientScreen", "EMBED")
                 .withThirdPartyEmbedUrl("https://google.com");
         }
@@ -100,6 +101,11 @@ public abstract class NonMusicClient implements Client {
         // All other branches should've been caught by getPlayabilityStatus().
         // An exception will be thrown if we can't handle it.
         if (playabilityStatus == PlayabilityStatus.NON_EMBEDDABLE) {
+            if (isEmbedded()) {
+                throw new FriendlyException("Loading information for for video failed", Severity.COMMON,
+                    new RuntimeException("Non-embeddable video cannot be loaded by embedded client"));
+            }
+
             json = loadTrackInfoFromInnertube(source, httpInterface, videoId, status);
             getPlayabilityStatus(json.get("playabilityStatus"), true);
         }
