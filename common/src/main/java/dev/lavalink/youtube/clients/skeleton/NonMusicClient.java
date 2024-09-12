@@ -68,7 +68,7 @@ public abstract class NonMusicClient implements Client {
     protected JsonBrowser loadTrackInfoFromInnertube(@NotNull YoutubeAudioSourceManager source,
                                                      @NotNull HttpInterface httpInterface,
                                                      @NotNull String videoId,
-                                                     @Nullable PlayabilityStatus status) throws CannotBeLoaded, IOException, RuntimeException {
+                                                     @Nullable PlayabilityStatus status) throws CannotBeLoaded, IOException {
         SignatureCipherManager cipherManager = source.getCipherManager();
         CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
         SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, playerScript.url);
