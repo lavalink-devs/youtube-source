@@ -20,14 +20,12 @@ public class WebEmbedded extends Web {
     public static ClientConfig BASE_CONFIG = new ClientConfig()
         .withApiKey("AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8")
         .withClientName("WEB_EMBEDDED_PLAYER")
-        .withClientField("clientVersion", "1.20240806.01.00")
+        .withClientField("clientVersion", "1.20240902.00.00")
         .withUserField("lockedSafetyMode", false);
 
     public WebEmbedded() {
         super(ClientOptions.DEFAULT);
     }
-
-    public static String poToken;    
 
     public static void setPoTokenAndVisitorData(String poToken, String visitorData) {
         WebEmbedded.poToken = poToken;
