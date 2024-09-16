@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.Web;
+import dev.lavalink.youtube.clients.WebEmbedded;
 import dev.lavalink.youtube.plugin.rest.MinimalConfigRequest;
 import dev.lavalink.youtube.plugin.rest.MinimalConfigResponse;
 import org.slf4j.Logger;
@@ -55,6 +56,7 @@ public class YoutubeRestHandler {
         String visitorData = config.getVisitorData();
 
         if (poToken == null || visitorData == null || (!poToken.isEmpty() && !visitorData.isEmpty())) {
+            WebEmbedded.setPoTokenAndVisitorData(poToken, visitorData);
             Web.setPoTokenAndVisitorData(poToken, visitorData);
             log.debug("Updated poToken to \"{}\" and visitorData to \"{}\"", poToken, visitorData);
         }

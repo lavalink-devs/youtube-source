@@ -101,6 +101,11 @@ public abstract class NonMusicClient implements Client {
         // All other branches should've been caught by getPlayabilityStatus().
         // An exception will be thrown if we can't handle it.
         if (playabilityStatus == PlayabilityStatus.NON_EMBEDDABLE) {
+            if (isEmbedded()) {
+                throw new FriendlyException("Loading information for for video failed", Severity.COMMON,
+                    new RuntimeException("Non-embeddable video cannot be loaded by embedded client"));
+            }
+
             json = loadTrackInfoFromInnertube(source, httpInterface, videoId, status);
             getPlayabilityStatus(json.get("playabilityStatus"), true);
         }
