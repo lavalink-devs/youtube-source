@@ -341,6 +341,23 @@ Otherwise:
 }
 ```
 
+### `GET` `/youtube/stream/{videoId}`
+
+Query parameters:
+
+| Key          | Value Type | Required | Notes                                                                                                                                                       |
+|--------------|------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| itag         | integer    | No       | The [itag](https://gist.github.com/AgentOak/34d47c65b1d28829bb17c24c04a0096f) of the desired format. youtube-source's default format selector will be used. |
+| withClient   | string     | No       | The client to use for streaming. Uses all clients if unspecified.                                                                                           |
+
+Response:
+
+If `videoId` could not be found or loaded, or the `itag` does not exist, or if no client supports format loading:
+`400 - Bad Request`
+
+Otherwise:
+`200 - OK` accompanied by the selected format stream (audio or video). `Content-Type` header will be set appropriately.
+
 ## Migration from Lavaplayer's built-in YouTube source
 
 This client is intended as a direct replacement for Lavaplayer's built-in `YoutubeAudioSourceManager`,
