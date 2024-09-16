@@ -345,10 +345,10 @@ Otherwise:
 
 Query parameters:
 
-| Key          | Value Type | Required | Notes                                                                                                                                                       |
-|--------------|------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| itag         | integer    | No       | The [itag](https://gist.github.com/AgentOak/34d47c65b1d28829bb17c24c04a0096f) of the desired format. youtube-source's default format selector will be used. |
-| withClient   | string     | No       | The identifier of the client to use for streaming. Uses all clients if unspecified.                                                                         |
+| Key          | Value Type | Required | Notes                                                                                                                                                                       |
+|--------------|------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| itag         | integer    | No       | The [itag](https://gist.github.com/AgentOak/34d47c65b1d28829bb17c24c04a0096f) of the desired format. If unspecified, youtube-source's default format selector will be used. |
+| withClient   | string     | No       | The identifier of the client to use for streaming. Uses all clients if unspecified.                                                                                         |
 
 Response:
 
