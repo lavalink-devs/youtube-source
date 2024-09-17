@@ -279,7 +279,6 @@ public abstract class NonMusicClient implements Client {
                 String title = DataFormatTools.defaultOnNull(titleField.get("simpleText").text(), titleField.get("runs").index(0).get("text").text());
                 String author = DataFormatTools.defaultOnNull(authorJson.get("runs").index(0).get("text").text(), "Unknown artist");
                 long duration = Units.secondsToMillis(item.get("lengthSeconds").asLong(Units.DURATION_SEC_UNKNOWN));
-
                 tracks.add(buildAudioTrack(source, item, title, author, duration, videoId, false));
             }
         }
@@ -295,6 +294,11 @@ public abstract class NonMusicClient implements Client {
         JsonBrowser titleJson = json.get("title");
         String title = DataFormatTools.defaultOnNull(titleJson.get("runs").index(0).get("text").text(), titleJson.get("simpleText").text());
         String author = json.get("longBylineText").get("runs").index(0).get("text").text();
+
+        if (author == null) {
+            log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
+            author = "Unknown artist";
+        }
 
         JsonBrowser durationJson = json.get("lengthText");
         String durationText = DataFormatTools.defaultOnNull(durationJson.get("runs").index(0).get("text").text(), durationJson.get("simpleText").text());
@@ -328,6 +332,11 @@ public abstract class NonMusicClient implements Client {
 
         String title = videoDetails.get("title").text();
         String author = videoDetails.get("author").text();
+
+        if (author == null) {
+            log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
+            author = "Unknown artist";
+        }
 
         TemporalInfo temporalInfo = TemporalInfo.fromRawData(
             !playabilityStatus.get("liveStreamability").isNull(),

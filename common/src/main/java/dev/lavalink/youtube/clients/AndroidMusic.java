@@ -10,12 +10,15 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class AndroidMusic extends Android {
+    private static final Logger log = LoggerFactory.getLogger(AndroidMusic.class);
     public static String CLIENT_VERSION = "7.11.50";
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
@@ -93,6 +96,11 @@ public class AndroidMusic extends Android {
         JsonBrowser secondaryJson = json.get("menu").get("menuRenderer").get("title").get("musicMenuTitleRenderer").get("secondaryText").get("runs");
         String title = DataFormatTools.defaultOnNull(titleJson.get("runs").index(0).get("text").text(), titleJson.get("simpleText").text());
         String author = secondaryJson.index(0).get("text").text();
+
+        if (author == null) {
+            log.debug("Author field is null, json: {}", json.format());
+            author = "Unknown artist";
+        }
 
         JsonBrowser durationJson = secondaryJson.index(2);
         String durationText = DataFormatTools.defaultOnNull(durationJson.get("text").text(), durationJson.get("runs").index(0).get("text").text());

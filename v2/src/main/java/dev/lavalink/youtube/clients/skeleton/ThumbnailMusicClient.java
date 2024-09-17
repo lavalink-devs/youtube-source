@@ -6,6 +6,8 @@ import com.sedmelluq.discord.lavaplayer.tools.ThumbnailTools;
 import com.sedmelluq.discord.lavaplayer.track.*;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +16,8 @@ import java.util.List;
  * This class is deprecated.
  */
 public abstract class ThumbnailMusicClient extends MusicClient {
+    private static final Logger log = LoggerFactory.getLogger(ThumbnailMusicClient.class);
+
     @Override
     @NotNull
     protected List<AudioTrack> extractSearchResultTracks(@NotNull YoutubeAudioSourceManager source,
@@ -49,6 +53,12 @@ public abstract class ThumbnailMusicClient extends MusicClient {
                 .values();
 
             String author = runs.get(0).get("text").text();
+
+            if (author == null) {
+                log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
+                author = "Unknown artist";
+            }
+
             JsonBrowser lastElement = runs.get(runs.size() - 1);
 
             if (!lastElement.get("navigationEndpoint").isNull()) {

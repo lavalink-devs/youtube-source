@@ -14,6 +14,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,6 +25,8 @@ import java.util.List;
  * The base class for a client that can be used with music.youtube.com.
  */
 public abstract class MusicClient implements Client {
+    private static final Logger log = LoggerFactory.getLogger(MusicClient.class);
+
     @NotNull
     protected abstract ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface);
 
@@ -95,6 +99,12 @@ public abstract class MusicClient implements Client {
                 .values();
 
             String author = runs.get(0).get("text").text();
+
+            if (author == null) {
+                log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
+                author = "Unknown artist";
+            }
+
             JsonBrowser lastElement = runs.get(runs.size() - 1);
 
             if (!lastElement.get("navigationEndpoint").isNull()) {

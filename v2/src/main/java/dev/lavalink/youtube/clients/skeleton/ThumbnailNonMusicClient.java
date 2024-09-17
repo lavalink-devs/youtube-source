@@ -13,6 +13,8 @@ import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.track.TemporalInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.List;
  * method instead.
  */
 public abstract class ThumbnailNonMusicClient extends NonMusicClient {
+    private static final Logger log = LoggerFactory.getLogger(ThumbnailNonMusicClient.class);
+
     protected void extractPlaylistTracks(@NotNull JsonBrowser json,
                                          @NotNull List<AudioTrack> tracks,
                                          @NotNull YoutubeAudioSourceManager source) {
@@ -66,6 +70,11 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
         String title = DataFormatTools.defaultOnNull(titleJson.get("runs").index(0).get("text").text(), titleJson.get("simpleText").text());
         String author = json.get("longBylineText").get("runs").index(0).get("text").text();
 
+        if (author == null) {
+            log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
+            author = "Unknown artist";
+        }
+
         JsonBrowser durationJson = json.get("lengthText");
         String durationText = DataFormatTools.defaultOnNull(durationJson.get("runs").index(0).get("text").text(), durationJson.get("simpleText").text());
 
@@ -86,6 +95,11 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
 
         String title = videoDetails.get("title").text();
         String author = videoDetails.get("author").text();
+
+        if (author == null) {
+            log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
+            author = "Unknown artist";
+        }
 
         TemporalInfo temporalInfo = TemporalInfo.fromRawData(
             !playabilityStatus.get("liveStreamability").isNull(),
