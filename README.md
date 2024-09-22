@@ -184,7 +184,7 @@ Currently, the following clients are available for use:
 
 - `MUSIC`
   - ✔ Provides support for searching YouTube music (`ytmsearch:`).
-  - ❌ No playback support. 
+  - ❌ Cannot be used for playback, or playlist/mix/livestream loading.
 - `WEB`
   - ✔ Opus formats.
 - `WEBEMBEDDED`
@@ -194,13 +194,13 @@ Currently, the following clients are available for use:
   - ❌ Heavily restricted, frequently dysfunctional.
 - `ANDROID_TESTSUITE`
   - ✔ Opus formats.
-  - ❌ No mix/playlist/livestream support. Advised to use in conjunction with other clients.
+  - ❌ No mix/playlist/livestream support.
 - `ANDROID_LITE`
   - ❌ No Opus formats (requires transcoding).
-  - ❌ Restricted similarly to `ANDROID_TESTSUITE` (except livestreams are playable).
+  - ❌ No mix/playlist/livestream support.
 - `ANDROID_MUSIC`
   - ✔ Opus formats.
-  - ❌ No playlist support.
+  - ❌ No playlist/livestream support.
 - `MEDIA_CONNECT`
   - ❌ No Opus formats (requires transcoding).
   - ❌ No mix/playlist/search support.

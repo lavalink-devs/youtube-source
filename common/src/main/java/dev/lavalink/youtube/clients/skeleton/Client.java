@@ -27,13 +27,13 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
 public interface Client {
     String WATCH_URL = "https://www.youtube.com/watch?v=";
     String API_BASE_URL = "https://youtubei.googleapis.com/youtubei/v1";
-    String PLAYER_URL = API_BASE_URL + "/player";
-    String SEARCH_URL = API_BASE_URL + "/search";
-    String NEXT_URL = API_BASE_URL + "/next";
-    String BROWSE_URL = API_BASE_URL + "/browse";
+    String PLAYER_URL = API_BASE_URL + "/player?prettyPrint=false";
+    String SEARCH_URL = API_BASE_URL + "/search?prettyPrint=false";
+    String NEXT_URL = API_BASE_URL + "/next?prettyPrint=false";
+    String BROWSE_URL = API_BASE_URL + "/browse?prettyPrint=false";
 
     String MUSIC_API_BASE_URL = "https://music.youtube.com/youtubei/v1";
-    String MUSIC_SEARCH_URL = MUSIC_API_BASE_URL + "/search";
+    String MUSIC_SEARCH_URL = MUSIC_API_BASE_URL + "/search?prettyPrint=false";
 
     // Should be videos only, whilst also bypassing YouTube's filter
     // for queries that trigger the suicide/self-harm warning.

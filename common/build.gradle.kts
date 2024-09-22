@@ -20,6 +20,8 @@ dependencies {
     compileOnly(libs.annotations)
 
     testImplementation(libs.lavaplayer.v1)
+    testImplementation("org.apache.logging.log4j:log4j-core:2.19.0")
+    testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0")
 }
 
 mavenPublishing {

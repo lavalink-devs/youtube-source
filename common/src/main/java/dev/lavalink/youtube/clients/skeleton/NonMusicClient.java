@@ -12,15 +12,18 @@ import dev.lavalink.youtube.cipher.SignatureCipherManager;
 import dev.lavalink.youtube.cipher.SignatureCipherManager.CachedPlayerScript;
 import dev.lavalink.youtube.clients.ClientConfig;
 import dev.lavalink.youtube.track.TemporalInfo;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -54,13 +57,22 @@ public abstract class NonMusicClient implements Client {
     protected JsonBrowser loadJsonResponse(@NotNull HttpInterface httpInterface,
                                            @NotNull HttpPost request,
                                            @NotNull String context) throws IOException {
+        if (request.getEntity() instanceof StringEntity) {
+            log.debug("Requesting {} ({}) with payload {}", request.getURI(), context, EntityUtils.toString(request.getEntity(), StandardCharsets.UTF_8));
+        } else {
+            log.debug("Requesting {} ({})", context, request.getURI());
+        }
+
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             HttpClientTools.assertSuccessWithContent(response, context);
             // todo: flag for checking json content type?
             //       from my testing, json is always returned so might not be necessary.
             HttpClientTools.assertJsonContentType(response);
 
-            return JsonBrowser.parse(response.getEntity().getContent());
+            String json = EntityUtils.toString(response.getEntity());
+            log.trace("Response from {} ({}) {}", request.getURI(), context, json);
+
+            return JsonBrowser.parse(json);
         }
     }
 
@@ -88,8 +100,6 @@ public abstract class NonMusicClient implements Client {
             .withPlaybackSignatureTimestamp(signatureCipher.scriptTimestamp)
             .setAttributes(httpInterface)
             .toJsonString();
-
-        log.debug("Requesting {} with payload {}", PLAYER_URL, payload);
 
         HttpPost request = new HttpPost(PLAYER_URL);
         request.setEntity(new StringEntity(payload, "UTF-8"));
@@ -131,13 +141,14 @@ public abstract class NonMusicClient implements Client {
     @NotNull
     protected JsonBrowser loadSearchResults(@NotNull HttpInterface httpInterface,
                                             @NotNull String searchQuery) {
-        ClientConfig clientConfig = getBaseClientConfig(httpInterface)
+        String payload = getBaseClientConfig(httpInterface)
             .withRootField("query", searchQuery)
             .withRootField("params", SEARCH_PARAMS)
-            .setAttributes(httpInterface);
+            .setAttributes(httpInterface)
+            .toJsonString();
 
         HttpPost request = new HttpPost(SEARCH_URL); // This *had* a key parameter. Doesn't seem needed though.
-        request.setEntity(new StringEntity(clientConfig.toJsonString(), "UTF-8"));
+        request.setEntity(new StringEntity(payload, "UTF-8"));
 
         try {
             return loadJsonResponse(httpInterface, request, "search response");
