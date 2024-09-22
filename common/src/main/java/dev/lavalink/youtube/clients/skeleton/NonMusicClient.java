@@ -106,7 +106,8 @@ public abstract class NonMusicClient implements Client {
 
         JsonBrowser json = loadJsonResponse(httpInterface, request, "player api response");
         JsonBrowser playabilityJson = json.get("playabilityStatus");
-        PlayabilityStatus playabilityStatus = getPlayabilityStatus(playabilityJson, false);
+        // fix: Make this method throw if a status was supplied (typically when we recurse).
+        PlayabilityStatus playabilityStatus = getPlayabilityStatus(playabilityJson, status != null);
 
         // All other branches should've been caught by getPlayabilityStatus().
         // An exception will be thrown if we can't handle it.

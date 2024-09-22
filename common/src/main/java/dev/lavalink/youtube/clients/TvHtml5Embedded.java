@@ -78,6 +78,11 @@ public class TvHtml5Embedded extends StreamingNonMusicClient {
     }
 
     @Override
+    public boolean isEmbedded() {
+        return true;
+    }
+
+    @Override
     @NotNull
     public String getPlayerParams() {
         return WEB_PLAYER_PARAMS;
