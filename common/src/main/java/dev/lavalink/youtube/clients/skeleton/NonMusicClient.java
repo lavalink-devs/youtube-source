@@ -116,7 +116,6 @@ public abstract class NonMusicClient implements Client {
                     new RuntimeException("Non-embeddable video cannot be loaded by embedded client"));
             }
 
-            json = loadTrackInfoFromInnertube(source, httpInterface, videoId, status);
             getPlayabilityStatus(json.get("playabilityStatus"), true);
         }
 
