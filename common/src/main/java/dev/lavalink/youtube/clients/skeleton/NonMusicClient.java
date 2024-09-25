@@ -350,12 +350,7 @@ public abstract class NonMusicClient implements Client {
             author = "Unknown artist";
         }
 
-        TemporalInfo temporalInfo = TemporalInfo.fromRawData(
-            !playabilityStatus.get("liveStreamability").isNull(),
-            videoDetails.get("lengthSeconds"),
-            videoDetails.get("isLive").asBoolean(false)
-        );
-
+        TemporalInfo temporalInfo = TemporalInfo.fromRawData(playabilityStatus, videoDetails);
         return buildAudioTrack(source, videoDetails, title, author, temporalInfo.durationMillis, videoId, temporalInfo.isActiveStream);
     }
 

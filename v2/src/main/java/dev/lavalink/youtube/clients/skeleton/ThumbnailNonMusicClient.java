@@ -101,12 +101,7 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
             author = "Unknown artist";
         }
 
-        TemporalInfo temporalInfo = TemporalInfo.fromRawData(
-            !playabilityStatus.get("liveStreamability").isNull(),
-            videoDetails.get("lengthSeconds"),
-            false
-        );
-
+        TemporalInfo temporalInfo = TemporalInfo.fromRawData(playabilityStatus, videoDetails);
         String thumbnailUrl = ThumbnailTools.getYouTubeThumbnail(videoDetails, videoId);
 
         AudioTrackInfo info = new AudioTrackInfo(title, author, temporalInfo.durationMillis, videoId, temporalInfo.isActiveStream, WATCH_URL + videoId, thumbnailUrl, null);

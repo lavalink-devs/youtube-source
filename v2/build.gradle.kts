@@ -14,6 +14,7 @@ base {
 dependencies {
     api(projects.common)
     compileOnly(libs.lavaplayer.v2)
+
     implementation(libs.rhino.engine)
     implementation(libs.nanojson)
     compileOnly(libs.slf4j)
