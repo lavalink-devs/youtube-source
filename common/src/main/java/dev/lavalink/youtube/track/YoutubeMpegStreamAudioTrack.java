@@ -95,8 +95,11 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
             file.parseHeaders();
 
             SequenceInfo sequenceInfo = extractAbsoluteSequenceFromEvent(file.getLastEventMessage());
-            state.globalSequence = sequenceInfo.sequence;
-            state.globalSequenceDuration = sequenceInfo.duration;
+
+            if (sequenceInfo != null) {
+                state.globalSequence = sequenceInfo.sequence;
+                state.globalSequenceDuration = sequenceInfo.duration;
+            }
         } catch (IOException ignored) {
 
         }
@@ -194,7 +197,11 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
         if (!trackInfo.isStream) {
             state.absoluteSequence++;
         } else {
-            state.absoluteSequence = extractAbsoluteSequenceFromEvent(file.getLastEventMessage()).sequence;
+            SequenceInfo sequenceInfo = extractAbsoluteSequenceFromEvent(file.getLastEventMessage());
+
+            if (sequenceInfo != null) {
+                state.absoluteSequence = sequenceInfo.sequence;
+            }
         }
 
         if (state.trackConsumer == null) {
