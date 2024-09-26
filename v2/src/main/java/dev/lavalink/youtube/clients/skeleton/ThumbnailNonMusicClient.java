@@ -9,6 +9,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import dev.lavalink.youtube.CannotBeLoaded;
+import dev.lavalink.youtube.OptionDisabledException;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.track.TemporalInfo;
 import org.jetbrains.annotations.NotNull;
@@ -89,6 +90,10 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
     public AudioItem loadVideo(@NotNull YoutubeAudioSourceManager source,
                                @NotNull HttpInterface httpInterface,
                                @NotNull String videoId) throws CannotBeLoaded, IOException {
+        if (!getOptions().getVideoLoading()) {
+            throw new OptionDisabledException("Video loading is disabled for this client");
+        }
+
         JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");

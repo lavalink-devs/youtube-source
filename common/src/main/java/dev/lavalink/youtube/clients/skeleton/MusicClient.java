@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.*;
+import dev.lavalink.youtube.OptionDisabledException;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.ClientConfig;
 import dev.lavalink.youtube.track.format.TrackFormats;
@@ -141,7 +142,7 @@ public abstract class MusicClient implements Client {
                                      @NotNull String searchQuery) {
         if (!getOptions().getSearching()) {
             // why would you even disable searching for this client lol
-            throw new RuntimeException("Searching is disabled for this client");
+            throw new OptionDisabledException("Searching is disabled for this client");
         }
 
         JsonBrowser json = getMusicSearchResult(httpInterface, searchQuery);

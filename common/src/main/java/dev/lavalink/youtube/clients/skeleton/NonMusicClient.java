@@ -6,13 +6,13 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.*;
 import dev.lavalink.youtube.CannotBeLoaded;
+import dev.lavalink.youtube.OptionDisabledException;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.cipher.SignatureCipher;
 import dev.lavalink.youtube.cipher.SignatureCipherManager;
 import dev.lavalink.youtube.cipher.SignatureCipherManager.CachedPlayerScript;
 import dev.lavalink.youtube.clients.ClientConfig;
 import dev.lavalink.youtube.track.TemporalInfo;
-import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -335,7 +335,7 @@ public abstract class NonMusicClient implements Client {
                                @NotNull HttpInterface httpInterface,
                                @NotNull String videoId) throws CannotBeLoaded, IOException {
         if (!getOptions().getVideoLoading()) {
-            throw new RuntimeException("Video loading is disabled for this client");
+            throw new OptionDisabledException("Video loading is disabled for this client");
         }
 
         JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null);
@@ -359,7 +359,7 @@ public abstract class NonMusicClient implements Client {
                                 @NotNull HttpInterface httpInterface,
                                 @NotNull String searchQuery) {
         if (!getOptions().getSearching()) {
-            throw new RuntimeException("Searching is disabled for this client");
+            throw new OptionDisabledException("Searching is disabled for this client");
         }
 
         JsonBrowser json = loadSearchResults(httpInterface, searchQuery);
@@ -378,7 +378,7 @@ public abstract class NonMusicClient implements Client {
                              @NotNull String mixId,
                              @Nullable String selectedVideoId) {
         if (!getOptions().getPlaylistLoading()) {
-            throw new RuntimeException("Mix loading is disabled for this client");
+            throw new OptionDisabledException("Mix loading is disabled for this client");
         }
 
         JsonBrowser json = loadMixResult(httpInterface, mixId, selectedVideoId);
@@ -407,7 +407,7 @@ public abstract class NonMusicClient implements Client {
                                   @NotNull String playlistId,
                                   @Nullable String selectedVideoId) {
         if (!getOptions().getPlaylistLoading()) {
-            throw new RuntimeException("Playlist loading is disabled for this client");
+            throw new OptionDisabledException("Playlist loading is disabled for this client");
         }
 
         JsonBrowser json = loadPlaylistResult(httpInterface, playlistId);
