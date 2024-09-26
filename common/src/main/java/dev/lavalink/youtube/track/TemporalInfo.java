@@ -18,23 +18,26 @@ public class TemporalInfo {
     // normal video? but has liveStreamability: PRRBJOn_n-Y
     // livestream: jfKfPfyJRdk
 
+    // active premieres have liveStreamability and videoDetails.isLive = true, videoDetails.isLiveContent = false.
+    // they do retain their lengthSeconds value.
+
     @NotNull
     public static TemporalInfo fromRawData(JsonBrowser playabilityStatus, JsonBrowser videoDetails) {
         JsonBrowser durationField = videoDetails.get("lengthSeconds");
         long durationValue = durationField.asLong(0L);
 
-        boolean hasLivestreamability = !playabilityStatus.get("liveStreamability").isNull();
+//        boolean hasLivestreamability = !playabilityStatus.get("liveStreamability").isNull();
         boolean isLive = videoDetails.get("isLive").asBoolean(false)
             || videoDetails.get("isLiveContent").asBoolean(false);
 
-        if (hasLivestreamability) {
+        if (isLive) { // hasLivestreamability
             // Premieres have duration information, but act as a normal stream. When we play it, we don't know the
             // current position of it since YouTube doesn't provide such information, so assume duration is unknown.
             durationValue = 0;
         }
 
         return new TemporalInfo(
-            (isLive || hasLivestreamability) && durationValue == 0,
+            isLive,
             durationValue == 0 ? DURATION_MS_UNKNOWN : Units.secondsToMillis(durationValue)
         );
     }
