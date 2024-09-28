@@ -39,8 +39,8 @@ subprojects {
      configure<PublishingExtension> {
         if (findProperty("MAVEN_PASSWORD") != null && findProperty("MAVEN_USERNAME") != null) {
             repositories {
-                val snapshots = "https://maven.lavalink.dev/snapshots"
-                val releases = "https://maven.lavalink.dev/releases"
+                val snapshots = "https://maven.kikkia.dev/snapshots"
+                val releases = "https://maven.kikkia.dev/releases"
 
                 maven(if (release) releases else snapshots) {
                     credentials {
