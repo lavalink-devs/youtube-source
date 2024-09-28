@@ -33,7 +33,7 @@ body:
       required: true
   - type: input
     attributes:
-      label: "The search query, URL, playlist or video ID that triggered the issue"
+      label: "The search query, URL, playlist ID/URL or video ID/URL that triggered the issue"
       description: |-
         If a search query failed to load and threw an error, provide the entire query, including
         the search prefix if applicable (i.e. "ytsearch:"/"ytmsearch:").
@@ -59,5 +59,15 @@ body:
         Include the ENTIRE stacktrace if available, as well as JSON dump if one is provided.
         You may redact sensitive information such as IP addresses, tokens, keys etc.
         If this is not applicable, just write "N/A".
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "What is your client configuration?"
+      description: |-
+        Specify a complete list of clients that you are using, as per your application.yml (if using Lavalink)
+        or constructor parameters (if invoking youtube-source directly).
+        This is the list of clients that you used prior to filling out this form (so do NOT write "MUSIC", "WEB", and
+        "TVHTML5EMBEDDED" unless this is what you're actually using).
     validations:
       required: true
