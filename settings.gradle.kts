@@ -15,7 +15,7 @@ dependencyResolutionManagement {
             library("lavaplayer-v1", "dev.arbjerg", "lavaplayer").versionRef("lavaplayer-v1")
             library("lavaplayer-v2", "dev.arbjerg", "lavaplayer").versionRef("lavaplayer-v2")
 
-            version("lavalink", "3.7.11")
+            version("lavalink", "4.0.7")
             library("lavalink-server", "dev.arbjerg.lavalink", "Lavalink-Server").versionRef("lavalink")
             library("lavaplayer-ext-youtube-rotator", "dev.arbjerg", "lavaplayer-ext-youtube-rotator").versionRef("lavaplayer-v1")
 
