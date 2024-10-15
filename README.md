@@ -195,9 +195,6 @@ Currently, the following clients are available for use:
 - `ANDROID_TESTSUITE`
   - ✔ Opus formats.
   - ❌ No mix/playlist/livestream support.
-- `ANDROID_LITE`
-  - ❌ No Opus formats (requires transcoding).
-  - ❌ No mix/playlist/livestream support.
 - `ANDROID_MUSIC`
   - ✔ Opus formats.
   - ❌ No playlist/livestream support.
