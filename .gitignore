@@ -31,3 +31,4 @@ build
 
 application.yml
 playerconfigs/*
+.vscode/*

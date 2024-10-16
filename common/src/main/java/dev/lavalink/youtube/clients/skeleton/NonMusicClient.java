@@ -39,7 +39,7 @@ public abstract class NonMusicClient implements Client {
     private static final Logger log = LoggerFactory.getLogger(NonMusicClient.class);
 
     protected static String WEB_PLAYER_PARAMS = "2AMB";
-    protected static String MOBILE_PLAYER_PARAMS = "CgIIAdgDAQ%3D%3D";
+    protected static String MOBILE_PLAYER_PARAMS = "CgIIAdgDAQ3D3D";
 
     protected int playlistPageCount = 6;
 
