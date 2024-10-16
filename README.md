@@ -191,13 +191,14 @@ Currently, the following clients are available for use:
   - ✔ Opus formats.
   - ❌ No mix/playlist/search support.
 - `ANDROID`
-  - ❌ Heavily restricted, frequently dysfunctional.
+  - ✔ Opus formats.
 - `ANDROID_TESTSUITE`
   - ✔ Opus formats.
   - ❌ No mix/playlist/livestream support.
 - `ANDROID_MUSIC`
   - ✔ Opus formats.
-  - ❌ No playlist/livestream support.
+  - ❌ No playlist/search support.
+  - ⚠ Livestream support (without opus formats)
 - `MEDIA_CONNECT`
   - ❌ No Opus formats (requires transcoding).
   - ❌ No mix/playlist/search support.
