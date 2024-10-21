@@ -189,6 +189,7 @@ Currently, the following clients are available for use:
   - ✔ Opus formats.
 - `WEBEMBEDDED`
   - ✔ Opus formats.
+  - ✔ Limited age-restricted video playback.
   - ❌ No mix/playlist/search support.
 - `ANDROID`
   - ❌ Heavily restricted, frequently dysfunctional.
@@ -205,8 +206,8 @@ Currently, the following clients are available for use:
   - ❌ No Opus formats (requires transcoding).
 - `TVHTML5EMBEDDED`
   - ✔ Opus formats.
-  - ✔ Age-restricted video playback.
   - ❌ No playlist support.
+  - ❌ Cannot be used for playback when logged out.
 
 ## Using OAuth Tokens
 You may notice that some requests are flagged by YouTube, causing an error message asking you to sign in to confirm you're not a bot.
@@ -387,10 +388,10 @@ In addition, there are a few significant changes to note:
   the source manager with (e.g. an overridden `YoutubeTrackDetailsLoader`), this **is not** compatible
   with this source manager.
 
-- Support for logging into accounts as a means of playing age-restricted tracks has been removed, with the
-  `TVHTML5EMBEDDED` client instead being the preferred workaround. There were a large number of
-  reasons for this change, but not least the fact that logging in was slowly becoming problematic and deprecated
-  on the YouTube backend. The amount of code to support this feature meant that it has been axed.
+- Support for logging into accounts as a means of playing age-restricted tracks has been removed.
+  There were a large number of reasons for this change, but not least the fact that logging in was slowly becoming 
+  problematic and deprecated on the YouTube backend. The amount of code to support this feature meant that it has been
+  axed. The `WEBEMBEDDED` client allows you to play some age-restricted videos, but not all.
 
 ## Additional Support
 If you need additional help with using this source, that's not covered here or in any of the issues, 
