@@ -154,9 +154,9 @@ plugins:
     # Clients are queried in the order they are given (so the first client is queried first and so on...)
     clients:
       - MUSIC
-      - ANDROID_TESTSUITE
+      - ANDROID_VR
       - WEB
-      - TVHTML5EMBEDDED
+      - WEBEMBEDDED 
 ```
 
 ### Advanced Options
@@ -173,7 +173,7 @@ plugins:
         # Example: Disabling a client's playback capabilities.
         playback: false
         videoLoading: false # Disables loading of videos for this client. A client may still be used for playback even if this is set to 'false'.
-      TVHTML5EMBEDDED:
+      WEBEMBEDDED:
         # Example: Configuring a client to exclusively be used for video loading and playback.
         playlistLoading: false # Disables loading of playlists and mixes.
         searching: false # Disables the ability to search for videos.
@@ -189,6 +189,7 @@ Currently, the following clients are available for use:
   - ✔ Opus formats.
 - `WEBEMBEDDED`
   - ✔ Opus formats.
+  - ✔ Limited age-restricted video playback.
   - ❌ No mix/playlist/search support.
 - `ANDROID`
   - ❌ Heavily restricted, frequently dysfunctional.
@@ -198,6 +199,8 @@ Currently, the following clients are available for use:
 - `ANDROID_MUSIC`
   - ✔ Opus formats.
   - ❌ No playlist/livestream support.
+- `ANDROID_VR`
+  - ✔ Opus formats.
 - `MEDIA_CONNECT`
   - ❌ No Opus formats (requires transcoding).
   - ❌ No mix/playlist/search support.
@@ -205,8 +208,8 @@ Currently, the following clients are available for use:
   - ❌ No Opus formats (requires transcoding).
 - `TVHTML5EMBEDDED`
   - ✔ Opus formats.
-  - ✔ Age-restricted video playback.
   - ❌ No playlist support.
+  - ❌ Playback requires sign-in.
 
 ## Using OAuth Tokens
 You may notice that some requests are flagged by YouTube, causing an error message asking you to sign in to confirm you're not a bot.
@@ -386,11 +389,6 @@ In addition, there are a few significant changes to note:
 - This source's class structure differs so if you had custom classes that you were initialising
   the source manager with (e.g. an overridden `YoutubeTrackDetailsLoader`), this **is not** compatible
   with this source manager.
-
-- Support for logging into accounts as a means of playing age-restricted tracks has been removed, with the
-  `TVHTML5EMBEDDED` client instead being the preferred workaround. There were a large number of
-  reasons for this change, but not least the fact that logging in was slowly becoming problematic and deprecated
-  on the YouTube backend. The amount of code to support this feature meant that it has been axed.
 
 ## Additional Support
 If you need additional help with using this source, that's not covered here or in any of the issues, 
