@@ -154,9 +154,9 @@ plugins:
     # Clients are queried in the order they are given (so the first client is queried first and so on...)
     clients:
       - MUSIC
-      - ANDROID_TESTSUITE
+      - ANDROID_VR
       - WEB
-      - TVHTML5EMBEDDED
+      - WEBEMBEDDED 
 ```
 
 ### Advanced Options
@@ -173,7 +173,7 @@ plugins:
         # Example: Disabling a client's playback capabilities.
         playback: false
         videoLoading: false # Disables loading of videos for this client. A client may still be used for playback even if this is set to 'false'.
-      TVHTML5EMBEDDED:
+      WEBEMBEDDED:
         # Example: Configuring a client to exclusively be used for video loading and playback.
         playlistLoading: false # Disables loading of playlists and mixes.
         searching: false # Disables the ability to search for videos.
@@ -199,6 +199,9 @@ Currently, the following clients are available for use:
 - `ANDROID_MUSIC`
   - ✔ Opus formats.
   - ❌ No playlist/livestream support.
+- `ANDROID_VR`
+  - ✔ Opus formats.
+  - ❌ No 'YouTube Kids' video support.
 - `MEDIA_CONNECT`
   - ❌ No Opus formats (requires transcoding).
   - ❌ No mix/playlist/search support.
