@@ -173,8 +173,8 @@ public class ClientConfig {
     public enum AndroidVersion {
         // https://apilevels.com/
         ANDROID_13("13", 33),
-        ANDROID_12("12", 31),
         ANDROID_12L("12L", 32),
+        ANDROID_12("12", 31),
         ANDROID_11("11", 30);
 
         private final String osVersion;

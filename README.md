@@ -201,7 +201,6 @@ Currently, the following clients are available for use:
   - ❌ No playlist/livestream support.
 - `ANDROID_VR`
   - ✔ Opus formats.
-  - ❌ No 'YouTube Kids' video support.
 - `MEDIA_CONNECT`
   - ❌ No Opus formats (requires transcoding).
   - ❌ No mix/playlist/search support.
@@ -210,7 +209,7 @@ Currently, the following clients are available for use:
 - `TVHTML5EMBEDDED`
   - ✔ Opus formats.
   - ❌ No playlist support.
-  - ❌ Cannot be used for playback when logged out.
+  - ❌ Playback requires sign-in.
 
 ## Using OAuth Tokens
 You may notice that some requests are flagged by YouTube, causing an error message asking you to sign in to confirm you're not a bot.
@@ -390,11 +389,6 @@ In addition, there are a few significant changes to note:
 - This source's class structure differs so if you had custom classes that you were initialising
   the source manager with (e.g. an overridden `YoutubeTrackDetailsLoader`), this **is not** compatible
   with this source manager.
-
-- Support for logging into accounts as a means of playing age-restricted tracks has been removed.
-  There were a large number of reasons for this change, but not least the fact that logging in was slowly becoming 
-  problematic and deprecated on the YouTube backend. The amount of code to support this feature meant that it has been
-  axed. The `WEBEMBEDDED` client allows you to play some age-restricted videos, but not all.
 
 ## Additional Support
 If you need additional help with using this source, that's not covered here or in any of the issues, 

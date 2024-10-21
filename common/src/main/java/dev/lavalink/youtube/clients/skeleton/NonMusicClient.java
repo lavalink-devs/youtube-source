@@ -87,8 +87,8 @@ public abstract class NonMusicClient implements Client {
 
         ClientConfig config = getBaseClientConfig(httpInterface);
 
-        if (status == null || isEmbedded()) {
-            // Only add embed info if the status and client are embeddable..
+        if (status == null) {
+            // Only add embed info if the status is not NON_EMBEDDABLE.
             config.withClientField("clientScreen", "EMBED")
                 .withThirdPartyEmbedUrl("https://google.com");
         }
