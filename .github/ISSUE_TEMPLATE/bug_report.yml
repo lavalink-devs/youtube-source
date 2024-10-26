@@ -13,33 +13,32 @@ body:
       label: Basic Troubleshooting
       description: |-
         Make sure you have checked the following first.
-        If you don't think it's applicable to your issue, you may check the box.
+        Options marked with (MANDATORY) MUST be done, otherwise your issue may be closed and locked without further response.
       options:
-        - label: I have checked for similar issues, and my issue is not a duplicate. (Check closed issues as well)
+        - label: I have checked for similar issues (open AND closed), and my issue is not a duplicate. (MANDATORY)
           required: true
-        - label: I have checked for pull requests that may already address my issue.
+        - label: I have checked for pull requests that may already address my issue. (MANDATORY)
           required: true
         - label: I am using (and my issue is reproducible on) the latest version of youtube-source.
           required: true
         - label: My issue is reproducible with IPv6 rotation.
           required: true
-        - label: I have confirmed that my issue is reproducible with the minimum viable clients (MUSIC, WEB and TVHTML5EMBEDDED)
-          required: true
   - type: input
     attributes:
       label: "Version of youtube-source"
-      placeholder: "Example: 1.3.0"
+      placeholder: "Example: 1.8.3"
     validations:
       required: true
   - type: input
     attributes:
-      label: "The search query, URL, playlist or video ID that triggered the issue"
+      label: "The search query/queries, URL(s), playlist ID(s)/URL(s) or video ID(s)/URL(s) that triggered the issue"
       description: |-
         If a search query failed to load and threw an error, provide the entire query, including
         the search prefix if applicable (i.e. "ytsearch:"/"ytmsearch:").
         For other identifiers, include the complete, unaltered input.
         If the error occurred when trying to PLAY a track (separate to LOADING), include the
         video ID or complete URL.
+        If you are specifying multiple, please separate each item with a comma (item1, item2, ...)
     validations:
       required: true
   - type: textarea
@@ -59,5 +58,13 @@ body:
         Include the ENTIRE stacktrace if available, as well as JSON dump if one is provided.
         You may redact sensitive information such as IP addresses, tokens, keys etc.
         If this is not applicable, just write "N/A".
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "What is your client configuration?"
+      description: |-
+        Specify a complete list of clients that you are using, as per your application.yml (if using Lavalink)
+        or constructor parameters (if invoking youtube-source directly).
     validations:
       required: true

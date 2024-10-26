@@ -14,6 +14,7 @@ public class ClientProviderV3 implements ClientProvider {
         ANDROID_TESTSUITE(AndroidTestsuite::new),
         ANDROID_LITE(AndroidLite::new),
         ANDROID_MUSIC(AndroidMusic::new),
+        ANDROID_VR(AndroidVr::new),
         IOS(Ios::new),
         MUSIC(Music::new),
         TVHTML5EMBEDDED(TvHtml5Embedded::new),
