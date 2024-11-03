@@ -124,6 +124,7 @@ public class YoutubeOauth2Handler {
      *
      * @return A JSON object containing information needed to authorize an account.
      */
+    @NotNull
     public JsonObject fetchDeviceCode() {
         // @formatter:off
         String requestJson = JsonWriter.string()
