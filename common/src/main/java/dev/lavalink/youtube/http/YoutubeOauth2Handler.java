@@ -40,6 +40,7 @@ public class YoutubeOauth2Handler {
     private final HttpInterfaceManager httpInterfaceManager;
 
     private boolean enabled;
+    private Thread pollThread;
     private String refreshToken;
 
     private String tokenType;
@@ -54,6 +55,15 @@ public class YoutubeOauth2Handler {
         this.refreshToken = refreshToken;
         this.tokenExpires = System.currentTimeMillis();
         this.accessToken = null;
+
+        if (pollThread != null && pollThread.isAlive()) {
+            try {
+                pollThread.interrupt();
+            } catch (Throwable t) {
+                // *probably* not important so just debug log it.
+                log.debug("Failed to interrupt poll thread", t);
+            }
+        }
 
         if (!DataFormatTools.isNullOrEmpty(refreshToken)) {
             refreshAccessToken(true);
@@ -104,13 +114,14 @@ public class YoutubeOauth2Handler {
         log.info("!!! DO NOT AUTHORISE WITH YOUR MAIN ACCOUNT, USE A BURNER !!!");
         log.info("==================================================");
 
-        Thread pollThread = new Thread(() -> pollForToken(deviceCode, interval == 0 ? 5000 : interval), "youtube-source-token-poller");
+        pollThread = new Thread(() -> pollForToken(deviceCode, interval == 0 ? 5000 : interval), "youtube-source-token-poller");
         pollThread.setDaemon(true);
         pollThread.start();
     }
 
     /**
      * Fetches a new device code used for linking a YouTube account via OAuth.
+     *
      * @return A JSON object containing information needed to authorize an account.
      */
     public JsonObject fetchDeviceCode() {
