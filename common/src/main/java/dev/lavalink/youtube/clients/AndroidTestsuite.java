@@ -39,6 +39,12 @@ public class AndroidTestsuite extends Android {
     }
 
     @Override
+    @NotNull
+    public String getPlayerParams() {
+        return MOBILE_PLAYER_PARAMS;
+    }
+
+    @Override
     public boolean canHandleRequest(@NotNull String identifier) {
         // loose check to avoid loading mixes/playlists.
         return !identifier.contains("list=") && super.canHandleRequest(identifier);

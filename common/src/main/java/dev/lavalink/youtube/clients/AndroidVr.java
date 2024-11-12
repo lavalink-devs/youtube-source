@@ -33,6 +33,12 @@ public class AndroidVr extends Android {
 
     @Override
     @NotNull
+    public String getPlayerParams() {
+        return MOBILE_PLAYER_PARAMS;
+    }
+
+    @Override
+    @NotNull
     public String getIdentifier() {
         return BASE_CONFIG.getName();
     }

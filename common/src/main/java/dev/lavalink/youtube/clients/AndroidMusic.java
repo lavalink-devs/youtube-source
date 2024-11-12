@@ -43,6 +43,12 @@ public class AndroidMusic extends Android {
 
     @Override
     @NotNull
+    public String getPlayerParams() {
+        return MOBILE_PLAYER_PARAMS;
+    }
+
+    @Override
+    @NotNull
     protected JsonBrowser extractMixPlaylistData(@NotNull JsonBrowser json) {
         return json.get("contents")
             .get("singleColumnMusicWatchNextResultsRenderer")
