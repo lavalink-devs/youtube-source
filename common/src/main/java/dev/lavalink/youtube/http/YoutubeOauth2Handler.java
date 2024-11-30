@@ -9,6 +9,7 @@ import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
+import dev.lavalink.youtube.clients.skeleton.Client;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -255,6 +256,10 @@ public class YoutubeOauth2Handler {
 
     public void applyToken(HttpUriRequest request) {
         if (!enabled || DataFormatTools.isNullOrEmpty(refreshToken)) {
+            return;
+        }
+
+        if (!Client.PLAYER_URL.equals(request.getURI().toString())) {
             return;
         }
 
