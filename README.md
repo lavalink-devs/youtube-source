@@ -386,6 +386,12 @@ In addition, there are a few significant changes to note:
   the source manager with (e.g. an overridden `YoutubeTrackDetailsLoader`), this **is not** compatible
   with this source manager.
 
+## Versioning Policy
+This project follows [Semantic Versioning](https://semver.org/), except in the case of [client](#available-clients) removal.
+Typically, clients are not removed unless there is good reason, such as being deprecated, irreparably broken or removed from YouTube's client lifecycle.
+In such scenarios, we anticipate that you have ceased usage of such clients prior to their removal, so do not expect any code breakage,
+however we advise that you periodically check and keep your client list up to date due to this.
+
 ## Additional Support
 If you need additional help with using this source, that's not covered here or in any of the issues, 
 [join our Discord server](https://discord.gg/ZW4s47Ppw4).
