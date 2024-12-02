@@ -187,6 +187,8 @@ Currently, the following clients are available for use:
   - ❌ Cannot be used for playback, or playlist/mix/livestream loading.
 - `WEB`
   - ✔ Opus formats.
+- `MWEB`
+  - ✔ Opus formats.
 - `WEBEMBEDDED`
   - ✔ Opus formats.
   - ✔ Limited age-restricted video playback.
