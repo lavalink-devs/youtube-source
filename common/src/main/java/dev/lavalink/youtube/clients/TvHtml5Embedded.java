@@ -106,6 +106,11 @@ public class TvHtml5Embedded extends StreamingNonMusicClient {
     }
 
     @Override
+    public boolean supportsOAuth() {
+        return true;
+    }
+
+    @Override
     @NotNull
     public String getIdentifier() {
         return BASE_CONFIG.getName();

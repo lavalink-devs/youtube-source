@@ -212,6 +212,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 }
 
                 log.debug("Attempting to load {} with client \"{}\"", reference.identifier, client.getIdentifier());
+                httpInterface.getContext().setAttribute(Client.OAUTH_CLIENT_ATTRIBUTE, client.supportsOAuth());
 
                 try {
                     AudioItem item = router.route(client);
