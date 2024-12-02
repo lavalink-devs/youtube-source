@@ -119,7 +119,7 @@ public abstract class NonMusicClient implements Client {
         // An exception will be thrown if we can't handle it.
         if (playabilityStatus == PlayabilityStatus.NON_EMBEDDABLE) {
             if (isEmbedded()) {
-                throw new FriendlyException("Loading information for for video failed", Severity.COMMON,
+                throw new FriendlyException("Loading information for video failed", Severity.COMMON,
                     new RuntimeException("Non-embeddable video cannot be loaded by embedded client"));
             }
 
@@ -130,7 +130,7 @@ public abstract class NonMusicClient implements Client {
         JsonBrowser videoDetails = json.get("videoDetails");
 
         if (videoDetails.isNull()) {
-            throw new FriendlyException("Loading information for for video failed", Severity.SUSPICIOUS,
+            throw new FriendlyException("Loading information for video failed", Severity.SUSPICIOUS,
                 new RuntimeException("Missing videoDetails block, JSON: " + json.format()));
         }
 
