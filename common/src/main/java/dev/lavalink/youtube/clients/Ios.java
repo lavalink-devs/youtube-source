@@ -51,6 +51,15 @@ public class Ios extends StreamingNonMusicClient {
 
     @Override
     @NotNull
+    protected String extractPlaylistName(@NotNull JsonBrowser json) {
+        return json.get("header")
+                .get("pageHeaderRenderer")
+                .get("pageTitle")
+                .text();
+    }
+
+    @Override
+    @NotNull
     public String getPlayerParams() {
         return MOBILE_PLAYER_PARAMS;
     }
