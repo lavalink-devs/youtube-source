@@ -6,7 +6,7 @@ import dev.lavalink.youtube.clients.ClientConfig.AndroidVersion;
 import org.jetbrains.annotations.NotNull;
 
 public class AndroidVr extends Android {
-    public static String CLIENT_VERSION = "1.60.18";
+    public static String CLIENT_VERSION = "1.60.19";
     public static AndroidVersion ANDROID_VERSION = AndroidVersion.ANDROID_12L;
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
