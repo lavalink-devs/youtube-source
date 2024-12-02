@@ -49,7 +49,7 @@ public class Android extends StreamingNonMusicClient {
     @Override
     @NotNull
     public String getPlayerParams() {
-        return MOBILE_PLAYER_PARAMS;
+        return null;
     }
 
     @Override

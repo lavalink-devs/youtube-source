@@ -93,11 +93,15 @@ public abstract class NonMusicClient implements Client {
                 .withThirdPartyEmbedUrl("https://google.com");
         }
 
-        String payload = config.withRootField("videoId", videoId)
+        config.withRootField("videoId", videoId)
             .withRootField("racyCheckOk", true)
-            .withRootField("contentCheckOk", true)
-            .withRootField("params", getPlayerParams())
-            .withPlaybackSignatureTimestamp(signatureCipher.scriptTimestamp)
+            .withRootField("contentCheckOk", true);
+
+        if (getPlayerParams() != null) {
+            config.withRootField("params" , getPlayerParams());
+        }
+
+        String payload = config.withPlaybackSignatureTimestamp(signatureCipher.scriptTimestamp)
             .setAttributes(httpInterface)
             .toJsonString();
 
