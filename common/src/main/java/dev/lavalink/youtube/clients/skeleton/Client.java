@@ -182,7 +182,11 @@ public interface Client {
     @NotNull
     String getIdentifier();
 
-    @NotNull
+    /**
+     * @return The parameters to use for playback. May be {@code null}, which will
+     *         avoid populating the "params" field in payloads.
+     */
+    @Nullable
     String getPlayerParams();
 
     @NotNull

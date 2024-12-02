@@ -97,8 +97,10 @@ public abstract class NonMusicClient implements Client {
             .withRootField("racyCheckOk", true)
             .withRootField("contentCheckOk", true);
 
-        if (getPlayerParams() != null) {
-            config.withRootField("params" , getPlayerParams());
+        String params = getPlayerParams();
+
+        if (params != null) {
+            config.withRootField("params", params);
         }
 
         String payload = config.withPlaybackSignatureTimestamp(signatureCipher.scriptTimestamp)
