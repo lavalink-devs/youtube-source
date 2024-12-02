@@ -203,16 +203,22 @@ Currently, the following clients are available for use:
 - `IOS`
   - ❌ No Opus formats (requires transcoding).
 - `TV`
-  <!-- check oauth compatibility -->
   - ✔ Opus formats.
+  - ✔ OAuth compatibility.
   - ❌ No mix/playlist/search/video *lookup* support.
   - ❌ Playback only.
 - `TVHTML5EMBEDDED`
   - ✔ Opus formats.
+  - ✔ OAuth compatibility.
   - ❌ No playlist support.
   - ❌ Playback requires sign-in.
 
-N.B. Livestreams do not yield Opus formats so will always require transcoding.
+> [!NOTE]
+> Livestreams do not yield Opus formats so will always require transcoding.
+
+> [!NOTE]
+> Assume clients do not work with OAuth unless stated.
+
 
 ## Using OAuth Tokens
 You may notice that some requests are flagged by YouTube, causing an error message asking you to sign in to confirm you're not a bot.
