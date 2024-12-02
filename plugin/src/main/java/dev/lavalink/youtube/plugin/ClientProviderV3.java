@@ -17,7 +17,8 @@ public class ClientProviderV3 implements ClientProvider {
         MUSIC(Music::new),
         TVHTML5EMBEDDED(TvHtml5Embedded::new),
         WEB(Web::new),
-        WEBEMBEDDED(WebEmbedded::new);
+        WEBEMBEDDED(WebEmbedded::new),
+        MWEB(MWeb::new);
 
         private final ClientWithOptions<Client> clientFactory;
 

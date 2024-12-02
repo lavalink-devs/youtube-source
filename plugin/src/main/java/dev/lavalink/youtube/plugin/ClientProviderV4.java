@@ -18,7 +18,8 @@ public class ClientProviderV4 implements ClientProvider {
         MUSIC(MusicWithThumbnail::new),
         TVHTML5EMBEDDED(TvHtml5EmbeddedWithThumbnail::new),
         WEB(WebWithThumbnail::new),
-        WEBEMBEDDED(WebEmbeddedWithThumbnail::new);
+        WEBEMBEDDED(WebEmbeddedWithThumbnail::new),
+        MWEB(MWebWithThumbnail::new);
 
         private final ClientWithOptions<Client> clientFactory;
 
