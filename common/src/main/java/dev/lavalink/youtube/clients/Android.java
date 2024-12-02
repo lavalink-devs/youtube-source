@@ -5,6 +5,7 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.clients.ClientConfig.AndroidVersion;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,7 @@ public class Android extends StreamingNonMusicClient {
     }
 
     @Override
-    @NotNull
+    @Nullable
     public String getPlayerParams() {
         return null;
     }

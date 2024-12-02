@@ -196,7 +196,7 @@ Currently, the following clients are available for use:
 - `ANDROID`
   - ❌ Heavily restricted, frequently dysfunctional.
 - `ANDROID_MUSIC`
-  - ✔ No opus formats for livestreams (requires transcoding).
+  - ✔ Opus formats.
   - ❌ No playlist/livestream support.
 - `ANDROID_VR`
   - ✔ Opus formats.
@@ -206,6 +206,8 @@ Currently, the following clients are available for use:
   - ✔ Opus formats.
   - ❌ No playlist support.
   - ❌ Playback requires sign-in.
+
+N.B. Livestreams do not yield Opus formats so will always require transcoding.
 
 ## Using OAuth Tokens
 You may notice that some requests are flagged by YouTube, causing an error message asking you to sign in to confirm you're not a bot.
