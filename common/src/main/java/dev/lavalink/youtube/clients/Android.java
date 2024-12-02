@@ -1,5 +1,6 @@
 package dev.lavalink.youtube.clients;
 
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.clients.ClientConfig.AndroidVersion;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
@@ -61,5 +62,26 @@ public class Android extends StreamingNonMusicClient {
     @NotNull
     public String getIdentifier() {
         return BASE_CONFIG.getName();
+    }
+
+    @Override
+    @NotNull
+    protected String extractPlaylistName(@NotNull JsonBrowser json) {
+        return json.get("header")
+                .get("pageHeaderRenderer")
+                .get("content")
+                .get("elementRenderer")
+                .get("newElement")
+                .get("type")
+                .get("componentType")
+                .get("model")
+                .get("youtubeModel")
+                .get("viewModel")
+                .get("pageHeaderViewModel")
+                .get("title")
+                .get("dynamicTextViewModel")
+                .get("text")
+                .get("content")
+                .text();
     }
 }
