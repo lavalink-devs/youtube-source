@@ -8,7 +8,7 @@ public class Music extends MusicClient {
     public static ClientConfig BASE_CONFIG = new ClientConfig()
         .withApiKey("AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30") // Requires header (Referer music.youtube.com)
         .withClientName("WEB_REMIX")
-        .withClientField("clientVersion", "1.20240401.00.00");
+        .withClientField("clientVersion", "1.20240724.00.00");
 
     protected ClientOptions options;
 
