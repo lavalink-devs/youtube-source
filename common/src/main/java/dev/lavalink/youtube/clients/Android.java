@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 public class Android extends StreamingNonMusicClient {
     private static final Logger log = LoggerFactory.getLogger(Android.class);
 
-    public static String CLIENT_VERSION = "19.07.39";
+    public static String CLIENT_VERSION = "19.44.38";
     public static AndroidVersion ANDROID_VERSION = AndroidVersion.ANDROID_11;
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
