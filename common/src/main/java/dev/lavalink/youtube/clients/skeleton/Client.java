@@ -25,6 +25,8 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  * The interface for a Client.
  */
 public interface Client {
+    String OAUTH_CLIENT_ATTRIBUTE = "yt-oauth-enabled-client";
+
     String WATCH_URL = "https://www.youtube.com/watch?v=";
     String API_BASE_URL = "https://youtubei.googleapis.com/youtubei/v1";
     String PLAYER_URL = API_BASE_URL + "/player?prettyPrint=false";
@@ -205,6 +207,13 @@ public interface Client {
 
     
     default boolean isEmbedded() {
+        return false;
+    }
+
+    /**
+     * @return True, if this client supports account linking via OAuth (i.e. TV)
+     */
+    default boolean supportsOAuth() {
         return false;
     }
 

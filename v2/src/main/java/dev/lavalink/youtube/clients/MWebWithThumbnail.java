@@ -3,12 +3,12 @@ package dev.lavalink.youtube.clients;
 import dev.lavalink.youtube.clients.skeleton.NonMusicClientWithThumbnail;
 import org.jetbrains.annotations.NotNull;
 
-public class AndroidLiteWithThumbnail extends AndroidLite implements NonMusicClientWithThumbnail {
-    public AndroidLiteWithThumbnail() {
+public class MWebWithThumbnail extends MWeb implements NonMusicClientWithThumbnail {
+    public MWebWithThumbnail() {
         super();
     }
 
-    public AndroidLiteWithThumbnail(@NotNull ClientOptions options) {
+    public MWebWithThumbnail(@NotNull ClientOptions options) {
         super(options);
     }
 }

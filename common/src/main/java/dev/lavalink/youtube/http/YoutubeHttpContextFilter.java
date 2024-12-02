@@ -3,6 +3,7 @@ package dev.lavalink.youtube.http;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextRetryCounter;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
+import dev.lavalink.youtube.clients.skeleton.Client;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -79,7 +80,12 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
         context.removeAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED);
       }
 
-      oauth2Handler.applyToken(request);
+      boolean isRequestFromOauthedClient = context.getAttribute(Client.OAUTH_CLIENT_ATTRIBUTE) == Boolean.TRUE;
+
+      if (isRequestFromOauthedClient && Client.PLAYER_URL.equals(request.getURI().toString())) {
+        // only apply the token to /player requests.
+        oauth2Handler.applyToken(request);
+      }
     }
 
 //    try {

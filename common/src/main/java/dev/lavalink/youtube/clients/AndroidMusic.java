@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 public class AndroidMusic extends Android {
     private static final Logger log = LoggerFactory.getLogger(AndroidMusic.class);
-    public static String CLIENT_VERSION = "7.11.50";
+    public static String CLIENT_VERSION = "7.27.52";
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
         .withApiKey(Android.BASE_CONFIG.getApiKey())

@@ -11,8 +11,6 @@ public class ClientProviderV3 implements ClientProvider {
 
     private enum ClientMapping implements ClientReference {
         ANDROID(Android::new),
-        ANDROID_TESTSUITE(AndroidTestsuite::new),
-        ANDROID_LITE(AndroidLite::new),
         ANDROID_MUSIC(AndroidMusic::new),
         ANDROID_VR(AndroidVr::new),
         IOS(Ios::new),
@@ -20,7 +18,7 @@ public class ClientProviderV3 implements ClientProvider {
         TVHTML5EMBEDDED(TvHtml5Embedded::new),
         WEB(Web::new),
         WEBEMBEDDED(WebEmbedded::new),
-        MEDIA_CONNECT(MediaConnect::new);
+        MWEB(MWeb::new);
 
         private final ClientWithOptions<Client> clientFactory;
 

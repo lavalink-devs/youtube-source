@@ -1,11 +1,12 @@
 package dev.lavalink.youtube.clients;
 
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.clients.ClientConfig.AndroidVersion;
 import org.jetbrains.annotations.NotNull;
 
 public class AndroidVr extends Android {
-    public static String CLIENT_VERSION = "1.60.18";
+    public static String CLIENT_VERSION = "1.60.19";
     public static AndroidVersion ANDROID_VERSION = AndroidVersion.ANDROID_12L;
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
@@ -41,5 +42,11 @@ public class AndroidVr extends Android {
     @NotNull
     public String getIdentifier() {
         return BASE_CONFIG.getName();
+    }
+
+    @Override
+    @NotNull
+    protected String extractPlaylistName(@NotNull JsonBrowser json) {
+        return json.get("header").get("playlistHeaderRenderer").get("title").get("runs").index(0).get("text").text();
     }
 }

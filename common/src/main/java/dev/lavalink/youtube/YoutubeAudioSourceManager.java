@@ -79,7 +79,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
     public YoutubeAudioSourceManager(boolean allowSearch, boolean allowDirectVideoIds, boolean allowDirectPlaylistIds) {
         // query order: music -> web -> androidtestsuite -> tvhtml5embedded
-        this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, new Music(), new Web(), new AndroidTestsuite(), new TvHtml5Embedded());
+        this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, new Music(), new AndroidVr(), new Web(), new WebEmbedded());
     }
 
     /**
@@ -212,6 +212,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 }
 
                 log.debug("Attempting to load {} with client \"{}\"", reference.identifier, client.getIdentifier());
+                httpInterface.getContext().setAttribute(Client.OAUTH_CLIENT_ATTRIBUTE, client.supportsOAuth());
 
                 try {
                     AudioItem item = router.route(client);
