@@ -2,7 +2,6 @@ package dev.lavalink.youtube.plugin;
 
 import dev.lavalink.youtube.clients.*;
 import dev.lavalink.youtube.clients.skeleton.Client;
-import dev.lavalink.youtube.clients.WebEmbeddedWithThumbnail;
 
 public class ClientProviderV4 implements ClientProvider {
     @Override

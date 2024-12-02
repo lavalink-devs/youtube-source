@@ -10,6 +10,10 @@ public class MWeb extends Web {
         .withClientName("MWEB")
         .withClientField("clientVersion", "2.20240726.11.00");
 
+    public MWeb() {
+        super();
+    }
+
     public MWeb(@NotNull ClientOptions options) {
         super(options);
     }
