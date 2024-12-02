@@ -469,6 +469,7 @@ public abstract class NonMusicClient implements Client {
     public AudioItem loadSearchMusic(@NotNull YoutubeAudioSourceManager source,
                                      @NotNull HttpInterface httpInterface,
                                      @NotNull String searchQuery) {
-        throw new UnsupportedOperationException();
+        throw new FriendlyException("This client cannot search music", Severity.COMMON,
+            new RuntimeException(getIdentifier() + " cannot be used to search music"));
     }
 }

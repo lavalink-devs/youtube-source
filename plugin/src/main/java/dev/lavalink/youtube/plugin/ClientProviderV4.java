@@ -15,6 +15,7 @@ public class ClientProviderV4 implements ClientProvider {
         ANDROID_VR(AndroidVrWithThumbnail::new),
         IOS(IosWithThumbnail::new),
         MUSIC(MusicWithThumbnail::new),
+        TV(Tv::new), // This has no WithThumbnail companion as it's a playback-only client.
         TVHTML5EMBEDDED(TvHtml5EmbeddedWithThumbnail::new),
         WEB(WebWithThumbnail::new),
         WEBEMBEDDED(WebEmbeddedWithThumbnail::new),

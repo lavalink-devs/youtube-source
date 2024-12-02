@@ -202,6 +202,11 @@ Currently, the following clients are available for use:
   - ✔ Opus formats.
 - `IOS`
   - ❌ No Opus formats (requires transcoding).
+- `TV`
+  <!-- check oauth compatibility -->
+  - ✔ Opus formats.
+  - ❌ No mix/playlist/search/video *lookup* support.
+  - ❌ Playback only.
 - `TVHTML5EMBEDDED`
   - ✔ Opus formats.
   - ❌ No playlist support.
