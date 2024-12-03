@@ -27,8 +27,10 @@ public class TemporalInfo {
         long durationValue = durationField.asLong(0L);
 
 //        boolean hasLivestreamability = !playabilityStatus.get("liveStreamability").isNull();
-        boolean isLive = videoDetails.get("isLive").asBoolean(false)
-            || videoDetails.get("isLiveContent").asBoolean(false);
+        boolean isLive = videoDetails.get("isLive").asBoolean(false);
+
+        // fix: isLiveContent looks to only be for past livestreams and seems to yield false positives.
+//            || videoDetails.get("isLiveContent").asBoolean(false);
 
         if (isLive) { // hasLivestreamability
             // Premieres have duration information, but act as a normal stream. When we play it, we don't know the
