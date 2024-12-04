@@ -85,6 +85,20 @@ public abstract class NonMusicClient implements Client {
         return loadTrackInfoFromInnertube(source, httpInterface, videoId, status, true);
     }
 
+    /**
+     * Retrieve raw JSON data for a specific video by its ID.
+     * @param source The source manager linked to this client.
+     * @param httpInterface The interface to use for HTTP requests.
+     * @param videoId The ID of the video to retrieve information for.
+     * @param status The last playability status, or {@code null} if an attempt to retrieve
+     *               information has not been made yet.
+     * @param validatePlayabilityStatus Whether to validate playability status. This may be {@code false}
+     *                                  in situations where only video metadata is required. If video data
+     *                                  does not exist, this is forcefully checked regardless of provided value.
+     * @return The raw JSON data as received from YouTube.
+     * @throws CannotBeLoaded If a video does not exist, is private, or otherwise inaccessible.
+     * @throws IOException If a HTTP request fails, etc.
+     */
     @NotNull
     protected JsonBrowser loadTrackInfoFromInnertube(@NotNull YoutubeAudioSourceManager source,
                                                      @NotNull HttpInterface httpInterface,
