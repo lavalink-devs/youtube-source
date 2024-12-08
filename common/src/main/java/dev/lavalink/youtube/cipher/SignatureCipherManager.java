@@ -50,17 +50,17 @@ public class SignatureCipherManager {
   private static final String BEFORE_ACCESS = "(?:\\[\\\"|\\.)";
   private static final String AFTER_ACCESS = "(?:\\\"\\]|)";
   private static final String VARIABLE_PART_ACCESS = BEFORE_ACCESS + VARIABLE_PART + AFTER_ACCESS;
-  private static final String REVERSE_PART = ":function\\(a\\)\\{(?:return )?a\\.reverse\\(\\)\\}";
-  private static final String SLICE_PART = ":function\\(a,b\\)\\{return a\\.slice\\(b\\)\\}";
-  private static final String SPLICE_PART = ":function\\(a,b\\)\\{a\\.splice\\(0,b\\)\\}";
-  private static final String SWAP_PART = ":function\\(a,b\\)\\{" +
-      "var c=a\\[0\\];a\\[0\\]=a\\[b%a\\.length\\];a\\[b(?:%a.length|)\\]=c(?:;return a)?\\}";
+  private static final String REVERSE_PART = ":function\\(\\w\\)\\{(?:return )?\\w\\.reverse\\(\\)\\}";
+  private static final String SLICE_PART = ":function\\(\\w,\\w\\)\\{return \\w\\.slice\\(\\w\\)\\}";
+  private static final String SPLICE_PART = ":function\\(\\w,\\w\\)\\{\\w\\.splice\\(0,\\w\\)\\}";
+  private static final String SWAP_PART = ":function\\(\\w,\\w\\)\\{" +
+      "var \\w=\\w\\[0\\];\\w\\[0\\]=\\w\\[\\w%\\w\\.length\\];\\w\\[\\w(?:%\\w.length|)\\]=\\w(?:;return \\w)?\\}";
 
   private static final Pattern functionPattern = Pattern.compile(
-      "function(?: " + VARIABLE_PART + ")?\\(a\\)\\{" +
-          "a=a\\.split\\(\"\"\\);\\s*" +
-          "((?:(?:a=)?" + VARIABLE_PART + VARIABLE_PART_ACCESS + "\\(a,\\d+\\);)+)" +
-          "return a\\.join\\(\"\"\\)" +
+      "function(?: " + VARIABLE_PART + ")?\\(([a-zA-Z])\\)\\{" +
+          "\\1=\\1\\.split\\(\"\"\\);\\s*" +
+          "((?:(?:\\1=)?" + VARIABLE_PART + VARIABLE_PART_ACCESS + "\\(\\1,\\d+\\);)+)" +
+          "return \\1\\.join\\(\"\"\\)" +
           "\\}"
   );
 
@@ -80,14 +80,14 @@ public class SignatureCipherManager {
   private static final Pattern splicePattern = Pattern.compile(PATTERN_PREFIX + SPLICE_PART, Pattern.MULTILINE);
   private static final Pattern swapPattern = Pattern.compile(PATTERN_PREFIX + SWAP_PART, Pattern.MULTILINE);
   private static final Pattern timestampPattern = Pattern.compile("(signatureTimestamp|sts):(\\d+)");
+
   private static final Pattern nFunctionPattern = Pattern.compile(
       "function\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
           "var\\s*(\\w+)=(?:\\1\\.split\\(.*?\\)|String\\.prototype\\.split\\.call\\(\\1,.*?\\))," +
           "\\s*(\\w+)=(\\[.*?]);\\s*\\3\\[\\d+]" +
           "(.*?try)(\\{.*?})catch\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
-          "\\s*return\"enhanced_except_([A-z0-9-]+)\"\\s*\\+\\s*\\1\\s*}" +
-          "\\s*return\\s*(\\2\\.join\\(\"\"\\)|Array\\.prototype\\.join\\.call\\(\\2,.*?\\))};", Pattern.DOTALL
-  );
+          "\\s*return\"[\\w-]+([A-z0-9-]+)\"\\s*\\+\\s*\\1\\s*}" +
+          "\\s*return\\s*(\\2\\.join\\(\"\"\\)|Array\\.prototype\\.join\\.call\\(\\2,.*?\\))};", Pattern.DOTALL);
 
   private final ConcurrentMap<String, SignatureCipher> cipherCache;
   private final Set<String> dumpedScriptUrls;
@@ -244,9 +244,9 @@ public class SignatureCipherManager {
     String swapKey = extractDollarEscapedFirstGroup(swapPattern, actionBody);
 
     Pattern extractor = Pattern.compile(
-        "(?:a=)?" + Pattern.quote(actions.group(1)) + BEFORE_ACCESS + "(" +
+        "(?:\\w=)?" + Pattern.quote(actions.group(1)) + BEFORE_ACCESS + "(" +
             String.join("|", getQuotedFunctions(reverseKey, slicePart, splicePart, swapKey)) +
-            ")" + AFTER_ACCESS + "\\(a,(\\d+)\\)"
+            ")" + AFTER_ACCESS + "\\(\\w,(\\d+)\\)"
     );
 
     Matcher functions = functionPattern.matcher(script);
@@ -255,23 +255,19 @@ public class SignatureCipherManager {
       throw new IllegalStateException("Must find decipher function from script.");
     }
 
-    Matcher matcher = extractor.matcher(functions.group(1));
+    Matcher matcher = extractor.matcher(functions.group(2));
 
     if (!scriptTimestamp.find()) {
       dumpProblematicScript(script, sourceUrl, "no timestamp match");
       throw new IllegalStateException("Must find timestamp from script: " + sourceUrl);
     }
 
-    String nFunction = "";
-
-    if (nFunctionMatcher.find()) {
-      nFunction = nFunctionMatcher.group(0);
-    } else {
-      // Don't throw any exceptions here since if n function is not extracted audio still can be played
+    if (!nFunctionMatcher.find()) {
       dumpProblematicScript(script, sourceUrl, "no n function match");
+      throw new IllegalStateException("Must find n function from script: " + sourceUrl);
     }
 
-    SignatureCipher cipherKey = new SignatureCipher(nFunction, scriptTimestamp.group(2), script);
+    SignatureCipher cipherKey = new SignatureCipher(nFunctionMatcher.group(0), scriptTimestamp.group(2), script);
 
     while (matcher.find()) {
       String type = matcher.group(1);
