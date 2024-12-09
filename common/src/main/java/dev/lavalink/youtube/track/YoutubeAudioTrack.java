@@ -17,6 +17,7 @@ import dev.lavalink.youtube.UrlTools;
 import dev.lavalink.youtube.UrlTools.UrlInfo;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.Client;
+import dev.lavalink.youtube.http.YoutubeOauth2Handler;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +62,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     }
 
     try (HttpInterface httpInterface = sourceManager.getInterface()) {
+      httpInterface.getContext().setAttribute(YoutubeOauth2Handler.OAUTH_INJECT_CONTEXT_ATTRIBUTE, trackInfo.uri);
       Exception lastException = null;
 
       for (Client client : clients) {
@@ -119,7 +121,8 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
                                  Client client,
                                  long streamPosition) throws CannotBeLoaded, Exception {
     FormatWithUrl augmentedFormat = loadBestFormatWithUrl(httpInterface, client);
-    log.debug("Starting track with URL from client {}: {}", client.getIdentifier(), augmentedFormat.signedUrl);
+    log.info("Starting track with URL from client {}: {}", client.getIdentifier(), augmentedFormat.signedUrl);
+    httpInterface.getContext().setAttribute(YoutubeOauth2Handler.OAUTH_INJECT_CONTEXT_ATTRIBUTE, trackInfo.uri);
 
     try {
       if (trackInfo.isStream || augmentedFormat.format.getContentLength() == CONTENT_LENGTH_UNKNOWN) {

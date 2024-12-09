@@ -70,6 +70,8 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
     String userAgent = context.getAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED, String.class);
 
     if (!request.getURI().getHost().contains("googlevideo")) {
+      String oauthInjection = oauth2Handler.getOauthInjection(context);
+
       if (userAgent != null) {
         request.setHeader("User-Agent", userAgent);
 
@@ -82,9 +84,10 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
 
       boolean isRequestFromOauthedClient = context.getAttribute(Client.OAUTH_CLIENT_ATTRIBUTE) == Boolean.TRUE;
 
-      if (isRequestFromOauthedClient && Client.PLAYER_URL.equals(request.getURI().toString())) {
+      if (isRequestFromOauthedClient && Client.PLAYER_URL.equals(request.getURI().toString()) &&
+              oauthInjection != null && !oauthInjection.isEmpty()) {
         // only apply the token to /player requests.
-        oauth2Handler.applyToken(request);
+        oauth2Handler.applyToken(request, oauthInjection);
       }
     }
 

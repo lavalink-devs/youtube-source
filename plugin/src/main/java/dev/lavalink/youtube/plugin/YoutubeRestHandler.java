@@ -9,6 +9,7 @@ import dev.lavalink.youtube.clients.WebEmbedded;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.plugin.rest.MinimalConfigRequest;
 import dev.lavalink.youtube.plugin.rest.MinimalConfigResponse;
+import dev.lavalink.youtube.plugin.rest.OauthInjectRequest;
 import dev.lavalink.youtube.track.YoutubePersistentHttpStream;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
@@ -182,5 +183,12 @@ public class YoutubeRestHandler {
             Web.setPoTokenAndVisitorData(poToken, visitorData);
             log.debug("Updated poToken to \"{}\" and visitorData to \"{}\"", poToken, visitorData);
         }
+    }
+
+    @PostMapping("/oauth")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateYoutubeConfig(@RequestBody OauthInjectRequest config) {
+        YoutubeAudioSourceManager source = getYoutubeSource();
+        source.oauth2Handler.injectOauthToken(config.getIdentifier(), config.getToken());
     }
 }

@@ -166,6 +166,10 @@ public class SignatureCipherManager {
   }
 
   public CachedPlayerScript getCachedPlayerScript(@NotNull HttpInterface httpInterface) {
+    // No cache due to changing oauth tokens between players.
+    // TODO: Explore caching based on oauth token
+
+    //return getPlayerScript(httpInterface);
     if (cachedPlayerScript == null || System.currentTimeMillis() >= cachedPlayerScript.expireTimestampMs) {
       synchronized (cipherLoadLock) {
         if (cachedPlayerScript == null || System.currentTimeMillis() >= cachedPlayerScript.expireTimestampMs) {
