@@ -68,6 +68,8 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
           continue;
         }
 
+        httpInterface.getContext().setAttribute(Client.OAUTH_CLIENT_ATTRIBUTE, client.supportsOAuth());
+
         try {
           processWithClient(localExecutor, httpInterface, client, 0);
           return; // stream played through successfully, short-circuit.

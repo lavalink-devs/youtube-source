@@ -94,7 +94,7 @@ public abstract class ThumbnailNonMusicClient extends NonMusicClient {
             throw new OptionDisabledException("Video loading is disabled for this client");
         }
 
-        JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null);
+        JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null, false);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
 

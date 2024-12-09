@@ -37,7 +37,7 @@ public abstract class ThumbnailStreamingNonMusicClient extends ThumbnailNonMusic
     public TrackFormats loadFormats(@NotNull YoutubeAudioSourceManager source,
                                     @NotNull HttpInterface httpInterface,
                                     @NotNull String videoId) throws CannotBeLoaded, IOException {
-        JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null);
+        JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null, true);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
         CachedPlayerScript playerScript = source.getCipherManager().getCachedPlayerScript(httpInterface);

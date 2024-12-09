@@ -32,7 +32,7 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
     public TrackFormats loadFormats(@NotNull YoutubeAudioSourceManager source,
                                     @NotNull HttpInterface httpInterface,
                                     @NotNull String videoId) throws CannotBeLoaded, IOException {
-        JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null);
+        JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null, true);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
         CachedPlayerScript playerScript = source.getCipherManager().getCachedPlayerScript(httpInterface);
@@ -53,11 +53,15 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
         boolean anyFailures = false;
 
         for (JsonBrowser merged : mergedFormats.values()) {
-            anyFailures = anyFailures || !extractFormat(merged, formats, isLive);
+            if (!extractFormat(merged, formats, isLive)) {
+                anyFailures = true;
+            }
         }
 
         for (JsonBrowser adaptive : adaptiveFormats.values()) {
-            anyFailures = anyFailures || !extractFormat(adaptive, formats, isLive);
+            if (!extractFormat(adaptive, formats, isLive)) {
+                anyFailures = true;
+            }
         }
 
         if (formats.isEmpty() && anyFailures) {

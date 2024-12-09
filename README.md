@@ -187,29 +187,38 @@ Currently, the following clients are available for use:
   - ❌ Cannot be used for playback, or playlist/mix/livestream loading.
 - `WEB`
   - ✔ Opus formats.
+- `MWEB`
+  - ✔ Opus formats.
 - `WEBEMBEDDED`
   - ✔ Opus formats.
   - ✔ Limited age-restricted video playback.
   - ❌ No mix/playlist/search support.
 - `ANDROID`
   - ❌ Heavily restricted, frequently dysfunctional.
-- `ANDROID_TESTSUITE`
-  - ✔ Opus formats.
-  - ❌ No mix/playlist/livestream support.
 - `ANDROID_MUSIC`
   - ✔ Opus formats.
   - ❌ No playlist/livestream support.
 - `ANDROID_VR`
   - ✔ Opus formats.
-- `MEDIA_CONNECT`
-  - ❌ No Opus formats (requires transcoding).
-  - ❌ No mix/playlist/search support.
 - `IOS`
   - ❌ No Opus formats (requires transcoding).
+- `TV`
+  - ✔ Opus formats.
+  - ✔ OAuth compatibility.
+  - ❌ No mix/playlist/search/video *lookup* support.
+  - ❌ Playback only.
 - `TVHTML5EMBEDDED`
   - ✔ Opus formats.
+  - ✔ OAuth compatibility.
   - ❌ No playlist support.
   - ❌ Playback requires sign-in.
+
+> [!NOTE]
+> Livestreams do not yield Opus formats so will always require transcoding.
+
+> [!NOTE]
+> Assume clients do not work with OAuth unless stated.
+
 
 ## Using OAuth Tokens
 You may notice that some requests are flagged by YouTube, causing an error message asking you to sign in to confirm you're not a bot.
@@ -389,6 +398,12 @@ In addition, there are a few significant changes to note:
 - This source's class structure differs so if you had custom classes that you were initialising
   the source manager with (e.g. an overridden `YoutubeTrackDetailsLoader`), this **is not** compatible
   with this source manager.
+
+## Versioning Policy
+This project follows [Semantic Versioning](https://semver.org/), except in the case of [client](#available-clients) removal.
+Typically, clients are not removed unless there is good reason, such as being deprecated, irreparably broken or removed from YouTube's client lifecycle.
+In such scenarios, we anticipate that you have ceased usage of such clients prior to their removal, so do not expect any code breakage,
+however we advise that you periodically check and keep your client list up to date due to this.
 
 ## Additional Support
 If you need additional help with using this source, that's not covered here or in any of the issues, 

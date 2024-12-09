@@ -259,10 +259,6 @@ public class YoutubeOauth2Handler {
             return;
         }
 
-        if (!Client.PLAYER_URL.equals(request.getURI().toString())) {
-            return;
-        }
-
         if (shouldRefreshAccessToken()) {
             log.debug("Access token has expired, refreshing...");
 
