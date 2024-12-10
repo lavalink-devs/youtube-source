@@ -138,7 +138,7 @@ public class SignatureCipherManager {
           logMessage = "Transformed n parameter is null, n function possibly faulty";
         } else if (nParameter.equals(transformed)) {
           logMessage = "Transformed n parameter is the same as input, n function possibly short-circuited";
-        } else if (transformed.contains("enhanced_except_") || transformed.endsWith("_w8_" + nParameter)) {
+        } else if (transformed.startsWith("enhanced_except_") || transformed.endsWith("_w8_" + nParameter)) {
           logMessage = "N function did not complete due to exception";
         }
 
