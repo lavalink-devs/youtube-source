@@ -134,7 +134,7 @@ public class SignatureCipherManager {
         String transformed = cipher.transform(nParameter, scriptEngine);
 
         if (nParameter.equals(transformed)) {
-          log.warn("Transformed n parameter is the same as input, n function possibly short-circuited (in: {}, out: {}, player script: {}, source version: {}",
+          log.warn("Transformed n parameter is the same as input, n function possibly short-circuited (in: {}, out: {}, player script: {}, source version: {})",
               nParameter, transformed, playerScript, YoutubeSource.VERSION);
         }
 
