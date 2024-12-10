@@ -131,7 +131,14 @@ public class SignatureCipherManager {
 
     if (!DataFormatTools.isNullOrEmpty(nParameter)) {
       try {
-        uri.setParameter("n", cipher.transform(nParameter, scriptEngine));
+        String transformed = cipher.transform(nParameter, scriptEngine);
+
+        if (nParameter.equals(transformed)) {
+          log.warn("Transformed n parameter is the same as input, n function possibly short-circuited (in: {}, out: {}, player script: {}, source version: {}",
+              nParameter, transformed, playerScript, YoutubeSource.VERSION);
+        }
+
+        uri.setParameter("n", transformed);
       } catch (ScriptException | NoSuchMethodException e) {
         // URLs can still be played without a resolved n parameter. It just means they're
         // throttled. But we shouldn't throw an exception anyway as it's not really fatal.
@@ -267,7 +274,12 @@ public class SignatureCipherManager {
       throw new IllegalStateException("Must find n function from script: " + sourceUrl);
     }
 
-    SignatureCipher cipherKey = new SignatureCipher(nFunctionMatcher.group(0), scriptTimestamp.group(2), script);
+    String nFunction = nFunctionMatcher.group(0);
+    String nfParameterName = DataFormatTools.extractBetween(nFunction, "(", ")");
+    // remove short-circuit that prevents n challenge transformation
+    nFunction = nFunction.replaceAll("if\\s*\\(typeof\\s*\\w+\\s*===?.*?\\)return " + nfParameterName + "\\s*;?", "");
+
+    SignatureCipher cipherKey = new SignatureCipher(nFunction, scriptTimestamp.group(2), script);
 
     while (matcher.find()) {
       String type = matcher.group(1);
