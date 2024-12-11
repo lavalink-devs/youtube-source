@@ -132,10 +132,19 @@ public class SignatureCipherManager {
     if (!DataFormatTools.isNullOrEmpty(nParameter)) {
       try {
         String transformed = cipher.transform(nParameter, scriptEngine);
+        String logMessage = null;
 
-        if (nParameter.equals(transformed)) {
-          log.warn("Transformed n parameter is the same as input, n function possibly short-circuited (in: {}, out: {}, player script: {}, source version: {})",
-              nParameter, transformed, playerScript, YoutubeSource.VERSION);
+        if (transformed == null) {
+          logMessage = "Transformed n parameter is null, n function possibly faulty";
+        } else if (nParameter.equals(transformed)) {
+          logMessage = "Transformed n parameter is the same as input, n function possibly short-circuited";
+        } else if (transformed.startsWith("enhanced_except_") || transformed.endsWith("_w8_" + nParameter)) {
+          logMessage = "N function did not complete due to exception";
+        }
+
+        if (logMessage != null) {
+            log.warn("{} (in: {}, out: {}, player script: {}, source version: {})",
+                logMessage, nParameter, transformed, playerScript, YoutubeSource.VERSION);
         }
 
         uri.setParameter("n", transformed);
@@ -281,7 +290,7 @@ public class SignatureCipherManager {
     String nFunction = nFunctionMatcher.group(0);
     String nfParameterName = DataFormatTools.extractBetween(nFunction, "(", ")");
     // remove short-circuit that prevents n challenge transformation
-    nFunction = nFunction.replaceAll("if\\s*\\(\\s*typeof\\s*\\w+\\s*===?.*?\\)\\s*return " + nfParameterName + "\\s*;?", "");
+    nFunction = nFunction.replaceAll("if\\s*\\(\\s*typeof\\s*\\w+\\s*===?.*?\\)\\s*return\\s+" + nfParameterName + "\\s*;?", "");
 
     SignatureCipher cipherKey = new SignatureCipher(nFunction, scriptTimestamp.group(2), script);
 
