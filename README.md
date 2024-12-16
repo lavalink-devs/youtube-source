@@ -289,7 +289,7 @@ to try and work around having automated requests blocked.
 
 
 > [!NOTE]
-> A `poToken` is not a silver bullet, and currently it only applies to requests made via the `WEB` client.
+> A `poToken` is not a silver bullet, and currently it only applies to requests made via the `WEB` & `WEBEMBEDDED` client.
 > You do not need to specify a `poToken` if using OAuth, and vice versa.
 
 Specifying the token is as simple as doing:
