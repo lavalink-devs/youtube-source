@@ -2,7 +2,17 @@ package dev.lavalink.youtube.clients;
 
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
+import com.sedmelluq.discord.lavaplayer.track.AudioReference;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
+import dev.lavalink.youtube.OptionDisabledException;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class MWeb extends Web {
     public static ClientConfig BASE_CONFIG = new ClientConfig()
@@ -22,6 +32,21 @@ public class MWeb extends Web {
     @NotNull
     public ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
         return BASE_CONFIG.copy();
+    }
+
+    @Override
+    @NotNull
+    protected List<AudioTrack> extractSearchResults(@NotNull YoutubeAudioSourceManager source,
+                                                    @NotNull JsonBrowser json) {
+        return json.get("contents")
+            .get("sectionListRenderer")
+            .get("contents")
+            .values() // .index(0)
+            .stream()
+            .flatMap(item -> item.get("itemSectionRenderer").get("contents").values().stream()) // actual results
+            .map(item -> extractAudioTrack(item.get("videoWithContextRenderer"), source))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
     }
 
     @Override

@@ -335,13 +335,19 @@ public abstract class NonMusicClient implements Client {
     @Nullable
     protected AudioTrack extractAudioTrack(@NotNull JsonBrowser json,
                                            @NotNull YoutubeAudioSourceManager source) {
+        // this entire function needs redoing. Ideally being able to specify the paths of known JSON layouts
+        // rather than doing a load of null checks and substitutions.
+
         // Ignore if it's not a track or if it's a livestream
         if (json.isNull() || json.get("lengthText").isNull() || !json.get("unplayableText").isNull()) return null;
 
         String videoId = json.get("videoId").text();
-        JsonBrowser titleJson = json.get("title");
+        JsonBrowser titleJson = !json.get("headline").isNull() ? json.get("headline") : json.get("title");
         String title = DataFormatTools.defaultOnNull(titleJson.get("runs").index(0).get("text").text(), titleJson.get("simpleText").text());
-        String author = json.get("longBylineText").get("runs").index(0).get("text").text();
+        String author = DataFormatTools.defaultOnNull(
+            json.get("longBylineText").get("runs").index(0).get("text").text(),
+            json.get("shortBylineText").get("runs").index(0).get("text").text()
+        );
 
         if (author == null) {
             log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
