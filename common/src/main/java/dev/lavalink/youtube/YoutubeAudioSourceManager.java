@@ -274,7 +274,14 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 } else if ("/playlist".equals(urlInfo.path)) {
                     String playlistId = urlInfo.parameters.get("list");
 
-                    if (playlistId != null) return (client) -> client.loadPlaylist(this, httpInterface, playlistId, null);
+                    if (playlistId != null) {
+                        if (playlistId.startsWith("RD")) { // mix handling
+                            String videoId = playlistId.substring(2);
+                            return (client) -> client.loadMix(this, httpInterface, playlistId, videoId);
+                        }
+
+                        return (client) -> client.loadPlaylist(this, httpInterface, playlistId, null);
+                    }
                 } else if ("/watch_videos".equals(urlInfo.path)) {
                     String videoIds = urlInfo.parameters.get("video_ids");
 
