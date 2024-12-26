@@ -39,6 +39,11 @@ import static com.sedmelluq.discord.lavaplayer.tools.Units.CONTENT_LENGTH_UNKNOW
 public class YoutubeAudioTrack extends DelegatedAudioTrack {
   private static final Logger log = LoggerFactory.getLogger(YoutubeAudioTrack.class);
 
+  // This field is used to determine at what point should a stream be discarded.
+  // If an error is thrown and the executor's position is larger than this number,
+  // the stream URL will not be renewed.
+  public static long BAD_STREAM_POSITION_THRESHOLD_MS = 3000;
+
   private final YoutubeAudioSourceManager sourceManager;
 
   /**
@@ -90,10 +95,15 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
           if ("Not success status code: 403".equals(message) ||
               "Invalid status code for player api response: 400".equals(message) ||
               (message != null && message.contains("No supported audio streams available"))) {
-            continue; // try next client
+            // As long as the executor position has not surpassed the threshold for which
+            // a stream is considered unrecoverable, we can try to renew the playback URL with
+            // another client.
+            if (localExecutor.getPosition() <= BAD_STREAM_POSITION_THRESHOLD_MS) {
+              continue;
+            }
           }
 
-          throw e; // Unhandled exception, just throw.
+          throw e; // Unhandled exception, just rethrow.
         }
       }
 
@@ -129,17 +139,6 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
       }
     } catch (StreamExpiredException e) {
       processWithClient(localExecutor, httpInterface, client, e.lastStreamPosition);
-    } catch (RuntimeException e) {
-      if ("Not success status code: 403".equals(e.getMessage())) {
-        if (localExecutor.getPosition() < 3000) {
-          throw e; // bad stream URL, try the next client.
-        }
-      }
-
-      // contains("No route to host") || contains("Read timed out")
-      // augmentedFormat.getFallback()
-
-      throw e;
     }
   }
 
