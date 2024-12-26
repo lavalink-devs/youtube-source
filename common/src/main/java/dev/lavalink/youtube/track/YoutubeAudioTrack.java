@@ -277,8 +277,8 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     private final long lastStreamPosition;
 
     private StreamExpiredException(long lastStreamPosition,
-                                   @NotNull Exception cause) {
-      super(cause);
+                                   @NotNull Throwable cause) {
+      super(null, cause, true, false);
       this.lastStreamPosition = lastStreamPosition;
     }
   }
