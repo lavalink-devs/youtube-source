@@ -154,6 +154,8 @@ plugins:
     # Clients are queried in the order they are given (so the first client is queried first and so on...)
     clients:
       - MUSIC
+      - TV
+      - TVHTML5EMBEDDED
       - ANDROID_VR
       - WEB
       - WEBEMBEDDED 
