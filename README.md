@@ -314,7 +314,8 @@ plugins:
 Follow this [guide](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies) from yt-dlp to export your account cookies.
 
 > [!NOTE]  
-> Cookies are not as reliable as OAuth2. They have a very short lifespan. Also, make sure to use a burner account; do not use your main account, as it may get banned or terminated. Cookies only work on `WEB`, `WEBEMBEDDED`, `MWEB`, and `ANDROID_VR`.
+> Cookies are not as reliable as OAuth2. They have a very short lifespan. Also, make sure to use a burner account; do not use your main account, as it may get banned or terminated. Cookies only work on `WEB`, `WEBEMBEDDED`, `MWEB`, and `ANDROID_VR` .
+> Using `ANDROID_VR` for playback is not recommended, as it may throw a 403 error because YouTube has made the `poToken` necessary for all clients.
 
 Specifying the cookie is as simple as doing:
 
