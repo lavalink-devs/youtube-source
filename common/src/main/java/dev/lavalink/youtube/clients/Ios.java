@@ -61,7 +61,8 @@ public class Ios extends StreamingNonMusicClient {
     @Override
     @NotNull
     public String getPlayerParams() {
-        return MOBILE_PLAYER_PARAMS;
+        // not needed MOBILE_PLAYER_PARAMS if we pass it returns this video is not availiable
+        return null;
     }
 
     @Override

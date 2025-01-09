@@ -156,9 +156,10 @@ plugins:
       - MUSIC
       - TV
       - TVHTML5EMBEDDED
-      - ANDROID_VR
       - WEB
       - WEBEMBEDDED 
+      - MWEB
+      - ANDROID_VR
 ```
 
 ### Advanced Options
