@@ -21,8 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class YoutubeOauth2Handler {
     private static final Logger log = LoggerFactory.getLogger(YoutubeOauth2Handler.class);
@@ -44,10 +49,54 @@ public class YoutubeOauth2Handler {
     private String tokenType;
     private String accessToken;
     private long tokenExpires;
+    private static final String origin = "https://www.youtube.com";
+    private String cookie;
 
     public YoutubeOauth2Handler(HttpInterfaceManager httpInterfaceManager) {
         this.httpInterfaceManager = httpInterfaceManager;
     }
+
+
+    public static String sapisidFromCookie(String rawCookie) {
+        Map<String, String> cookies = parseCookies(rawCookie);
+        String sapisid = cookies.get("SAPISID");
+        if (sapisid == null) {
+            sapisid = cookies.get("__Secure-3PAPISID");
+        }
+        return sapisid;
+    }
+
+    private static Map<String, String> parseCookies(String rawCookie) {
+        return Arrays.stream(rawCookie.split(";\\s*"))
+                .map(pair -> pair.split("=", 2))
+                .filter(keyValue -> keyValue.length == 2)
+                .collect(Collectors.toMap(kv -> kv[0], kv -> kv[1]));
+    }
+
+    public static String getAuthorization(String sapisid, String origin) throws NoSuchAlgorithmException {
+        long timestamp = System.currentTimeMillis() / 1000;
+        String data = timestamp + " " + sapisid + " " + origin;
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        byte[] hashBytes = digest.digest(data.getBytes());
+        StringBuilder hashHex = new StringBuilder();
+        for (byte b : hashBytes) {
+            hashHex.append(String.format("%02x", b));
+        }
+        return "SAPISIDHASH " + timestamp + "_" + hashHex;
+    }
+
+    public void setCookie(@Nullable String cookie) {
+        if (cookie != null && !cookie.isEmpty()) {
+            this.cookie = cookie;
+            log.debug("Applied Cookie to Oauth2Handler: {}", cookie);
+        }
+    }
+
+    @Nullable
+    public String getCookie() {
+        return cookie;
+    }
+
 
     public void setRefreshToken(@Nullable String refreshToken, boolean skipInitialization) {
         this.refreshToken = refreshToken;
@@ -252,6 +301,27 @@ public class YoutubeOauth2Handler {
         tokenExpires = System.currentTimeMillis() + (tokenLifespan * 1000) - 60000;
 
         log.debug("OAuth access token is {} and refresh token is {}. Access token expires in {} seconds.", accessToken, refreshToken, tokenLifespan);
+    }
+
+
+
+    public void applyCookie(HttpUriRequest request) {
+        if (cookie != null && !cookie.isEmpty()) {
+            String sapisId = sapisidFromCookie(cookie);
+            String auth = "";
+            try {
+                auth = getAuthorization(sapisId, origin);
+            } catch (NoSuchAlgorithmException e) {
+                log.error("Failed to build authorization header from cookie", e);
+                return;
+            }
+            request.setHeader("Authorization", auth);
+            request.setHeader("Cookie", this.getCookie());
+            request.setHeader("x-origin", origin);
+            log.info("Applied cookie to the request");
+
+        }
+
     }
 
     public void applyToken(HttpUriRequest request) {

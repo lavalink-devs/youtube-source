@@ -26,6 +26,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.
  */
 public interface Client {
     String OAUTH_CLIENT_ATTRIBUTE = "yt-oauth-enabled-client";
+    String COOKIE_CLIENT_ATTRIBUTE = "yt-cookie-supported-client";
 
     String WATCH_URL = "https://www.youtube.com/watch?v=";
     String API_BASE_URL = "https://youtubei.googleapis.com/youtubei/v1";
@@ -189,6 +190,14 @@ public interface Client {
     @Nullable
     String getPlayerParams();
 
+
+    
+    @NotNull
+    default String getPlayerUrl() {
+        return "https://youtubei.googleapis.com/youtubei/v1/player?prettyPrint=false";
+        // cookies don't work on this PLAYER API URL for some reason.
+    }
+
     @NotNull
     default ClientOptions getOptions() {
         return ClientOptions.DEFAULT;
@@ -218,6 +227,11 @@ public interface Client {
      * @return True, if this client supports account linking via OAuth (i.e. TV)
      */
     default boolean supportsOAuth() {
+        return false;
+    }
+
+
+    default boolean supportsCookies() {
         return false;
     }
 

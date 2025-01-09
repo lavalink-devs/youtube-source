@@ -89,4 +89,18 @@ public class MWeb extends Web {
     public String getIdentifier() {
         return BASE_CONFIG.getName();
     }
+
+
+    @Override
+    @NotNull
+    public String getPlayerUrl() {
+        return "https://www.youtube.com/youtubei/v1/player?prettyPrint=false";
+    }
+
+    @Override
+    public boolean supportsCookies() {
+        return true;
+    }
+     
+
 }

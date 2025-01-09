@@ -110,4 +110,16 @@ public class WebEmbedded extends Web {
         throw new FriendlyException("This client cannot load mixes", Severity.COMMON,
             new RuntimeException("WEBEMBEDDED cannot be used to load mixes"));
     }
+
+
+    @Override
+    @NotNull
+    public String getPlayerUrl() {
+        return "https://www.youtube.com/youtubei/v1/player?prettyPrint=false";
+    }
+
+    @Override
+    public boolean supportsCookies() {
+        return true;
+    }
 }

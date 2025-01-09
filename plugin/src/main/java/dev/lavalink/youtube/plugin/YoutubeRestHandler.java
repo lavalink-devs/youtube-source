@@ -7,6 +7,7 @@ import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.Web;
 import dev.lavalink.youtube.clients.WebEmbedded;
 import dev.lavalink.youtube.clients.skeleton.Client;
+import dev.lavalink.youtube.plugin.rest.CookieConfigRequest;
 import dev.lavalink.youtube.plugin.rest.MinimalConfigRequest;
 import dev.lavalink.youtube.plugin.rest.MinimalConfigResponse;
 import dev.lavalink.youtube.track.YoutubePersistentHttpStream;
@@ -75,6 +76,7 @@ public class YoutubeRestHandler {
 
             log.debug("Loading formats for {} with client {}", videoId, client.getIdentifier());
             httpInterface.getContext().setAttribute(Client.OAUTH_CLIENT_ATTRIBUTE, client.supportsOAuth());
+            httpInterface.getContext().setAttribute(Client.COOKIE_CLIENT_ATTRIBUTE, client.supportsCookies());
 
             TrackFormats formats;
 
@@ -162,6 +164,15 @@ public class YoutubeRestHandler {
     @GetMapping("/youtube")
     public MinimalConfigResponse getYoutubeConfig() {
         return MinimalConfigResponse.from(getYoutubeSource());
+    }
+
+
+    @PostMapping("/youtube/cookie")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateYoutubeCookie(@RequestBody CookieConfigRequest config) {
+        YoutubeAudioSourceManager source = getYoutubeSource();
+        source.getOauth2Handler().setCookie(config.getCookie());
+        log.debug("Updated YouTube OAuth2 cookie to \"{}\"", config.getCookie());
     }
 
     @PostMapping("/youtube")
