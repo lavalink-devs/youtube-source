@@ -274,6 +274,7 @@ plugins:
       # Initialization is skipped automatically if a valid refresh token is supplied. Leave this commented if you're
       # completing the OAuth flow for the first time/do not have a refresh token.
       # skipInitialization: true
+      # cookie: "paste your google account cookie here which your exported from browser"
 ```
 
 ## Using a `poToken`
@@ -307,6 +308,31 @@ plugins:
     pot:
       token: "paste your po_token here"
       visitorData: "paste your visitor_data here"
+```
+## Using `Cookies`
+
+Follow this [guide](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies) from yt-dlp to export your account cookies.
+
+> [!NOTE]  
+> Cookies are not as reliable as OAuth2. They have a very short lifespan. Also, make sure to use a burner account; do not use your main account, as it may get banned or terminated. Cookies only work on `WEB`, `WEBEMBEDDED`, `MWEB`, and `ANDROID_VR`.
+
+Specifying the cookie is as simple as doing:
+
+### Lavaplayer
+```java
+source.getOauth2Handler().setCookie("your_cookie_here");
+```
+
+### Lavalink
+```yaml
+plugins:
+  youtube:
+    enabled: true
+    oauth:
+      enabled: true
+      cookie : "put_your_cookie_here"
+      refreshToken : "put_your_refresh_token_here"
+      skipInitialization : true
 ```
 
 ## REST routes (`plugin` only)
@@ -349,6 +375,23 @@ Otherwise:
   "refreshToken": "your current refresh token, or null"
 }
 ```
+
+### `POST` `/youtube/cookie`
+Body:
+```json
+{
+  "cookie" : "your_cookie_value, or null"
+}
+```
+
+Response:
+
+If the YouTube source is not enabled, or oauth is not enabled:
+`500 - Internal Server Error`
+
+Otherwise:
+`204 - No Content`
+
 
 ### `GET` `/youtube/stream/{videoId}`
 
