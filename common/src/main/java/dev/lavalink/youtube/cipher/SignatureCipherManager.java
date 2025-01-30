@@ -286,7 +286,7 @@ public class SignatureCipherManager {
     String nFunction = nFunctionMatcher.group(0);
     String nfParameterName = DataFormatTools.extractBetween(nFunction, "(", ")");
     // remove short-circuit that prevents n challenge transformation
-    nFunction = nFunction.replaceAll("if\\s*\\(\\s*typeof\\s*\\w+\\s*===?.*?\\)\\s*return\\s+" + nfParameterName + "\\s*;?", "");
+    nFunction = nFunction.replaceAll("if\\s*\\(\\s*typeof\\s*[\\w$]+\\s*===?.*?\\)\\s*return\\s+" + nfParameterName + "\\s*;?", "");
 
     SignatureCipher cipherKey = new SignatureCipher(nFunction, scriptTimestamp.group(2), script);
 
