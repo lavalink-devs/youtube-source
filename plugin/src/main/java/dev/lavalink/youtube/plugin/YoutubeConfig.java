@@ -18,6 +18,7 @@ public class YoutubeConfig {
     private String[] clients;
     private Map<String, ClientOptions> clientOptions = new HashMap<>();
     private YoutubeOauthConfig oauth = null;
+    
 
     public boolean getEnabled() {
         return enabled;
