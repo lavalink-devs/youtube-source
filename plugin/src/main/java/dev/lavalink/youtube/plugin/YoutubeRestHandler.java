@@ -82,6 +82,12 @@ public class YoutubeRestHandler {
                 formats = client.loadFormats(source, httpInterface, videoId);
             } catch (CannotBeLoaded cbl) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This video cannot be loaded. Reason: " + cbl.getCause().getMessage());
+            } catch (FriendlyException t) {
+                if (t.getMessage().contains("This video is unavailable") || t.getMessage().contains("This video requires login.")) {
+                    log.debug("REST streaming with {} for {} returned {}", client.getIdentifier(), videoId, t.getMessage());
+                    continue;
+                }
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "An error occurred while loading the formats.", t);
             }
 
             if (formats == null || formats.getFormats().isEmpty()) {
