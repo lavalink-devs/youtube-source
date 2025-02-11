@@ -197,7 +197,7 @@ Currently, the following clients are available for use:
   - ❌ Heavily restricted, frequently dysfunctional.
 - `ANDROID_MUSIC`
   - ✔ Opus formats.
-  - ❌ No playlist/livestream support.
+  - ❌ No mix/playlist/search support.
 - `ANDROID_VR`
   - ✔ Opus formats.
 - `IOS`
