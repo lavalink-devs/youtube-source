@@ -172,9 +172,9 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         oauth2Handler.setRefreshToken(refreshToken, skipInitialization);
 
         if (Arrays.stream(clients).noneMatch(Client::supportsOAuth)) {
-            log.warn("OAuth has been enabled without registering any OAuth-enabled clients. " +
+            log.warn("OAuth has been enabled without registering any OAuth-compatible clients. " +
                 "Please consult https://github.com/lavalink-devs/youtube-source?tab=readme-ov-file#available-clients for a list of " +
-                "OAuth-enabled clients.");
+                "OAuth-compatible clients.");
         }
     }
 
