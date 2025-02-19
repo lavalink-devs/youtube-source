@@ -80,11 +80,19 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
         context.removeAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED);
       }
 
+      boolean oauthApplied = false;
       boolean isRequestFromOauthedClient = context.getAttribute(Client.OAUTH_CLIENT_ATTRIBUTE) == Boolean.TRUE;
 
-      if (isRequestFromOauthedClient && Client.PLAYER_URL.equals(request.getURI().toString())) {
-        // only apply the token to /player requests.
+      if (isRequestFromOauthedClient && request.getURI().toString().contains("/youtubei/v1/player")) {
         oauth2Handler.applyToken(request);
+        oauthApplied = true;
+      }
+
+      boolean isRequestFromCookieSupportedClient = context.getAttribute(Client.COOKIE_CLIENT_ATTRIBUTE) == Boolean.TRUE;
+
+      if (!oauthApplied && isRequestFromCookieSupportedClient && request.getURI().toString().contains("/youtubei/v1/player")) {
+        oauth2Handler.applyCookie(request);
+
       }
     }
 

@@ -27,6 +27,7 @@ public class AndroidMusic extends Android {
         .withClientField("clientVersion", CLIENT_VERSION)
         .withUserAgent(String.format("com.google.android.apps.youtube.music/%s (Linux; U; Android %s) gzip", CLIENT_VERSION, ANDROID_VERSION.getOsVersion()));
 
+
     public AndroidMusic() {
         this(ClientOptions.DEFAULT);
     }
@@ -44,7 +45,8 @@ public class AndroidMusic extends Android {
     @Override
     @NotNull
     public String getPlayerParams() {
-        return MOBILE_PLAYER_PARAMS;
+        // not needed MOBILE_PLAYER_PARAMS if we pass it returns this video is not availiable
+        return null;
     }
 
     @Override

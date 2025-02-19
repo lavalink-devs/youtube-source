@@ -74,6 +74,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
         }
 
         httpInterface.getContext().setAttribute(Client.OAUTH_CLIENT_ATTRIBUTE, client.supportsOAuth());
+        httpInterface.getContext().setAttribute(Client.COOKIE_CLIENT_ATTRIBUTE, client.supportsCookies());
 
         try {
           processWithClient(localExecutor, httpInterface, client, 0);
