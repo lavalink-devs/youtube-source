@@ -174,6 +174,13 @@ public class SignatureCipherManager {
           throw throwWithDebugInfo(log, null, "no jsUrl found", "html", responseText);
         }
 
+        if (scriptUrl.contains("/player_ias_tce.vflset/")) {
+          // TODO: tce player scripts need proper support
+          //       see https://github.com/yt-dlp/yt-dlp/issues/12398
+          log.debug("jsUrl URL points to tce-variant player script, rewriting to non-tce.");
+          scriptUrl = scriptUrl.replace("/player_ias_tce.vflset/", "/player_ias.vflset/");
+        }
+
         return (cachedPlayerScript = new CachedPlayerScript(scriptUrl));
       } catch (IOException e) {
         throw ExceptionTools.toRuntimeException(e);
