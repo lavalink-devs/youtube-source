@@ -177,7 +177,7 @@ public class SignatureCipherManager {
         if (scriptUrl.contains("/player_ias_tce.vflset/")) {
           // TODO: tce player scripts need proper support
           //       see https://github.com/yt-dlp/yt-dlp/issues/12398
-          log.debug("jsUrl URL points to tce-variant player script, rewriting to non-tce.");
+          log.debug("jsUrl points to tce-variant player script, rewriting to non-tce.");
           scriptUrl = scriptUrl.replace("/player_ias_tce.vflset/", "/player_ias.vflset/");
         }
 
