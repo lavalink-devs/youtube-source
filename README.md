@@ -99,22 +99,9 @@ YoutubeAudioSourceManager youtube = new YoutubeAudioSourceManager(/*allowSearch:
 ```
 
 ## plugin
-This module serves as the plugin for use with [Lavalink](https://github.com/lavalink-devs/Lavalink).
+This module serves as the plugin for use with [Lavalink v4](https://github.com/lavalink-devs/Lavalink).
 
 To use this plugin with Lavalink, you must declare the dependency.
-
-<details>
-<summary>Using with Lavalink v3:</summary>
-
-```yaml
-lavalink:
-  plugins:
-    # Replace VERSION with the current version as shown by the Releases tab or a long commit hash for snapshots.
-    - dependency: "dev.lavalink.youtube:youtube-plugin:VERSION"
-      repository: "https://maven.lavalink.dev/releases" # use https://maven.lavalink.dev/snapshots if you want to use a snapshot version.
-```
-
-</details>
 
 <details>
 <summary>Using with Lavalink v4:</summary>
