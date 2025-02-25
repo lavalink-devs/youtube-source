@@ -131,7 +131,7 @@ public abstract class NonMusicClient implements Client {
             .setAttributes(httpInterface)
             .toJsonString();
 
-        HttpPost request = new HttpPost(PLAYER_URL);
+        HttpPost request = new HttpPost(getPlayerUrl());
         request.setEntity(new StringEntity(payload, "UTF-8"));
 
         JsonBrowser json = loadJsonResponse(httpInterface, request, "player api response");
