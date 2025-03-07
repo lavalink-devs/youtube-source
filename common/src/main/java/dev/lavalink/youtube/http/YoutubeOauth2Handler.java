@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -35,6 +36,7 @@ public class YoutubeOauth2Handler {
     private static final String CLIENT_SECRET = "SboVhoG9s0rNafixCSGGKXAT";
     private static final String SCOPES = "http://gdata.youtube.com https://www.googleapis.com/auth/youtube";
     private static final String OAUTH_FETCH_CONTEXT_ATTRIBUTE = "yt-oauth";
+    public static final String OAUTH_INJECT_CONTEXT_ATTRIBUTE = "yt-oauth-injection";
 
     private final HttpInterfaceManager httpInterfaceManager;
 
@@ -286,6 +288,16 @@ public class YoutubeOauth2Handler {
         if (accessToken != null && tokenType != null && System.currentTimeMillis() < tokenExpires) {
             log.debug("Using oauth authorization header with value \"{} {}\"", tokenType, accessToken);
             request.setHeader("Authorization", String.format("%s %s", tokenType, accessToken));
+        }
+    }
+
+    public void applyToken(HttpUriRequest request, String token) {
+        if (!Client.PLAYER_URL.equals(request.getURI().toString())) {
+            return;
+        }
+
+        if (token != null && !token.isEmpty()) {
+            request.setHeader("Authorization", String.format("%s %s", "Bearer", token));
         }
     }
 
