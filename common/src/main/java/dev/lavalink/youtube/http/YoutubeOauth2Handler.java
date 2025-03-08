@@ -291,9 +291,7 @@ public class YoutubeOauth2Handler {
     }
 
     public void applyToken(HttpUriRequest request, String token) {
-        if (token != null && !token.isEmpty()) {
             request.setHeader("Authorization", String.format("%s %s", "Bearer", token));
-        }
     }
 
     private HttpInterface getHttpInterface() {
