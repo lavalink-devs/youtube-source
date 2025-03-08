@@ -2,6 +2,7 @@ package dev.lavalink.youtube.track;
 
 import com.grack.nanojson.JsonObject;
 import com.grack.nanojson.JsonParser;
+import com.grack.nanojson.JsonParserException;
 import com.sedmelluq.discord.lavaplayer.container.matroska.MatroskaAudioTrack;
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
@@ -69,9 +70,13 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     }
 
     try (HttpInterface httpInterface = sourceManager.getInterface()) {
-      JsonObject userData = JsonParser.object().from(getUserData().toString());
-      if (userData.has("oauth-token")) {
-        httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, userData.getString("oauth-token"));
+      try {
+        JsonObject userData = JsonParser.object().from(getUserData().toString());
+        if (userData.has("oauth-token")) {
+          httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, userData.getString("oauth-token"));
+        }
+      } catch (JsonParserException e) {
+        log.debug("Failed to parse token from userData", e);
       }
       Exception lastException = null;
 
