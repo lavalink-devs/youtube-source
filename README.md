@@ -256,6 +256,17 @@ plugins:
       # skipInitialization: true
 ```
 
+### Passing an oauth token from your client
+Another option to use oauth is by using oauth access tokens that are managed from your client. In this case your 
+bot/client provides LavaLink with the token to use when playing a track. To do this simply add the oauth access token 
+to a track's [userData](https://lavalink.dev/api/rest#track) field in a json format when updating the player to 
+play a track like:
+```json
+{
+  "oauth-token": "access token to use"
+}
+```
+
 ## Using a `poToken`
 A `poToken`, also known as a "Proof of Origin Token" is a way to identify what requests originate from.
 In YouTube's case, this is sent as a JavaScript challenge that browsers must evaluate, and send back the resolved
