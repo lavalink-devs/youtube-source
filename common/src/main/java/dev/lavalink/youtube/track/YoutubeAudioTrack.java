@@ -1,14 +1,12 @@
 package dev.lavalink.youtube.track;
 
-import com.grack.nanojson.JsonObject;
-import com.grack.nanojson.JsonParser;
-import com.grack.nanojson.JsonParserException;
 import com.sedmelluq.discord.lavaplayer.container.matroska.MatroskaAudioTrack;
 import com.sedmelluq.discord.lavaplayer.container.mpeg.MpegAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
@@ -27,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -71,11 +70,11 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     try (HttpInterface httpInterface = sourceManager.getInterface()) {
       try {
-        JsonObject userData = JsonParser.object().from(getUserData().toString());
-        if (userData.has("oauth-token")) {
-          httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, userData.getString("oauth-token"));
+        JsonBrowser userData = JsonBrowser.parse(getUserData().toString());
+        if (userData.get("oauth-token") != null) {
+          httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, userData.get("oauth-token").text());
         }
-      } catch (JsonParserException e) {
+      } catch (IOException e) {
         log.debug("Failed to parse token from userData", e);
       }
       Exception lastException = null;

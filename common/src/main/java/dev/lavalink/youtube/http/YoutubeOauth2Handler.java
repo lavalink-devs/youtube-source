@@ -291,7 +291,7 @@ public class YoutubeOauth2Handler {
     }
 
     public void applyToken(HttpUriRequest request, String token) {
-            request.setHeader("Authorization", String.format("%s %s", "Bearer", token));
+        request.setHeader("Authorization", String.format("%s %s", "Bearer", token));
     }
 
     private HttpInterface getHttpInterface() {
