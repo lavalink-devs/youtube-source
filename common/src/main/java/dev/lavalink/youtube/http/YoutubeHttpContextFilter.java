@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
+import static dev.lavalink.youtube.http.YoutubeOauth2Handler.OAUTH_INJECT_CONTEXT_ATTRIBUTE;
 
 public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   private static final Logger log = LoggerFactory.getLogger(YoutubeHttpContextFilter.class);
@@ -83,8 +84,14 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
       boolean isRequestFromOauthedClient = context.getAttribute(Client.OAUTH_CLIENT_ATTRIBUTE) == Boolean.TRUE;
 
       if (isRequestFromOauthedClient && Client.PLAYER_URL.equals(request.getURI().toString())) {
+        // Look at the userdata for any provided oauth-token
+        String oauthToken = context.getAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, String.class);
         // only apply the token to /player requests.
-        oauth2Handler.applyToken(request);
+        if (oauthToken != null && !oauthToken.isEmpty()) {
+          oauth2Handler.applyToken(request, oauthToken);
+        } else {
+          oauth2Handler.applyToken(request);
+        }
       }
     }
 

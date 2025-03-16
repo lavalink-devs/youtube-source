@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -32,6 +34,7 @@ import java.util.Map;
 import static com.sedmelluq.discord.lavaplayer.container.Formats.MIME_AUDIO_WEBM;
 import static com.sedmelluq.discord.lavaplayer.tools.DataFormatTools.decodeUrlEncodedItems;
 import static com.sedmelluq.discord.lavaplayer.tools.Units.CONTENT_LENGTH_UNKNOWN;
+import static dev.lavalink.youtube.http.YoutubeOauth2Handler.OAUTH_INJECT_CONTEXT_ATTRIBUTE;
 
 /**
  * Audio track that handles processing Youtube videos as audio tracks.
@@ -66,6 +69,14 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     }
 
     try (HttpInterface httpInterface = sourceManager.getInterface()) {
+      try {
+        JsonBrowser userData = JsonBrowser.parse(getUserData().toString());
+        if (userData.get("oauth-token") != null) {
+          httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, userData.get("oauth-token").text());
+        }
+      } catch (IOException e) {
+        log.debug("Failed to parse token from userData", e);
+      }
       Exception lastException = null;
 
       for (Client client : clients) {
