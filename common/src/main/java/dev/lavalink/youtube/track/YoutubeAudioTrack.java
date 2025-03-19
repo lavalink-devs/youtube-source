@@ -70,9 +70,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     try (HttpInterface httpInterface = sourceManager.getInterface()) {
       try {
-        JsonBrowser userData = JsonBrowser.parse(getUserData().toString());
-        if (userData.get("oauth-token") != null) {
-          httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, userData.get("oauth-token").text());
+        Object userData = getUserData();
+        if (userData != null) {
+          JsonBrowser jsonUserData = JsonBrowser.parse(userData.toString());
+          if (jsonUserData.get("oauth-token") != null) {
+            httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, jsonUserData.get("oauth-token").text());
+          }
         }
       } catch (IOException e) {
         log.debug("Failed to parse token from userData", e);
