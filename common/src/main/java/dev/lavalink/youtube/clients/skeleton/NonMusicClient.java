@@ -7,6 +7,7 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.*;
 import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.OptionDisabledException;
+import dev.lavalink.youtube.YoutubeAudioPlaylist;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.cipher.SignatureCipher;
 import dev.lavalink.youtube.cipher.SignatureCipherManager;
@@ -440,7 +441,9 @@ public abstract class NonMusicClient implements Client {
             throw new FriendlyException("Could not find tracks from mix.", SUSPICIOUS, null);
         }
 
-        return new BasicAudioPlaylist(title, tracks, findSelectedTrack(tracks, selectedVideoId), false);
+        String playlistUrl = "https://www.youtube.com/watch?v=" + (selectedVideoId != null ? selectedVideoId : tracks.get(0).getIdentifier()) + "&list=" + mixId;
+
+        return new YoutubeAudioPlaylist(title, tracks, findSelectedTrack(tracks, selectedVideoId), false, playlistUrl);
     }
 
     @Override
@@ -464,6 +467,13 @@ public abstract class NonMusicClient implements Client {
         if (playlistName == null) {
             throw new IllegalStateException("Failed to extract playlist name",
                 new RuntimeException("Playlist name was not found, JSON: " + json.format()));
+        }
+
+        String playlistUrl;
+        if (selectedVideoId == null) {
+            playlistUrl = "https://www.youtube.com/playlist?list=" + playlistId;
+        } else {
+            playlistUrl = "https://www.youtube.com/watch?v=" + selectedVideoId + "&list=" + playlistId;
         }
 
         JsonBrowser playlistVideoList = extractPlaylistVideoList(json);
@@ -498,7 +508,7 @@ public abstract class NonMusicClient implements Client {
             throw new FriendlyException("Could not find tracks from playlist.", SUSPICIOUS, new RuntimeException("JSON: " + json.format()));
         }
 
-        return new BasicAudioPlaylist(playlistName, tracks, findSelectedTrack(tracks, selectedVideoId), false);
+        return new YoutubeAudioPlaylist(playlistName, tracks, findSelectedTrack(tracks, selectedVideoId), false, playlistUrl);
     }
 
     @Override
