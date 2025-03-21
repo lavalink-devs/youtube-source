@@ -17,12 +17,19 @@ public class SignatureCipher {
   public final String scriptTimestamp;
   public final String rawScript;
 
+  public final boolean tceScript;
+  public final String tceVars;
+
   public SignatureCipher(@NotNull String nFunction,
                          @NotNull String timestamp,
-                         @NotNull String rawScript) {
+                         @NotNull String rawScript,
+                         boolean tceScript,
+                         @NotNull String tceVars) {
     this.nFunction = nFunction;
     this.scriptTimestamp = timestamp;
     this.rawScript = rawScript;
+    this.tceScript = tceScript;
+    this.tceVars = tceVars;
   }
 
   /**
@@ -63,7 +70,7 @@ public class SignatureCipher {
   public String transform(@NotNull String text, @NotNull ScriptEngine scriptEngine) throws ScriptException, NoSuchMethodException {
     String transformed;
 
-    scriptEngine.eval("n=" + nFunction);
+    scriptEngine.eval("n=" + nFunction + (tceScript ? tceVars : ""));
     transformed = (String) ((Invocable) scriptEngine).invokeFunction("n", text);
 
     return transformed;
