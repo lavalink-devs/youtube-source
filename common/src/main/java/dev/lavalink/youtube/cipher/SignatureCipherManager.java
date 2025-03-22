@@ -321,7 +321,7 @@ public class SignatureCipherManager {
     if (!tceVars.find()) {
       if (matchedTce) {
         dumpProblematicScript(script, sourceUrl, "no tce variables match");
-        throw new IllegalStateException("Must find tce variables from script: " + sourceUrl);
+        log.warn("Got tce player script but could not find global variables: {}", sourceUrl);
       }
     } else {
       tceText = tceVars.group(1);
