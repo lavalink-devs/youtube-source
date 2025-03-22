@@ -262,7 +262,6 @@ public class SignatureCipherManager {
 
   private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl) {
     Matcher actions = actionsPattern.matcher(script);
-    Matcher nFunctionMatcher = nFunctionPattern.matcher(script);
     Matcher scriptTimestamp = timestampPattern.matcher(script);
 
     boolean matchedTce = false;
@@ -304,14 +303,23 @@ public class SignatureCipherManager {
       throw new IllegalStateException("Must find timestamp from script: " + sourceUrl);
     }
 
+    // use matchedTce hint to determine which regex we should use to parse the script.
+    Matcher nFunctionMatcher = matchedTce ? nFunctionTcePattern.matcher(script) : nFunctionPattern.matcher(script);
+
     if (!nFunctionMatcher.find()) {
-      nFunctionMatcher = nFunctionTcePattern.matcher(script);
+      // fall back to the opposite of what we used above.
+      nFunctionMatcher = matchedTce ? nFunctionPattern.matcher(script) : nFunctionTcePattern.matcher(script);
 
       if (!nFunctionMatcher.find()) {
         dumpProblematicScript(script, sourceUrl, "no n function match");
         throw new IllegalStateException("Must find n function from script: " + sourceUrl);
       }
 
+      // unconditionally set this to true.
+      // we either start with the non-tce regex and then fall back to the tce regex,
+      // in which case we have matched a tce script.
+      // otherwise, we first checked with the tce regex but didn't match and defaulted to
+      // the legacy regex, but in this case the variable can only have a value of true.
       matchedTce = true;
     }
 
