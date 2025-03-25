@@ -185,42 +185,22 @@ plugins:
 ## Available Clients
 Currently, the following clients are available for use:
 
-- `MUSIC`
-  - ✔ Provides support for searching YouTube music (`ytmsearch:`).
-  - ❌ Cannot be used for playback, or playlist/mix/livestream loading.
-- `WEB`
-  - ✔ Opus formats.
-- `MWEB`
-  - ✔ Opus formats.
-- `WEBEMBEDDED`
-  - ✔ Opus formats.
-  - ✔ Limited age-restricted video playback.
-  - ❌ No mix/playlist/search support.
-- `ANDROID`
-  - ❌ Heavily restricted, frequently dysfunctional.
-- `ANDROID_MUSIC`
-  - ✔ Opus formats.
-  - ❌ No playlist/livestream support.
-- `ANDROID_VR`
-  - ✔ Opus formats.
-- `IOS`
-  - ❌ No Opus formats (requires transcoding).
-- `TV`
-  - ✔ Opus formats.
-  - ✔ OAuth compatibility.
-  - ❌ No mix/playlist/search/video *lookup* support.
-  - ❌ Playback only.
-- `TVHTML5EMBEDDED`
-  - ✔ Opus formats.
-  - ✔ OAuth compatibility.
-  - ❌ No playlist support.
-  - ❌ Playback requires sign-in.
+| Identifier        | Opus Formats | OAuth | Age-restriction Support | Playback Support | Metadata Support             | Additional Notes                                     |
+|-------------------|--------------|-------|-------------------------|------------------|------------------------------|------------------------------------------------------|
+| `MUSIC`           | No           | No    | No                      | No               | Search                       | YouTube music search support via `ytmsearch:` prefix |
+| `WEB`             | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix |                                                      |
+| `MWEB`            | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix |                                                      |
+| `WEBEMBEDDED`     | Yes          | No    | Limited                 | Yes + Livestream | Video                        |                                                      |
+| `ANDROID`         | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix | Heavily restricted, frequently dysfunctional         |
+| `ANDROID_MUSIC`   | Yes          | No    | No                      | Yes              | Video, Search, Mix           |                                                      |
+| `ANDROID_VR`      | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix |                                                      |
+| `IOS`             | No           | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix |                                                      |
+| `TV`              | Yes          | Yes   | With OAuth              | Yes + Livestream | None                         | Playback requires sign-in                            |
+| `TVHTML5EMBEDDED` | Yes          | Yes   | With OAuth              | Yes + Livestream | Video, Search, Mix           | Playback requires sign-in                            |
 
 > [!NOTE]
+> Clients that do not return Opus formats will require transcoding.
 > Livestreams do not yield Opus formats so will always require transcoding.
-
-> [!NOTE]
-> Assume clients do not work with OAuth unless stated.
 
 
 ## Using OAuth Tokens
@@ -278,6 +258,17 @@ plugins:
       # completing the OAuth flow for the first time/do not have a refresh token.
       # skipInitialization: true
       # cookie: "paste your google account cookie here which your exported from browser"
+```
+
+### Passing an oauth token from your client
+Another option to use oauth is by using oauth access tokens that are managed from your client. In this case your 
+bot/client provides LavaLink with the token to use when playing a track. To do this simply add the oauth access token 
+to a track's [userData](https://lavalink.dev/api/rest#track) field in a json format when updating the player to 
+play a track like:
+```json
+{
+  "oauth-token": "access token to use"
+}
 ```
 
 ## Using a `poToken`

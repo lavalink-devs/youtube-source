@@ -3,6 +3,7 @@ package dev.lavalink.youtube.plugin;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.CannotBeLoaded;
+import dev.lavalink.youtube.ClientInformation;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.Web;
 import dev.lavalink.youtube.clients.WebEmbedded;
@@ -53,6 +54,7 @@ public class YoutubeRestHandler {
                                                                        @RequestParam(name = "itag", required = false) Integer itag,
                                                                        @RequestParam(name = "withClient", required = false) String clientIdentifier) throws IOException {
         YoutubeAudioSourceManager source = getYoutubeSource();
+        Throwable lastException = null;
 
         if (Arrays.stream(source.getClients()).noneMatch(Client::supportsFormatLoading)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "None of the registered clients supports format loading.");
@@ -84,6 +86,11 @@ public class YoutubeRestHandler {
                 formats = client.loadFormats(source, httpInterface, videoId);
             } catch (CannotBeLoaded cbl) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This video cannot be loaded. Reason: " + cbl.getCause().getMessage());
+            }  catch (Throwable t) {
+                log.debug("Client \"{}\" threw a non-fatal exception, storing and proceeding...", client.getIdentifier());
+                t.addSuppressed(ClientInformation.create(client));
+                lastException = t;
+                continue;
             }
 
             if (formats == null || formats.getFormats().isEmpty()) {
@@ -156,6 +163,10 @@ public class YoutubeRestHandler {
 
         if (foundFormats) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No formats found with the requested itag.");
+        }
+
+        if (lastException != null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "This video cannot be loaded", lastException);
         }
 
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Could not find formats for the requested videoId.");

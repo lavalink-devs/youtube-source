@@ -45,7 +45,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.ExceptionTools.throwWithDeb
 public class SignatureCipherManager {
   private static final Logger log = LoggerFactory.getLogger(SignatureCipherManager.class);
 
-  private static final String VARIABLE_PART = "[a-zA-Z_\\$][a-zA-Z_0-9]*";
+  private static final String VARIABLE_PART = "[a-zA-Z_\\$][a-zA-Z_0-9\\$]*";
   private static final String VARIABLE_PART_DEFINE = "\\\"?" + VARIABLE_PART + "\\\"?";
   private static final String BEFORE_ACCESS = "(?:\\[\\\"|\\.)";
   private static final String AFTER_ACCESS = "(?:\\\"\\]|)";
@@ -88,6 +88,24 @@ public class SignatureCipherManager {
           "(.*?try)(\\{.*?})catch\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
           "\\s*return\"[\\w-]+([A-z0-9-]+)\"\\s*\\+\\s*\\1\\s*}" +
           "\\s*return\\s*(\\2\\.join\\(\"\"\\)|Array\\.prototype\\.join\\.call\\(\\2,.*?\\))};", Pattern.DOTALL);
+
+  private static final Pattern tceGlobalVarsPattern = Pattern.compile(
+      "(?:^|[;,])\\s*(var\\s+([\\w$]+)\\s*=\\s*\"(?:[^\"\\\\]|\\\\.)+\"\\s*\\.\\s*split\\(\"([^\"\\\\]|\\\\.)\"\\))(?=\\s*[,;])"
+  );
+
+  private static final Pattern functionTcePattern = Pattern.compile(
+      "function(?:\\s+[a-zA-Z_\\$][a-zA-Z0-9_\\$]*)?\\(\\w\\)\\{" +
+          "\\w=\\w\\.split\\((?:\"\"|[a-zA-Z0-9_$]*\\[\\d+])\\);" +
+          "\\s*((?:(?:\\w=)?[a-zA-Z_\\$][a-zA-Z0-9_\\$]*(?:\\[\\\"|\\.)[a-zA-Z_\\$][a-zA-Z0-9_\\$]*(?:\\\"\\]|)\\(\\w,\\d+\\);)+)" +
+          "return \\w\\.join\\((?:\"\"|[a-zA-Z0-9_$]*\\[\\d+])\\)}"
+  );
+
+  private static final Pattern nFunctionTcePattern = Pattern.compile(
+      "function\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
+          "\\s*var\\s*(\\w+)=\\1\\.split\\(\\1\\.slice\\(0,0\\)\\),\\s*(\\w+)=\\[.*?];" +
+          ".*?catch\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
+          "\\s*return(?:\"[^\"]+\"|\\s*[a-zA-Z_0-9$]*\\[\\d+])\\s*\\+\\s*\\1\\s*}" +
+          "\\s*return\\s*\\2\\.join\\((?:\"\"|[a-zA-Z_0-9$]*\\[\\d+])\\)};", Pattern.DOTALL);
 
   private final ConcurrentMap<String, SignatureCipher> cipherCache;
   private final Set<String> dumpedScriptUrls;
@@ -244,8 +262,9 @@ public class SignatureCipherManager {
 
   private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl) {
     Matcher actions = actionsPattern.matcher(script);
-    Matcher nFunctionMatcher = nFunctionPattern.matcher(script);
     Matcher scriptTimestamp = timestampPattern.matcher(script);
+
+    boolean matchedTce = false;
 
     if (!actions.find()) {
       dumpProblematicScript(script, sourceUrl, "no actions match");
@@ -267,28 +286,62 @@ public class SignatureCipherManager {
 
     Matcher functions = functionPattern.matcher(script);
     if (!functions.find()) {
-      dumpProblematicScript(script, sourceUrl, "no decipher function match");
-      throw new IllegalStateException("Must find decipher function from script.");
+      functions = functionTcePattern.matcher(script);
+
+      if (!functions.find()) {
+        dumpProblematicScript(script, sourceUrl, "no decipher function match");
+        throw new IllegalStateException("Must find decipher function from script.");
+      }
+
+      matchedTce = true;
     }
 
-    Matcher matcher = extractor.matcher(functions.group(2));
+    Matcher matcher = extractor.matcher(functions.group(matchedTce ? 1 : 2));
 
     if (!scriptTimestamp.find()) {
       dumpProblematicScript(script, sourceUrl, "no timestamp match");
       throw new IllegalStateException("Must find timestamp from script: " + sourceUrl);
     }
 
+    // use matchedTce hint to determine which regex we should use to parse the script.
+    Matcher nFunctionMatcher = matchedTce ? nFunctionTcePattern.matcher(script) : nFunctionPattern.matcher(script);
+
     if (!nFunctionMatcher.find()) {
-      dumpProblematicScript(script, sourceUrl, "no n function match");
-      throw new IllegalStateException("Must find n function from script: " + sourceUrl);
+      // fall back to the opposite of what we used above.
+      nFunctionMatcher = matchedTce ? nFunctionPattern.matcher(script) : nFunctionTcePattern.matcher(script);
+
+      if (!nFunctionMatcher.find()) {
+        dumpProblematicScript(script, sourceUrl, "no n function match");
+        throw new IllegalStateException("Must find n function from script: " + sourceUrl);
+      }
+
+      // unconditionally set this to true.
+      // we either start with the non-tce regex and then fall back to the tce regex,
+      // in which case we have matched a tce script.
+      // otherwise, we first checked with the tce regex but didn't match and defaulted to
+      // the legacy regex, but in this case the variable can only have a value of true.
+      matchedTce = true;
+    }
+
+    Matcher tceVars = tceGlobalVarsPattern.matcher(script);
+    String tceText = "";
+
+    if (!tceVars.find()) {
+      if (matchedTce) {
+        dumpProblematicScript(script, sourceUrl, "no tce variables match");
+        log.warn("Got tce player script but could not find global variables: {}", sourceUrl);
+      }
+    } else {
+      tceText = tceVars.group(1);
     }
 
     String nFunction = nFunctionMatcher.group(0);
     String nfParameterName = DataFormatTools.extractBetween(nFunction, "(", ")");
     // remove short-circuit that prevents n challenge transformation
-    nFunction = nFunction.replaceAll("if\\s*\\(\\s*typeof\\s*\\w+\\s*===?.*?\\)\\s*return\\s+" + nfParameterName + "\\s*;?", "");
+//    nFunction = nFunction.replaceAll("if\\s*\\(\\s*typeof\\s*[\\w$]+\\s*===?.*?\\)\\s*return\\s+" + nfParameterName + "\\s*;?", "");
+    nFunction = nFunction.replaceAll("if\\s*\\(typeof\\s*[^\\s()]+\\s*===?.*?\\)return " + nfParameterName + "\\s*;?", "");
 
-    SignatureCipher cipherKey = new SignatureCipher(nFunction, scriptTimestamp.group(2), script);
+    SignatureCipher cipherKey = new SignatureCipher(nFunction, scriptTimestamp.group(2), script, matchedTce, tceText);
 
     while (matcher.find()) {
       String type = matcher.group(1);
