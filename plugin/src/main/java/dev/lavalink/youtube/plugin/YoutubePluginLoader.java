@@ -212,6 +212,10 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
             if (oauthConfig.getEnabled()) {
                 log.debug("Configuring youtube oauth integration with token: \"{}\" skipInitialization: {}", oauthConfig.getRefreshToken(), oauthConfig.getSkipInitialization());
                 source.useOauth2(oauthConfig.getRefreshToken(), oauthConfig.getSkipInitialization());
+                if (oauthConfig.getCookie() != null && !oauthConfig.getCookie().isEmpty()) {
+                    source.getOauth2Handler().setCookie(oauthConfig.getCookie());
+                    log.debug("Applied cookie to oauth2 handler: {}" , oauthConfig.getCookie());
+                }
             }
         }
 

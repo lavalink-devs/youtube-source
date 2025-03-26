@@ -4,6 +4,16 @@ public class YoutubeOauthConfig {
     private boolean enabled = false;
     private String refreshToken;
     private boolean skipInitialization = false;
+    private String cookie;
+
+    public String getCookie() {
+        return cookie;
+    }
+
+    public void setCookie(String cookie) {
+        this.cookie = cookie;
+    }
+
 
     public boolean getEnabled() {
         return enabled;
