@@ -41,6 +41,10 @@ mavenPublishing {
     configure(JavaLibrary(JavadocJar.None(), sourcesJar = false))
 }
 
+tasks.jar {
+    dependsOn(":common:compileTestJava")
+}
+
 tasks {
     processResources {
         filter<ReplaceTokens>(
