@@ -2,13 +2,11 @@ name: Publish
 on:
   push:
   release:
-    types: [ published ]
+    types: [published]
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      MAVEN_USERNAME: ${{ vars.MAVEN_USERNAME }}
-      MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,23 +23,23 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build and Publish
-        run: ./gradlew build publish --no-daemon -PMAVEN_USERNAME=$MAVEN_USERNAME -PMAVEN_PASSWORD=$MAVEN_PASSWORD
+      - name: Build Project
+        run: ./gradlew build --no-daemon
 
       - name: Upload common Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4  
         with:
           name: youtube-common.jar
           path: common/build/libs/youtube-common-*.jar
 
       - name: Upload lldevs Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4  
         with:
           name: youtube-v2.jar
           path: v2/build/libs/youtube-v2-*.jar
 
       - name: Upload plugin Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4  
         with:
           name: youtube-plugin.jar
           path: plugin/build/libs/youtube-plugin-*.jar
@@ -55,17 +53,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download youtube-common Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4  
         with:
           name: youtube-common.jar
 
       - name: Download youtube-v2 Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4  
         with:
           name: youtube-v2.jar
 
       - name: Download youtube-plugin Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4  
         with:
           name: youtube-plugin.jar
 
