@@ -90,7 +90,15 @@ public class SignatureCipherManager {
           "\\s*return\\s*(\\2\\.join\\(\"\"\\)|Array\\.prototype\\.join\\.call\\(\\2,.*?\\))};", Pattern.DOTALL);
 
   private static final Pattern tceGlobalVarsPattern = Pattern.compile(
-      "(?:^|[;,])\\s*(var\\s+([\\w$]+)\\s*=\\s*\"(?:[^\"\\\\]|\\\\.)+\"\\s*\\.\\s*split\\(\"([^\"\\\\]|\\\\.)\"\\))(?=\\s*[,;])"
+          "(?:^|[;,])\\s*(var\\s+([\\w$]+)\\s*=\\s*" +
+                  "(?:" +
+                  "([\"'])(?:\\\\.|[^\\\\])*?\\3" +  // Matches a quoted string safely
+                  "\\s*\\.\\s*split\\((" +
+                  "([\"'])(?:\\\\.|[^\\\\])*?\\5" +  // Ensures same quote type in split()
+                  "\\))" +
+                  "|" +  // OR condition to handle array notation
+                  "\\[\\s*(?:([\"'])(?:\\\\.|[^\\\\])*?\\6\\s*,?\\s*)+\\]" +
+                  "))(?=\\s*[,;])"
   );
 
   private static final Pattern functionTcePattern = Pattern.compile(
