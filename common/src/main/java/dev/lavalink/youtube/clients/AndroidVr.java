@@ -10,7 +10,6 @@ public class AndroidVr extends Android {
     public static AndroidVersion ANDROID_VERSION = AndroidVersion.ANDROID_12L;
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
-        .withApiKey(Android.BASE_CONFIG.getApiKey())
         .withUserAgent(String.format("com.google.android.apps.youtube.vr.oculus/%s (Linux; U; Android %s; eureka-user Build/SQ3A.220605.009.A1) gzip", CLIENT_VERSION, ANDROID_VERSION.getOsVersion()))
         .withClientName("ANDROID_VR")
         .withClientField("clientVersion", CLIENT_VERSION)

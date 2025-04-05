@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 public class MWeb extends Web {
     public static ClientConfig BASE_CONFIG = new ClientConfig()
-        .withApiKey("AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8")
         .withClientName("MWEB")
         .withClientField("clientVersion", "2.20240726.11.00");
 

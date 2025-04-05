@@ -16,7 +16,6 @@ public class Android extends StreamingNonMusicClient {
     public static AndroidVersion ANDROID_VERSION = AndroidVersion.ANDROID_11;
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
-        .withApiKey("AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w")
         .withUserAgent(String.format("com.google.android.youtube/%s (Linux; U; Android %s) gzip", CLIENT_VERSION, ANDROID_VERSION.getOsVersion()))
         .withClientName("ANDROID")
         .withClientField("clientVersion", CLIENT_VERSION)
