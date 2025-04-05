@@ -17,7 +17,6 @@ import java.util.List;
 
 public class TvHtml5Embedded extends StreamingNonMusicClient {
     public static ClientConfig BASE_CONFIG = new ClientConfig()
-        .withApiKey("AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8")
         .withClientName("TVHTML5_SIMPLY_EMBEDDED_PLAYER")
         .withClientField("clientVersion", "2.0")
         .withThirdPartyEmbedUrl("https://www.youtube.com");

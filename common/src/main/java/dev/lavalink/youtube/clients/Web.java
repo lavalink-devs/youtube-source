@@ -32,9 +32,8 @@ public class Web extends StreamingNonMusicClient {
     protected static Pattern CONFIG_REGEX = Pattern.compile("ytcfg\\.set\\((\\{.+})\\);");
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
-        .withApiKey("AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8")
         .withClientName("WEB")
-        .withClientField("clientVersion", "2.20240224.11.00")
+        .withClientField("clientVersion", "2.20250403.01.00")
         .withUserField("lockedSafetyMode", false);
 
     public static String poToken;
