@@ -213,35 +213,50 @@ public class YoutubeOauth2Handler {
                 return;
             }
 
-            // @formatter:off
-            String requestJson = JsonWriter.string()
+            try {
+                JsonObject json = createNewAccessToken(refreshToken);
+                updateTokens(json);
+                log.info("YouTube access token refreshed successfully");
+                log.debug("YouTube access token is {} and refresh token is {}. Access token expires in {} seconds.", accessToken, refreshToken, json.getLong("expires_in"));
+            } catch (Exception e) {
+                log.error("Failed to refresh access token", e);
+                throw e;
+            }
+        }
+    }
+
+
+    /**
+     * Executes the HTTP request to refresh the access token and returns the response.
+     * @param refreshToken The refresh token to be included in the request.
+     * @return The JSON response as a JsonObject.
+     */
+    public JsonObject createNewAccessToken(String refreshToken) {
+        String requestJson = JsonWriter.string()
                 .object()
-                    .value("client_id", CLIENT_ID)
-                    .value("client_secret", CLIENT_SECRET)
-                    .value("refresh_token", refreshToken)
-                    .value("grant_type", "refresh_token")
+                .value("client_id", CLIENT_ID)
+                .value("client_secret", CLIENT_SECRET)
+                .value("refresh_token", refreshToken)
+                .value("grant_type", "refresh_token")
                 .end()
                 .done();
-            // @formatter:on
 
-            HttpPost request = new HttpPost("https://www.youtube.com/o/oauth2/token");
-            StringEntity entity = new StringEntity(requestJson, ContentType.APPLICATION_JSON);
-            request.setEntity(entity);
+        HttpPost request = new HttpPost("https://www.youtube.com/o/oauth2/token");
+        StringEntity entity = new StringEntity(requestJson, ContentType.APPLICATION_JSON);
+        request.setEntity(entity);
 
-            try (HttpInterface httpInterface = getHttpInterface();
-                 CloseableHttpResponse response = httpInterface.execute(request)) {
-                HttpClientTools.assertSuccessWithContent(response, "oauth2 token fetch");
-                JsonObject parsed = JsonParser.object().from(response.getEntity().getContent());
+        try (HttpInterface httpInterface = getHttpInterface();
+             CloseableHttpResponse response = httpInterface.execute(request)) {
+            HttpClientTools.assertSuccessWithContent(response, "oauth2 token fetch");
+            JsonObject parsed = JsonParser.object().from(response.getEntity().getContent());
 
-                if (parsed.has("error") && !parsed.isNull("error")) {
-                    throw new RuntimeException("Refreshing access token returned error " + parsed.getString("error"));
-                }
-
-                updateTokens(parsed);
-                log.info("YouTube access token refreshed successfully");
-            } catch (IOException | JsonParserException e) {
-                throw ExceptionTools.toRuntimeException(e);
+            if (parsed.has("error") && !parsed.isNull("error")) {
+                throw new RuntimeException("Refreshing access token returned error " + parsed.getString("error"));
             }
+
+            return parsed;
+        } catch (IOException | JsonParserException e) {
+            throw ExceptionTools.toRuntimeException(e);
         }
     }
 
