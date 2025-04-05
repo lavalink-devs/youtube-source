@@ -31,11 +31,6 @@ public class AndroidVr extends Android {
         return BASE_CONFIG.copy();
     }
 
-    @Override
-    @NotNull
-    public String getPlayerParams() {
-        return null;
-    }
 
     @Override
     @NotNull
