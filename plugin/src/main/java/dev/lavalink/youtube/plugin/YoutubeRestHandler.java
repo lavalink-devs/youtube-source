@@ -176,7 +176,7 @@ public class YoutubeRestHandler {
         return MinimalConfigResponse.from(getYoutubeSource());
     }
 
-    @GetMapping("/youtube/createaccesstoken/{refreshToken}")
+    @GetMapping("/youtube/oauth/{refreshToken}")
     public JsonObject createNewAccessToken(@PathVariable("refreshToken") String refreshToken) {
         return getYoutubeSource().getOauth2Handler().createNewAccessToken(refreshToken);
     }
