@@ -1,5 +1,6 @@
 package dev.lavalink.youtube.plugin;
 
+import com.grack.nanojson.JsonObject;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.CannotBeLoaded;
@@ -173,6 +174,11 @@ public class YoutubeRestHandler {
     @GetMapping("/youtube")
     public MinimalConfigResponse getYoutubeConfig() {
         return MinimalConfigResponse.from(getYoutubeSource());
+    }
+
+    @GetMapping("/youtube/oauth/{refreshToken}")
+    public JsonObject createNewAccessToken(@PathVariable("refreshToken") String refreshToken) {
+        return getYoutubeSource().getOauth2Handler().createNewAccessToken(refreshToken);
     }
 
     @PostMapping("/youtube")
