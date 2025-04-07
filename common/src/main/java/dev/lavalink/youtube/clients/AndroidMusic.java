@@ -22,7 +22,6 @@ public class AndroidMusic extends Android {
     public static String CLIENT_VERSION = "7.27.52";
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
-        .withApiKey(Android.BASE_CONFIG.getApiKey())
         .withClientName("ANDROID_MUSIC")
         .withClientField("clientVersion", CLIENT_VERSION)
         .withUserAgent(String.format("com.google.android.apps.youtube.music/%s (Linux; U; Android %s) gzip", CLIENT_VERSION, ANDROID_VERSION.getOsVersion()));

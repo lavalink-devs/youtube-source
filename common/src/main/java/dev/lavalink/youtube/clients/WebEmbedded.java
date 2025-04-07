@@ -18,9 +18,8 @@ public class WebEmbedded extends Web {
     private static final Logger log = LoggerFactory.getLogger(WebEmbedded.class);
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
-        .withApiKey("AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8")
         .withClientName("WEB_EMBEDDED_PLAYER")
-        .withClientField("clientVersion", "1.20240723.01.00")
+        .withClientField("clientVersion", "1.20250401.01.00")
         .withUserField("lockedSafetyMode", false);
 
     public WebEmbedded() {
