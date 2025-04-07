@@ -358,6 +358,28 @@ If `videoId` could not be found or loaded, or the `itag` does not exist, or if n
 Otherwise:
 `200 - OK` accompanied by the selected format stream (audio or video). `Content-Type` header will be set appropriately.
 
+### `GET` `/youtube/oauth/{refreshToken}`
+
+Response:
+
+If the `refreshToken` is invalid, expired, or cannot be processed:
+`500 - Internal Server Error`
+
+If the refresh process succeeds and a new access token is generated:
+`200 - OK` accompanied by the new access token in JSON format.
+
+Example response:
+```json
+{
+  "access_token": "AccessToken",
+  "expires_in": 69420,
+  "scope": "used scope",
+  "token_type": "type"
+}
+```
+
+
+
 ## Migration from Lavaplayer's built-in YouTube source
 
 This client is intended as a direct replacement for Lavaplayer's built-in `YoutubeAudioSourceManager`,
