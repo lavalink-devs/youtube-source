@@ -119,17 +119,21 @@ public class SignatureCipherManager {
   private final Set<String> dumpedScriptUrls;
   private final ScriptEngine scriptEngine;
   private final Object cipherLoadLock;
+  private final String proxyUrl;
+  private final String proxyPass;
 
   protected volatile CachedPlayerScript cachedPlayerScript;
 
   /**
    * Create a new signature cipher manager
    */
-  public SignatureCipherManager() {
+  public SignatureCipherManager(String proxyUrl, String proxyPass) {
     this.cipherCache = new ConcurrentHashMap<>();
     this.dumpedScriptUrls = new HashSet<>();
     this.scriptEngine = new RhinoScriptEngineFactory().getScriptEngine();
     this.cipherLoadLock = new Object();
+    this.proxyUrl = proxyUrl;
+    this.proxyPass = proxyPass;
   }
 
   /**
@@ -182,11 +186,17 @@ public class SignatureCipherManager {
     }
 
     try {
+        log.warn("HEY: {}", format);
+        log.warn("YO: {}", uri.build());
       return uri.build(); // setParameter("ratebypass", "yes")  -- legacy parameter that will give 403 if tampered with.
     } catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
   }
+
+//  private URI getUriFromProxy(String sig, String sigKey, String nParam, URI initial, String playerScript) {
+//
+//  }
 
   private CachedPlayerScript getPlayerScript(@NotNull HttpInterface httpInterface) {
     synchronized (cipherLoadLock) {
@@ -269,6 +279,7 @@ public class SignatureCipherManager {
   }
 
   private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl) {
+    log.warn("USING SCRIPT: {}", sourceUrl);
     Matcher actions = actionsPattern.matcher(script);
     Matcher scriptTimestamp = timestampPattern.matcher(script);
 

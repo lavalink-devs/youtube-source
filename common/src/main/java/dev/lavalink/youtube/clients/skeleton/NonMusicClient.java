@@ -107,7 +107,7 @@ public abstract class NonMusicClient implements Client {
                                                      boolean validatePlayabilityStatus) throws CannotBeLoaded, IOException {
         SignatureCipherManager cipherManager = source.getCipherManager();
         CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
-        SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, playerScript.url);
+        SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, "https://www.youtube.com/s/player/9a279502/player_ias.vflset/ja_JP/base.js");
 
         ClientConfig config = getBaseClientConfig(httpInterface);
 
@@ -126,6 +126,8 @@ public abstract class NonMusicClient implements Client {
         if (params != null) {
             config.withRootField("params", params);
         }
+
+        log.warn("SCRIPT TIMESTAMP: {}", signatureCipher.scriptTimestamp);
 
         String payload = config.withPlaybackSignatureTimestamp(signatureCipher.scriptTimestamp)
             .setAttributes(httpInterface)

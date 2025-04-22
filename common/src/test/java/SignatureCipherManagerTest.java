@@ -25,7 +25,7 @@ public class SignatureCipherManagerTest {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpInterface httpInterface = new HttpInterface(httpClient, new HttpClientContext(), true, noOpFilter);
             for (TestCase test: scripts) {
-                SignatureCipherManager cipherManager = new SignatureCipherManager();
+                SignatureCipherManager cipherManager = new SignatureCipherManager("", "");
 
                 try {
                     URI uri = cipherManager.resolveFormatUrl(httpInterface, test.uri, getTestStream(test));
