@@ -55,11 +55,7 @@ public class TrackFormats {
 
         if (info == null) {
             return false;
-        } else if (format.getSignature() == null) {
-            return false;
         } else if (other == null) {
-            return true;
-        } else if (other.getSignature() == null) {
             return true;
         } else if (MIME_AUDIO_WEBM.equals(info.mimeType) && format.getAudioChannels() > 2) {
             // Opus with more than 2 audio channels is unsupported by LavaPlayer currently.

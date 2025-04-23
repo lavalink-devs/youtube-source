@@ -153,8 +153,17 @@ public class SignatureCipherManager {
     URIBuilder uri = new URIBuilder(initialUrl);
 
     // Short circuit
-    if (proxy.isReady() && signature != null) {
-      return proxy.getUriFromProxy(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
+    if (proxy.isReady()) {
+      if (!DataFormatTools.isNullOrEmpty(signature)) {
+        return proxy.getUriFromProxy(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
+      }
+
+      uri.setParameter("n", proxy.decipherN(httpInterface, nParameter, playerScript));
+      try {
+          return uri.build();
+      } catch (URISyntaxException e) {
+          throw new RuntimeException(e);
+      }
     }
 
     SignatureCipher cipher = getCipherScript(httpInterface, playerScript);

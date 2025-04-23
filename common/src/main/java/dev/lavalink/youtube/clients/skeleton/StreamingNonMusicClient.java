@@ -97,8 +97,6 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
                 return true; // this isn't considered fatal.
             }
 
-            log.error(urlMap.keySet().toString());
-
             formats.add(new StreamFormat(
                 ContentType.parse(formatJson.get("mimeType").text()),
                 (int) formatJson.get("itag").asLong(-1L),
