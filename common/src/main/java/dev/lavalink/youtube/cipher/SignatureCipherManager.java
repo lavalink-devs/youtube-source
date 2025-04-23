@@ -50,6 +50,8 @@ public class SignatureCipherManager {
   private static final String BEFORE_ACCESS = "(?:\\[\\\"|\\.)";
   private static final String AFTER_ACCESS = "(?:\\\"\\]|)";
   private static final String VARIABLE_PART_ACCESS = BEFORE_ACCESS + VARIABLE_PART + AFTER_ACCESS;
+
+  // Updated regex patterns based on the new player script structure
   private static final String REVERSE_PART = ":function\\(\\w\\)\\{(?:return )?\\w\\.reverse\\(\\)\\}";
   private static final String SLICE_PART = ":function\\(\\w,\\w\\)\\{return \\w\\.slice\\(\\w\\)\\}";
   private static final String SPLICE_PART = ":function\\(\\w,\\w\\)\\{\\w\\.splice\\(0,\\w\\)\\}";
@@ -57,23 +59,23 @@ public class SignatureCipherManager {
       "var \\w=\\w\\[0\\];\\w\\[0\\]=\\w\\[\\w%\\w\\.length\\];\\w\\[\\w(?:%\\w.length|)\\]=\\w(?:;return \\w)?\\}";
 
   private static final Pattern functionPattern = Pattern.compile(
-      "function(?: " + VARIABLE_PART + ")?\\(([a-zA-Z])\\)\\{" +
+      "function\\s*\\w*\\(\\s*(\\w)\\s*\\)\\s*\\{" +
           "\\1=\\1\\.split\\(\"\"\\);\\s*" +
           "((?:(?:\\1=)?" + VARIABLE_PART + VARIABLE_PART_ACCESS + "\\(\\1,\\d+\\);)+)" +
-          "return \\1\\.join\\(\"\"\\)" +
+          "return \\1\\.join\\(\"\"\\);" +
           "\\}"
   );
 
   private static final Pattern actionsPattern = Pattern.compile(
-      "var (" + VARIABLE_PART + ")=\\{((?:(?:" +
+      "var\\s+(" + VARIABLE_PART + ")=\\{((?:(?:" +
           VARIABLE_PART_DEFINE + REVERSE_PART + "|" +
           VARIABLE_PART_DEFINE + SLICE_PART + "|" +
           VARIABLE_PART_DEFINE + SPLICE_PART + "|" +
           VARIABLE_PART_DEFINE + SWAP_PART +
-          "),?\\n?)+)\\};"
+          "),?\\s*\\n?)+)\\};"
   );
 
-  private static final String PATTERN_PREFIX = "(?:^|,)\\\"?(" + VARIABLE_PART + ")\\\"?";
+  private static final String PATTERN_PREFIX = "(?:^|,)\\s*\\\"?(" + VARIABLE_PART + ")\\\"?";
 
   private static final Pattern reversePattern = Pattern.compile(PATTERN_PREFIX + REVERSE_PART, Pattern.MULTILINE);
   private static final Pattern slicePattern = Pattern.compile(PATTERN_PREFIX + SLICE_PART, Pattern.MULTILINE);
@@ -82,21 +84,22 @@ public class SignatureCipherManager {
   private static final Pattern timestampPattern = Pattern.compile("(signatureTimestamp|sts):(\\d+)");
 
   private static final Pattern nFunctionPattern = Pattern.compile(
-      "function\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
-          "var\\s*(\\w+)=(?:\\1\\.split\\(.*?\\)|String\\.prototype\\.split\\.call\\(\\1,.*?\\))," +
+      "function\\s*\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
+          "\\s*var\\s*(\\w+)=(?:\\1\\.split\\(.*?\\)|String\\.prototype\\.split\\.call\\(\\1,.*?\\))," +
           "\\s*(\\w+)=(\\[.*?]);\\s*\\3\\[\\d+]" +
           "(.*?try)(\\{.*?})catch\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
-          "\\s*return\"[\\w-]+([A-z0-9-]+)\"\\s*\\+\\s*\\1\\s*}" +
+          "\\s*return\\s*\"[\\w-]+([A-z0-9-]+)\"\\s*\\+\\s*\\1\\s*;" +
+          "\\s*}" +
           "\\s*return\\s*(\\2\\.join\\(\"\"\\)|Array\\.prototype\\.join\\.call\\(\\2,.*?\\))};", Pattern.DOTALL);
 
   private static final Pattern tceGlobalVarsPattern = Pattern.compile(
           "(?:^|[;,])\\s*(var\\s+([\\w$]+)\\s*=\\s*" +
                   "(?:" +
-                  "([\"'])(?:\\\\.|[^\\\\])*?\\3" +  // Matches a quoted string safely
+                  "([\"'])(?:\\\\.|[^\\\\])*?\\3" +  
                   "\\s*\\.\\s*split\\((" +
-                  "([\"'])(?:\\\\.|[^\\\\])*?\\5" +  // Ensures same quote type in split()
+                  "([\"'])(?:\\\\.|[^\\\\])*?\\5" +  
                   "\\))" +
-                  "|" +  // OR condition to handle array notation
+                  "|" +  
                   "\\[\\s*(?:([\"'])(?:\\\\.|[^\\\\])*?\\6\\s*,?\\s*)+\\]" +
                   "))(?=\\s*[,;])"
   );
@@ -112,7 +115,8 @@ public class SignatureCipherManager {
       "function\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
           "\\s*var\\s*(\\w+)=\\1\\.split\\(\\1\\.slice\\(0,0\\)\\),\\s*(\\w+)=\\[.*?];" +
           ".*?catch\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
-          "\\s*return(?:\"[^\"]+\"|\\s*[a-zA-Z_0-9$]*\\[\\d+])\\s*\\+\\s*\\1\\s*}" +
+          "\\s*return(?:\"[^\"]+\"|\\s*[a-zA-Z_0-9$]*\\[\\d+])\\s*\\+\\s*\\1\\s*;" +
+          "\\s*}" +
           "\\s*return\\s*\\2\\.join\\((?:\"\"|[a-zA-Z_0-9$]*\\[\\d+])\\)};", Pattern.DOTALL);
 
   private final ConcurrentMap<String, SignatureCipher> cipherCache;
