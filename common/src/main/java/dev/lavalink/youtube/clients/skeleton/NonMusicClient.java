@@ -127,8 +127,6 @@ public abstract class NonMusicClient implements Client {
             config.withRootField("params", params);
         }
 
-        log.warn("SCRIPT TIMESTAMP: {}", timestamp);
-
         String payload = config.withPlaybackSignatureTimestamp(timestamp)
             .setAttributes(httpInterface)
             .toJsonString();

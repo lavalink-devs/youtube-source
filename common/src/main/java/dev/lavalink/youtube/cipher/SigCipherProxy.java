@@ -28,6 +28,47 @@ public class SigCipherProxy {
         this.proxyUrl = url;
     }
 
+    public String decipherN(HttpInterface httpInterface, String n, String playerScript) {
+        String targetUrl = proxyUrl.endsWith("/") ? proxyUrl + "decrypt_signature" : proxyUrl + "/decrypt_signature";
+        HttpPost request = new HttpPost(targetUrl);
+
+        String requestBody = JsonWriter.string()
+                .object()
+                .value("player_url", "https://youtube.com" + playerScript)
+                .value("encrypted_signature", "")
+                .value("n_param", n)
+                .value("video_id", "test")
+                .end()
+                .done();
+        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+        request.addHeader("Authorization", "Bearer " + proxyPass);
+
+        try (CloseableHttpResponse response = httpInterface.execute(request)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            HttpEntity entity = response.getEntity();
+            String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
+
+            if (statusCode >= 200 && statusCode < 300) {
+                if (responseBody == null || responseBody.isEmpty()) {
+                    throw new IOException("Received empty successful response from decryption proxy.");
+                }
+
+                JsonBrowser json = JsonBrowser.parse(responseBody);
+
+                String returnedN = json.get("decrypted_n_sig").text();
+
+                if (returnedN != null && !returnedN.isEmpty()) {
+                    return returnedN;
+                }
+                return "";
+            } else {
+                throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public URI getUriFromProxy(HttpInterface httpInterface, String sig, String sigKey, String nParam, URI initial, String playerScript) {
         String targetUrl = proxyUrl.endsWith("/") ? proxyUrl + "decrypt_signature" : proxyUrl + "/decrypt_signature";
         HttpPost request = new HttpPost(targetUrl);
@@ -80,7 +121,7 @@ public class SigCipherProxy {
                 return uriBuilder.build();
 
             } else {
-                throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody);
+                throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody + " SIG: " + sig);
             }
         } catch (URISyntaxException | IOException e) {
             throw new RuntimeException(e);

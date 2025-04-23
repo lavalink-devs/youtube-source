@@ -153,8 +153,8 @@ public class SignatureCipherManager {
     URIBuilder uri = new URIBuilder(initialUrl);
 
     // Short circuit
-    if (proxy.isReady()) {
-      return proxy.getUriFromProxy(httpInterface, signature, format.getSignatureKey(), nParameter, initialUrl, playerScript);
+    if (proxy.isReady() && signature != null) {
+      return proxy.getUriFromProxy(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
     }
 
     SignatureCipher cipher = getCipherScript(httpInterface, playerScript);
@@ -230,7 +230,19 @@ public class SignatureCipherManager {
   }
 
   public String getScriptTimestamp(HttpInterface httpInterface, String scriptUrl) {
-    return proxy.getTimestampFromScript(httpInterface, scriptUrl);
+//      try {
+//        String script = getRawScript(httpInterface, scriptUrl);
+//        Matcher scriptTimestamp = timestampPattern.matcher(script);
+//        if (!scriptTimestamp.find()) {
+//          log.error("TIMESTAMP NOT FOUND");
+//        } else {
+//          log.error("TIMESTAMP: {}", scriptTimestamp.group(2));
+//        }
+//      } catch (IOException e) {
+//          throw new RuntimeException(e);
+//      }
+
+      return proxy.getTimestampFromScript(httpInterface, scriptUrl);
   }
 
   public SignatureCipher getCipherScript(@NotNull HttpInterface httpInterface,
@@ -256,6 +268,24 @@ public class SignatureCipherManager {
     }
 
     return cipherKey;
+  }
+
+  public String getRawScript(@NotNull HttpInterface httpInterface,
+                                         @NotNull String cipherScriptUrl) throws IOException {
+    synchronized (cipherLoadLock) {
+      log.debug("getting raw player script {}", cipherScriptUrl);
+
+      try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(parseTokenScriptUrl(cipherScriptUrl)))) {
+        int statusCode = response.getStatusLine().getStatusCode();
+
+        if (!HttpClientTools.isSuccessWithContent(statusCode)) {
+          throw new IOException("Received non-success response code " + statusCode + " from script url " +
+                  cipherScriptUrl + " ( " + parseTokenScriptUrl(cipherScriptUrl) + " )");
+        }
+
+        return EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+      }
+    }
   }
 
   private List<String> getQuotedFunctions(@Nullable String... functionNames) {
