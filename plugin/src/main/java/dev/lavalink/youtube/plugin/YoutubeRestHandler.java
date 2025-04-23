@@ -114,8 +114,12 @@ public class YoutubeRestHandler {
 
             log.debug("Selected format {} for {}", selectedFormat.getItag(), videoId);
 
-            URI resolved = source.getCipherManager().resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), selectedFormat);
-            URI transformed = client.transformPlaybackUri(selectedFormat.getUrl(), resolved);
+            URI transformed = selectedFormat.getUrl();
+            if (client.requiresJSScript()) {
+                URI resolved = source.getCipherManager().resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), selectedFormat);
+                transformed = client.transformPlaybackUri(selectedFormat.getUrl(), resolved);
+            }
+
             YoutubePersistentHttpStream httpStream = new YoutubePersistentHttpStream(httpInterface, transformed, selectedFormat.getContentLength());
 
             boolean streamValidated = false;

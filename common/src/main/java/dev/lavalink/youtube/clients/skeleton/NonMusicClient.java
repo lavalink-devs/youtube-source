@@ -106,8 +106,6 @@ public abstract class NonMusicClient implements Client {
                                                      @Nullable PlayabilityStatus status,
                                                      boolean validatePlayabilityStatus) throws CannotBeLoaded, IOException {
         SignatureCipherManager cipherManager = source.getCipherManager();
-        CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
-        SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, playerScript.url);
 
         ClientConfig config = getBaseClientConfig(httpInterface);
 
@@ -127,9 +125,14 @@ public abstract class NonMusicClient implements Client {
             config.withRootField("params", params);
         }
 
-        String payload = config.withPlaybackSignatureTimestamp(signatureCipher.scriptTimestamp)
-            .setAttributes(httpInterface)
-            .toJsonString();
+        String payload = config.setAttributes(httpInterface).toJsonString();;
+        if (this.requiresJSScript()) {
+            CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
+            SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, playerScript.url);
+            payload = config.withPlaybackSignatureTimestamp(signatureCipher.scriptTimestamp)
+                    .setAttributes(httpInterface)
+                    .toJsonString();
+        }
 
         HttpPost request = new HttpPost(PLAYER_URL);
         request.setEntity(new StringEntity(payload, "UTF-8"));

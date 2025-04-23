@@ -221,6 +221,10 @@ public interface Client {
         return false;
     }
 
+    default boolean requirsJSScript() {
+        return true;
+    }
+
     void setPlaylistPageCount(int count);
 
     /**

@@ -74,4 +74,9 @@ public class Ios extends StreamingNonMusicClient {
     public String getIdentifier() {
         return BASE_CONFIG.getName();
     }
+
+    @Override
+    public boolean requiresJSScript() {
+        return false;
+    }
 }

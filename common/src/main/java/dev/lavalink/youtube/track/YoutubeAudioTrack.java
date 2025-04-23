@@ -108,7 +108,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
           if ("Not success status code: 403".equals(message) ||
               "Invalid status code for player api response: 400".equals(message) ||
-              (message != null && message.contains("No supported audio streams available"))) {
+                  (message != null && (message.contains("No supported audio streams available") || message.contains("Must find action functions from script")))) {
             // As long as the executor position has not surpassed the threshold for which
             // a stream is considered unrecoverable, we can try to renew the playback URL with
             // another client.
@@ -213,10 +213,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     StreamFormat format = formats.getBestFormat();
 
-    URI resolvedUrl = sourceManager.getCipherManager()
-        .resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), format);
-
-    resolvedUrl = client.transformPlaybackUri(format.getUrl(), resolvedUrl);
+    URI resolvedUrl = format.getUrl();
+    if (client.requiresJSScript()) {
+      resolvedUrl = sourceManager.getCipherManager()
+              .resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), format);
+      resolvedUrl = client.transformPlaybackUri(format.getUrl(), resolvedUrl);
+    }
 
     return new FormatWithUrl(format, resolvedUrl);
   }

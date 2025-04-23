@@ -84,4 +84,9 @@ public class Android extends StreamingNonMusicClient {
                 .get("content")
                 .text();
     }
+
+    @Override
+    public boolean requiresJSScript() {
+        return false;
+    }
 }
