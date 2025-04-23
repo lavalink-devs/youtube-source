@@ -119,8 +119,7 @@ public class SignatureCipherManager {
   private final Set<String> dumpedScriptUrls;
   private final ScriptEngine scriptEngine;
   private final Object cipherLoadLock;
-  private final String proxyUrl;
-  private final String proxyPass;
+  private final SigCipherProxy proxy;
 
   protected volatile CachedPlayerScript cachedPlayerScript;
 
@@ -132,8 +131,7 @@ public class SignatureCipherManager {
     this.dumpedScriptUrls = new HashSet<>();
     this.scriptEngine = new RhinoScriptEngineFactory().getScriptEngine();
     this.cipherLoadLock = new Object();
-    this.proxyUrl = proxyUrl;
-    this.proxyPass = proxyPass;
+    this.proxy = new SigCipherProxy(proxyUrl, proxyPass);
   }
 
   /**
@@ -153,6 +151,12 @@ public class SignatureCipherManager {
     URI initialUrl = format.getUrl();
 
     URIBuilder uri = new URIBuilder(initialUrl);
+
+    // Short circuit
+    if (proxy.isReady()) {
+      return proxy.getUriFromProxy(httpInterface, signature, format.getSignatureKey(), nParameter, initialUrl, playerScript);
+    }
+
     SignatureCipher cipher = getCipherScript(httpInterface, playerScript);
 
     if (!DataFormatTools.isNullOrEmpty(signature)) {
@@ -194,10 +198,6 @@ public class SignatureCipherManager {
     }
   }
 
-//  private URI getUriFromProxy(String sig, String sigKey, String nParam, URI initial, String playerScript) {
-//
-//  }
-
   private CachedPlayerScript getPlayerScript(@NotNull HttpInterface httpInterface) {
     synchronized (cipherLoadLock) {
       try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com/embed/"))) {
@@ -227,6 +227,10 @@ public class SignatureCipherManager {
     }
 
     return cachedPlayerScript;
+  }
+
+  public String getScriptTimestamp(HttpInterface httpInterface, String scriptUrl) {
+    return proxy.getTimestampFromScript(httpInterface, scriptUrl);
   }
 
   public SignatureCipher getCipherScript(@NotNull HttpInterface httpInterface,

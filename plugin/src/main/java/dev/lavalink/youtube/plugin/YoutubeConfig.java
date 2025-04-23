@@ -14,6 +14,8 @@ public class YoutubeConfig {
     private boolean allowSearch = true;
     private boolean allowDirectVideoIds = true;
     private boolean allowDirectPlaylistIds = true;
+    private String cipherProxyUrl;
+    private String cipherProxyPass;
     private Pot pot = null;
     private String[] clients;
     private Map<String, ClientOptions> clientOptions = new HashMap<>();
@@ -81,5 +83,21 @@ public class YoutubeConfig {
 
     public void setOauth(YoutubeOauthConfig oauth) {
         this.oauth = oauth;
+    }
+
+    public String getCipherProxyUrl() {
+        return cipherProxyUrl;
+    }
+
+    public void setCipherProxyUrl(String cipherProxyUrl) {
+        this.cipherProxyUrl = cipherProxyUrl;
+    }
+
+    public String getCipherProxyPass() {
+        return cipherProxyPass;
+    }
+
+    public void setCipherProxyPass(String cipherProxyPass) {
+        this.cipherProxyPass = cipherProxyPass;
     }
 }
