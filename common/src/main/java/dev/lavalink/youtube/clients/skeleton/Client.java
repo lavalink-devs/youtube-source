@@ -208,7 +208,6 @@ public interface Client {
     default boolean supportsFormatLoading() {
         return getOptions().getPlayback();
     }
-
     
     default boolean isEmbedded() {
         return false;
@@ -221,7 +220,7 @@ public interface Client {
         return false;
     }
 
-    default boolean requirsJSScript() {
+    default boolean requiresJSScript() {
         return true;
     }
 
