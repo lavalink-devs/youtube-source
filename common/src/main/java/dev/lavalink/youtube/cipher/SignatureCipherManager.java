@@ -40,6 +40,7 @@ import static com.sedmelluq.discord.lavaplayer.tools.ExceptionTools.throwWithDeb
 
 /**
  * Handles parsing and caching of signature ciphers
+ * Updated for YouTube player version 6450230e
  */
 @SuppressWarnings({"RegExpRedundantEscape", "RegExpUnnecessaryNonCapturingGroup"})
 public class SignatureCipherManager {
@@ -50,30 +51,31 @@ public class SignatureCipherManager {
   private static final String BEFORE_ACCESS = "(?:\\[\\\"|\\.)";
   private static final String AFTER_ACCESS = "(?:\\\"\\]|)";
   private static final String VARIABLE_PART_ACCESS = BEFORE_ACCESS + VARIABLE_PART + AFTER_ACCESS;
+  
   private static final String REVERSE_PART = ":function\\(\\w+\\)\\{(?:return )?\\w+\\.reverse\\(\\)\\}";
   private static final String SLICE_PART = ":function\\(\\w+,\\w+\\)\\{return \\w+\\.slice\\(\\w+\\)\\}";
   private static final String SPLICE_PART = ":function\\(\\w+,\\w+\\)\\{\\w+\\.splice\\(0,\\w+\\)\\}";
   private static final String SWAP_PART = ":function\\(\\w+,\\w+\\)\\{" +
-      "var \\w+=\\w+\\[0\\];\\w+\\[0\\]=\\w+\\[\\w+%\\w+\\.length\\];\\w+\\[\\w+(?:%\\w+\\.length|)\\]=\\w+(?:;return \\w+)?\\}";
+      "var \\w+=\\w+\\[0\\];\\w+\\[0\\]=\\w+\\[\\w+(?:%\\w+\\.length)?\\];\\w+\\[\\w+(?:%\\w+\\.length)?\\]=\\w+(?:;return \\w+)?\\}";
 
   private static final Pattern functionPattern = Pattern.compile(
-      "function\\s*\\w*\\(\\s*(\\w)\\s*\\)\\s*\\{" +
-          "\\1=\\1\\.split\\(\"\"\\);\\s*" +
+      "function(?: " + VARIABLE_PART + ")?\\(([a-zA-Z_$][a-zA-Z0-9_$]*)\\)\\{" +
+          "(?:[a-zA-Z_$][a-zA-Z0-9_$]*=)?\\1=\\1\\.split\\((?:\"\"|\\\"\\\")\\);\\s*" +
           "((?:(?:\\1=)?" + VARIABLE_PART + VARIABLE_PART_ACCESS + "\\(\\1,\\d+\\);)+)" +
-          "return \\1\\.join\\(\"\"\\);" +
+          "return \\1\\.join\\((?:\"\"|\\\"\\\")\\)" +
           "\\}"
   );
 
   private static final Pattern actionsPattern = Pattern.compile(
-      "var\\s+(" + VARIABLE_PART + ")=\\{((?:(?:" +
+      "var (" + VARIABLE_PART + ")=\\{((?:(?:" +
           VARIABLE_PART_DEFINE + REVERSE_PART + "|" +
           VARIABLE_PART_DEFINE + SLICE_PART + "|" +
           VARIABLE_PART_DEFINE + SPLICE_PART + "|" +
           VARIABLE_PART_DEFINE + SWAP_PART +
-          "),?\\s*\\n?)+)\\};"
+          "),?\\r?\\n?)+)\\};"
   );
 
-  private static final String PATTERN_PREFIX = "(?:^|,)\\s*\\\"?(" + VARIABLE_PART + ")\\\"?";
+  private static final String PATTERN_PREFIX = "(?:^|,)\\\"?(" + VARIABLE_PART + ")\\\"?";
 
   private static final Pattern reversePattern = Pattern.compile(PATTERN_PREFIX + REVERSE_PART, Pattern.MULTILINE);
   private static final Pattern slicePattern = Pattern.compile(PATTERN_PREFIX + SLICE_PART, Pattern.MULTILINE);
@@ -82,40 +84,44 @@ public class SignatureCipherManager {
   private static final Pattern timestampPattern = Pattern.compile("(signatureTimestamp|sts):(\\d+)");
 
   private static final Pattern nFunctionPattern = Pattern.compile(
-      "function\\s*\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
-          "\\s*var\\s*(\\w+)=(?:\\1\\.split\\(.*?\\)|String\\.prototype\\.split\\.call\\(\\1,.*?\\))," +
-          "\\s*(\\w+)=(\\[.*?]);\\s*\\3\\[\\d+]" +
-          "(.*?try)(\\{.*?})catch\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
-          "\\s*return\\s*\"[\\w-]+([A-z0-9-]+)\"\\s*\\+\\s*\\1\\s*;" +
-          "\\s*}" +
-          "\\s*return\\s*(\\2\\.join\\(\"\"\\)|Array\\.prototype\\.join\\.call\\(\\2,.*?\\))};", Pattern.DOTALL);
+      "function\\s*\\(\\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*\\)\\s*\\{" +
+          "\\s*var\\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*=\\s*" +
+          "(?:\\1\\.split\\(\\\"\\\"\\)|String\\.prototype\\.split\\.call\\(\\1,\\\"\\\"\\))," +
+          "\\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*=\\s*(\\[.*?\\]);\\s*" +
+          "(?:.*?)(try\\s*\\{.*?\\}\\s*catch\\s*\\(([a-zA-Z_$][a-zA-Z0-9_$]*)\\)\\s*\\{" +
+          ".*?return\\s*(?:\"[\\w-]+\"|[a-zA-Z_$][a-zA-Z0-9_$]*\\[\\d+\\])\\s*\\+\\s*\\1\\s*\\})" +
+          ".*?return\\s*(?:\\2\\.join\\(\\\"\\\"\\)|Array\\.prototype\\.join\\.call\\(\\2,\\\"\\\"\\))",
+          Pattern.DOTALL
+  );
 
   private static final Pattern tceGlobalVarsPattern = Pattern.compile(
-          "(?:^|[;,])\\s*(var\\s+([\\w$]+)\\s*=\\s*" +
-                  "(?:" +
-                  "([\"'])(?:\\\\.|[^\\\\])*?\\3" +  
-                  "\\s*\\.\\s*split\\((" +
-                  "([\"'])(?:\\\\.|[^\\\\])*?\\5" +  
-                  "\\))" +
-                  "|" +  
-                  "\\[\\s*(?:([\"'])(?:\\\\.|[^\\\\])*?\\6\\s*,?\\s*)+\\]" +
-                  "))(?=\\s*[,;])"
+      "(?:^|[;,])\\s*(var\\s+([\\w$]+)\\s*=\\s*" +
+              "(?:" +
+              "([\"'])(?:\\\\.|[^\\\\])*?\\3" +  
+              "\\s*\\.\\s*split\\((" +
+              "([\"'])(?:\\\\.|[^\\\\])*?\\5" +  
+              "\\))" +
+              "|" +  
+              "\\[\\s*(?:([\"'])(?:\\\\.|[^\\\\])*?\\6\\s*,?\\s*)+\\]" +
+              "))(?=\\s*[,;])"
   );
 
   private static final Pattern functionTcePattern = Pattern.compile(
-      "function(?:\\s+[a-zA-Z_\\$][a-zA-Z0-9_\\$]*)?\\(\\w\\)\\{" +
-          "\\w=\\w\\.split\\((?:\"\"|[a-zA-Z0-9_$]*\\[\\d+])\\);" +
-          "\\s*((?:(?:\\w=)?[a-zA-Z_\\$][a-zA-Z0-9_\\$]*(?:\\[\\\"|\\.)[a-zA-Z_\\$][a-zA-Z0-9_\\$]*(?:\\\"\\]|)\\(\\w,\\d+\\);)+)" +
-          "return \\w\\.join\\((?:\"\"|[a-zA-Z0-9_$]*\\[\\d+])\\)}"
+      "function(?:\\s+[a-zA-Z_\\$][a-zA-Z0-9_\\$]*)?\\(([a-zA-Z_$][a-zA-Z0-9_$]*)\\)\\{" +
+          "\\1=\\1\\.split\\((?:\"\"|[a-zA-Z0-9_$]*\\[\\d+\\])\\);" +
+          "\\s*((?:(?:\\1=)?[a-zA-Z_\\$][a-zA-Z0-9_\\$]*(?:\\[\\\"|\\.)[a-zA-Z_\\$][a-zA-Z0-9_\\$]*(?:\\\"\\]|)\\(\\1,\\d+\\);)+)" +
+          "return \\1\\.join\\((?:\"\"|[a-zA-Z0-9_$]*\\[\\d+\\])\\)}"
   );
 
   private static final Pattern nFunctionTcePattern = Pattern.compile(
-      "function\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
-          "\\s*var\\s*(\\w+)=\\1\\.split\\(\\1\\.slice\\(0,0\\)\\),\\s*(\\w+)=\\[.*?];" +
-          ".*?catch\\(\\s*(\\w+)\\s*\\)\\s*\\{" +
-          "\\s*return(?:\"[^\"]+\"|\\s*[a-zA-Z_0-9$]*\\[\\d+])\\s*\\+\\s*\\1\\s*;" +
-          "\\s*}" +
-          "\\s*return\\s*\\2\\.join\\((?:\"\"|[a-zA-Z_0-9$]*\\[\\d+])\\)};", Pattern.DOTALL);
+      "function\\(\\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*\\)\\s*\\{" +
+          "\\s*var\\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*=\\s*\\1\\.split\\(\\1\\.slice\\(0,0\\)\\)," +
+          "\\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*=\\s*\\[.*?\\];" +
+          ".*?catch\\(\\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*\\)\\s*\\{" +
+          "\\s*return\\s*(?:\"[^\"]+\"|\\s*[a-zA-Z_0-9$]*\\[\\d+\\])\\s*\\+\\s*\\1\\s*\\}" +
+          "\\s*return\\s*\\2\\.join\\((?:\"\"|[a-zA-Z_0-9$]*\\[\\d+\\])\\)\\};",
+          Pattern.DOTALL
+  );
 
   private final ConcurrentMap<String, SignatureCipher> cipherCache;
   private final Set<String> dumpedScriptUrls;
@@ -184,7 +190,7 @@ public class SignatureCipherManager {
     }
 
     try {
-      return uri.build(); // setParameter("ratebypass", "yes")  -- legacy parameter that will give 403 if tampered with.
+      return uri.build();
     } catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
@@ -277,8 +283,17 @@ public class SignatureCipherManager {
     boolean matchedTce = false;
 
     if (!actions.find()) {
-      dumpProblematicScript(script, sourceUrl, "no actions match");
-      throw new IllegalStateException("Must find action functions from script: " + sourceUrl);
+      Pattern alternativeActionsPattern = Pattern.compile(
+          "var\\s+(" + VARIABLE_PART + ")\\s*=\\s*\\{((?:(?:" +
+          VARIABLE_PART_DEFINE + ":" + "function\\s*\\(.*?\\}(?:,\\s*|\\s*$))+)\\};"
+      );
+      
+      actions = alternativeActionsPattern.matcher(script);
+      
+      if (!actions.find()) {
+        dumpProblematicScript(script, sourceUrl, "no actions match");
+        throw new IllegalStateException("Must find action functions from script: " + sourceUrl);
+      }
     }
 
     String actionBody = actions.group(2);
@@ -288,48 +303,107 @@ public class SignatureCipherManager {
     String splicePart = extractDollarEscapedFirstGroup(splicePattern, actionBody);
     String swapKey = extractDollarEscapedFirstGroup(swapPattern, actionBody);
 
+    if (reverseKey == null) {
+      Pattern flexReversePattern = Pattern.compile(
+          "(?:^|,)(\\w+):function\\(\\w+\\)\\{(?:return )?.*?\\.reverse\\(\\)\\}", 
+          Pattern.MULTILINE
+      );
+      reverseKey = extractDollarEscapedFirstGroup(flexReversePattern, actionBody);
+    }
+
+    if (slicePart == null) {
+      Pattern flexSlicePattern = Pattern.compile(
+          "(?:^|,)(\\w+):function\\(\\w+,\\w+\\)\\{return .*?\\.slice\\(.*?\\)\\}", 
+          Pattern.MULTILINE
+      );
+      slicePart = extractDollarEscapedFirstGroup(flexSlicePattern, actionBody);
+    }
+
+    if (splicePart == null) {
+      Pattern flexSplicePattern = Pattern.compile(
+          "(?:^|,)(\\w+):function\\(\\w+,\\w+\\)\\{.*?\\.splice\\(0,.*?\\)\\}", 
+          Pattern.MULTILINE
+      );
+      splicePart = extractDollarEscapedFirstGroup(flexSplicePattern, actionBody);
+    }
+
+    if (swapKey == null) {
+      Pattern flexSwapPattern = Pattern.compile(
+          "(?:^|,)(\\w+):function\\(\\w+,\\w+\\)\\{var \\w+=.*?\\[0\\];.*?\\[0\\]=.*?;.*?\\}", 
+          Pattern.MULTILINE
+      );
+      swapKey = extractDollarEscapedFirstGroup(flexSwapPattern, actionBody);
+    }
     Pattern extractor = Pattern.compile(
-        "(?:\\w=)?" + Pattern.quote(actions.group(1)) + BEFORE_ACCESS + "(" +
+        "(?:\\w+=)?" + Pattern.quote(actions.group(1)) + BEFORE_ACCESS + "(" +
             String.join("|", getQuotedFunctions(reverseKey, slicePart, splicePart, swapKey)) +
-            ")" + AFTER_ACCESS + "\\(\\w,(\\d+)\\)"
+            ")" + AFTER_ACCESS + "\\(\\w+,(\\d+)\\)"
     );
 
     Matcher functions = functionPattern.matcher(script);
     if (!functions.find()) {
-      functions = functionTcePattern.matcher(script);
-
-      if (!functions.find()) {
-        dumpProblematicScript(script, sourceUrl, "no decipher function match");
-        throw new IllegalStateException("Must find decipher function from script.");
-      }
-
-      matchedTce = true;
+        Pattern updatedFunctionPattern = Pattern.compile(
+            "function(?:\\s+\\w+)?\\s*\\(([a-zA-Z_$][a-zA-Z0-9_$]*)\\)\\s*\\{" +
+            "\\s*(?:\\w+=)?\\1=\\1\\.split\\((?:\"\"|\\\"\\\"|\\1\\.slice\\(0,0\\))\\);\\s*" +
+            "((?:(?:\\1=)?\\w+(?:\\[\\\"|\\.)\\w+(?:\\\"\\]|)\\(\\1,\\d+\\);)+)" +
+            "return\\s+\\1\\.join\\((?:\"\"|\\\"\\\"|\\1\\.slice\\(0,0\\))\\)\\s*" +
+            "\\}"
+        );
+        
+        functions = updatedFunctionPattern.matcher(script);
+        
+        if (!functions.find()) {
+            functions = functionTcePattern.matcher(script);
+            
+            if (!functions.find()) {
+                dumpProblematicScript(script, sourceUrl, "no decipher function match");
+                throw new IllegalStateException("Must find decipher function from script.");
+            }
+            
+            matchedTce = true;
+        }
     }
 
     Matcher matcher = extractor.matcher(functions.group(matchedTce ? 1 : 2));
 
     if (!scriptTimestamp.find()) {
-      dumpProblematicScript(script, sourceUrl, "no timestamp match");
-      throw new IllegalStateException("Must find timestamp from script: " + sourceUrl);
+        Pattern alternativeTimestampPattern = Pattern.compile("\"signatureTimestamp\":(\\d+)|signatureTimestamp:\\s*(\\d+)");
+        scriptTimestamp = alternativeTimestampPattern.matcher(script);
+        
+        if (!scriptTimestamp.find()) {
+            dumpProblematicScript(script, sourceUrl, "no timestamp match");
+            throw new IllegalStateException("Must find timestamp from script: " + sourceUrl);
+        }
     }
 
-    // use matchedTce hint to determine which regex we should use to parse the script.
+    String timestamp = scriptTimestamp.group(1);
+    if (timestamp == null) {
+        timestamp = scriptTimestamp.group(2);
+    }
+
     Matcher nFunctionMatcher = matchedTce ? nFunctionTcePattern.matcher(script) : nFunctionPattern.matcher(script);
 
     if (!nFunctionMatcher.find()) {
-      // fall back to the opposite of what we used above.
       nFunctionMatcher = matchedTce ? nFunctionPattern.matcher(script) : nFunctionTcePattern.matcher(script);
 
       if (!nFunctionMatcher.find()) {
-        dumpProblematicScript(script, sourceUrl, "no n function match");
-        throw new IllegalStateException("Must find n function from script: " + sourceUrl);
+        Pattern flexNFunctionPattern = Pattern.compile(
+            "function\\s*\\(([a-zA-Z_$][a-zA-Z0-9_$]*)\\)\\s*\\{" +
+            "\\s*var\\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*=\\s*(?:[^;]+)," +
+            "\\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*=\\s*\\[.+?\\];.*?" +
+            "try\\s*\\{.*?\\}\\s*catch\\s*\\(.*?\\)\\s*\\{.*?return.*?\\}\\s*" +
+            "return\\s+[^;]+;?\\s*\\}",
+            Pattern.DOTALL
+        );
+        
+        nFunctionMatcher = flexNFunctionPattern.matcher(script);
+        
+        if (!nFunctionMatcher.find()) {
+            dumpProblematicScript(script, sourceUrl, "no n function match");
+            throw new IllegalStateException("Must find n function from script: " + sourceUrl);
+        }
       }
 
-      // unconditionally set this to true.
-      // we either start with the non-tce regex and then fall back to the tce regex,
-      // in which case we have matched a tce script.
-      // otherwise, we first checked with the tce regex but didn't match and defaulted to
-      // the legacy regex, but in this case the variable can only have a value of true.
       matchedTce = true;
     }
 
@@ -346,12 +420,23 @@ public class SignatureCipherManager {
     }
 
     String nFunction = nFunctionMatcher.group(0);
-    String nfParameterName = DataFormatTools.extractBetween(nFunction, "(", ")");
-    // remove short-circuit that prevents n challenge transformation
-//    nFunction = nFunction.replaceAll("if\\s*\\(\\s*typeof\\s*[\\w$]+\\s*===?.*?\\)\\s*return\\s+" + nfParameterName + "\\s*;?", "");
-    nFunction = nFunction.replaceAll("if\\s*\\(typeof\\s*[^\\s()]+\\s*===?.*?\\)return " + nfParameterName + "\\s*;?", "");
+    
+    String nfParameterName = null;
+    Pattern paramNamePattern = Pattern.compile("function\\s*\\(\\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*\\)");
+    Matcher paramNameMatcher = paramNamePattern.matcher(nFunction);
+    if (paramNameMatcher.find()) {
+      nfParameterName = paramNameMatcher.group(1);
+    } else {
+      nfParameterName = "a"; 
+    }
+    
+    nFunction = nFunction.replaceAll(
+        "if\\s*\\(\\s*(?:typeof\\s*[^\\s()]+\\s*===?|\\!\\d+\\s*\\|\\|\\s*).*?\\)\\s*(?:return\\s+" + 
+        nfParameterName + "\\s*;?|\\{\\s*return\\s+" + nfParameterName + "\\s*;?\\s*\\})", 
+        ""
+    );
 
-    SignatureCipher cipherKey = new SignatureCipher(nFunction, scriptTimestamp.group(2), script, matchedTce, tceText);
+    SignatureCipher cipherKey = new SignatureCipher(nFunction, timestamp, script, matchedTce, tceText);
 
     while (matcher.find()) {
       String type = matcher.group(1);
