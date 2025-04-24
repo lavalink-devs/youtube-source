@@ -1,35 +1,144 @@
 package dev.lavalink.youtube.cipher;
 
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Describes one signature cipher
  */
 public class SignatureCipher {
+  private static final Logger log = LoggerFactory.getLogger(SignatureCipher.class);
+  private static final Pattern nFunctionTcePattern = Pattern.compile(
+      "function\\s*\\((\\w+)\\)\\s*\\{var\\s*\\w+\\s*=\\s*\\1\\[\\w+\\[\\d+\\]\\]\\(\\w+\\[\\d+\\]\\)\\s*,\\s*\\w+\\s*=\\s*\\[.*?\\]\\;.*?catch\\(\\s*(\\w+)\\s*\\s*\\)\\s*\\{return\\s*\\w+\\[\\d+\\](\\+\\1)?\\}\\s*return\\s*\\w+\\[\\w+\\[\\d+\\]\\]\\(\\w+\\[\\d+\\]\\)\\}\\;",
+      Pattern.DOTALL);
+  private static final Pattern sigFunctionTcePattern = Pattern.compile("function\\(\\s*([a-zA-Z0-9$])\\s*\\)\\s*\\{" +
+      "\\s*\\1\\s*=\\s*\\1\\[(\\w+)\\[\\d+\\]\\]\\(\\2\\[\\d+\\]\\);" +
+      "([a-zA-Z0-9$]+)\\[\\2\\[\\d+\\]\\]\\(\\s*\\1\\s*,\\s*\\d+\\s*\\);" +
+      "\\s*\\3\\[\\2\\[\\d+\\]\\]\\(\\s*\\1\\s*,\\s*\\d+\\s*\\);" +
+      ".*?return\\s*\\1\\[\\2\\[\\d+\\]\\]\\(\\2\\[\\d+\\]\\)\\};");
+  private static final Pattern tceGlobalVarsPattern = Pattern.compile(
+      "('use\\s*strict';)?" +
+          "(?<code>var\\s*" +
+          "(?<varname>[a-zA-Z0-9_$]+)\\s*=\\s*" +
+          "(?<value>" +
+          "(?:\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*')" +
+          "\\.split\\(" +
+          "(?:\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*')" +
+          "\\)" +
+          "|" +
+          "\\[" +
+          "(?:(?:\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*')" +
+          "\\s*,?\\s*)*" +
+          "\\]" +
+          "|" +
+          "\"[^\"]*\"\\.split\\(\"[^\"]*\"\\)" +
+          ")" +
+          ")");
+  private static final Pattern tceSigFunctionActionsPattern = Pattern.compile(
+      "var\\s*[a-zA-Z0-9$_]+\\s*=\\s*\\{\\s*[a-zA-Z0-9$_]+\\s*:\\s*function\\((\\w+|\\s*\\w+\\s*,\\s*\\w+\\s*)\\)\\s*\\{\\s*(\\s*var\\s*\\w+=\\w+\\[\\d+\\];\\w+\\[\\d+\\]\\s*=\\s*\\w+\\[\\w+\\s*\\%\\s*\\w+\\[\\w+\\[\\d+\\]\\]\\];\\s*\\w+\\[\\w+\\s*%\\s*\\w+\\[\\w+\\[\\d+\\]\\]\\]\\s*=\\s*\\w+\\s*\\},|\\w+\\[\\w+\\[\\d+\\]\\]\\(\\)\\},)\\s*[a-zA-Z0-9$_]+\\s*:\\s*function\\((\\s*\\w+\\w*,\\s*\\w+\\s*|\\w+)\\)\\s*\\{(\\w+\\[\\w+\\[\\d+\\]\\]\\(\\)|\\s*var\\s*\\w+\\s*=\\s*\\w+\\[\\d+\\]\\s*;\\w+\\[\\d+\\]\\s*=\\w+\\[\\s*\\w+\\s*%\\s*\\w+\\[\\w+\\[\\d+\\]\\]\\]\\s*;\\w+\\[\\s*\\w+\\s*%\\s*\\w\\[\\w+\\[\\d+\\]\\]\\]\\s*=\\s*\\w+\\s*)\\},\\s*[a-zA-Z0-9$_]+\\s*:\\s*function\\s*\\(\\s*\\w+\\s*,\\s*\\w+\\s*\\)\\{\\w+\\[\\w+\\[\\d+\\]\\]\\(\\s*\\d+\\s*,\\s*\\w+\\s*\\)\\}\\};");
+
   private final List<CipherOperation> operations = new ArrayList<>();
   public final String nFunction;
   public final String scriptTimestamp;
   public final String rawScript;
+  public final String sigFunction;
+  public final String sigFunctionActions;
 
-  public final boolean tceScript;
-  public final String tceVars;
+  public final TCEVariable tceVariable;
 
-  public SignatureCipher(@NotNull String nFunction,
-                         @NotNull String timestamp,
-                         @NotNull String rawScript,
-                         boolean tceScript,
-                         @NotNull String tceVars) {
+  public SignatureCipher(@NotNull String nFunction, @NotNull String sigFunction, @NotNull String sigFunctionActions,
+      @NotNull String timestamp, @NotNull String rawScript, @NotNull TCEVariable tceVariable) {
     this.nFunction = nFunction;
     this.scriptTimestamp = timestamp;
     this.rawScript = rawScript;
-    this.tceScript = tceScript;
-    this.tceVars = tceVars;
+    this.sigFunction = sigFunction;
+    this.sigFunctionActions = sigFunctionActions;
+    this.tceVariable = tceVariable;
+  }
+
+  public SignatureCipher(@NotNull String nFunction, @NotNull String timestamp, @NotNull String rawScript) {
+    this.nFunction = nFunction;
+    this.scriptTimestamp = timestamp;
+    this.rawScript = rawScript;
+    this.tceVariable = null;
+    this.sigFunction = null;
+    this.sigFunctionActions = null;
+  }
+
+  public static SignatureCipher fromRawScript(@NotNull String jsCode, @NotNull String timestamp) {
+    log.debug("Finding tce global variable from the script...");
+    Matcher tceVariableMatcher = tceGlobalVarsPattern.matcher(jsCode);
+
+    if (!tceVariableMatcher.find()) {
+      log.warn("Failed to find the tce global variable...");
+      return null;
+    }
+
+
+    TCEVariable tce = new TCEVariable(tceVariableMatcher.group("varname"), tceVariableMatcher.group("code"),
+        tceVariableMatcher.group("value"));
+
+    Matcher nFunctionMatcher = nFunctionTcePattern.matcher(jsCode);
+
+    if (!nFunctionMatcher.find()) {
+      log.warn("Failed to find the tce variant n function...");
+      return null;
+    }
+     
+
+
+
+    Matcher sigFunctionMatcher = sigFunctionTcePattern.matcher(jsCode);
+    if (!sigFunctionMatcher.find()) {
+      log.warn("Failed to find the tce variant sig function....");
+      return null;
+    }
+
+    Matcher sigFunctionActionsMatcher = tceSigFunctionActionsPattern.matcher(jsCode);
+    if (!sigFunctionActionsMatcher.find()) {
+      log.warn("Failed to find the tce variant sig function actions...");
+      return null;
+    }
+
+    String nFunction = nFunctionMatcher.group(0);
+    Pattern shortCircuitPattern = Pattern.compile(String.format(
+        ";\\s*if\\s*\\(\\s*typeof\\s+[a-zA-Z0-9_$]+\\s*===?\\s*(?:\"undefined\"|'undefined'|%s\\[\\d+\\])\\s*\\)\\s*return\\s+\\w+;",
+        tce.getEscapedName()));
+    Matcher tceShortCircuitMatcher = shortCircuitPattern.matcher(nFunction);
+    if (tceShortCircuitMatcher.find()) {
+      System.out.println("TCE global variable short circuit detected replacing nFunction...");
+      nFunction = nFunction.replaceAll(shortCircuitPattern.toString(), ";");
+    }
+
+    return new SignatureCipher(nFunction, sigFunctionMatcher.group(0), sigFunctionActionsMatcher.group(0), timestamp,
+        jsCode, tce);
+  }
+
+  public boolean isTceScript() {
+    return this.tceVariable != null;
+
+  }
+
+  /**
+   * @param text Text to apply the cipher on
+   * @return The result of the cipher on the input text
+   */
+  public String apply(@NotNull String text, @NotNull ScriptEngine scriptEngine)
+      throws ScriptException, NoSuchMethodException {
+    String transformed;
+
+    scriptEngine.eval("sig=" + sigFunction + sigFunctionActions + (isTceScript() ? tceVariable.getCode() : ""));
+    transformed = (String) ((Invocable) scriptEngine).invokeFunction("sig", text);
+    return transformed;
   }
 
   /**
@@ -63,14 +172,15 @@ public class SignatureCipher {
   }
 
   /**
-   * @param text Text to transform
+   * @param text         Text to transform
    * @param scriptEngine JavaScript engine to execute function
    * @return The result of the n parameter transformation
    */
-  public String transform(@NotNull String text, @NotNull ScriptEngine scriptEngine) throws ScriptException, NoSuchMethodException {
+  public String transform(@NotNull String text, @NotNull ScriptEngine scriptEngine)
+      throws ScriptException, NoSuchMethodException {
     String transformed;
 
-    scriptEngine.eval("n=" + nFunction + (tceScript ? tceVars : ""));
+    scriptEngine.eval("n=" + nFunction + (isTceScript() ? tceVariable.getCode() : ""));
     transformed = (String) ((Invocable) scriptEngine).invokeFunction("n", text);
 
     return transformed;

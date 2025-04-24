@@ -35,7 +35,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import static com.sedmelluq.discord.lavaplayer.tools.ExceptionTools.throwWithDebugInfo;
 
 /**
@@ -152,8 +151,15 @@ public class SignatureCipherManager {
     SignatureCipher cipher = getCipherScript(httpInterface, playerScript);
 
     if (!DataFormatTools.isNullOrEmpty(signature)) {
-      uri.setParameter(format.getSignatureKey(), cipher.apply(signature));
-    }
+      try {
+        uri.setParameter(format.getSignatureKey(), !cipher.isTceScript() ? cipher.apply(signature) : cipher.apply(signature , scriptEngine));
+      } catch (ScriptException | NoSuchMethodException e) {
+        // URLs can still be played without a resolved n parameter. It just means they're
+        // throttled. But we shouldn't throw an exception anyway as it's not really fatal.
+        dumpProblematicScript(cipherCache.get(playerScript).rawScript, playerScript, "Can't transform s parameter " + signature + " with " + " sig function");
+      }
+      }
+      
 
     if (!DataFormatTools.isNullOrEmpty(nParameter)) {
       try {
@@ -269,8 +275,19 @@ public class SignatureCipherManager {
   }
 
   private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl) {
-    Matcher actions = actionsPattern.matcher(script);
     Matcher scriptTimestamp = timestampPattern.matcher(script);
+    if (!scriptTimestamp.find()) {
+      dumpProblematicScript(script, sourceUrl, "no timestamp match");
+      throw new IllegalStateException("Must find timestamp from script: " + sourceUrl);
+    }
+
+    SignatureCipher tceCypherKey = SignatureCipher.fromRawScript(script , scriptTimestamp.group(2));
+
+    if (tceCypherKey != null) {
+      return tceCypherKey;
+    } 
+
+    Matcher actions = actionsPattern.matcher(script);
 
     boolean matchedTce = false;
 
@@ -306,10 +323,7 @@ public class SignatureCipherManager {
 
     Matcher matcher = extractor.matcher(functions.group(matchedTce ? 1 : 2));
 
-    if (!scriptTimestamp.find()) {
-      dumpProblematicScript(script, sourceUrl, "no timestamp match");
-      throw new IllegalStateException("Must find timestamp from script: " + sourceUrl);
-    }
+    
 
     // use matchedTce hint to determine which regex we should use to parse the script.
     Matcher nFunctionMatcher = matchedTce ? nFunctionTcePattern.matcher(script) : nFunctionPattern.matcher(script);
@@ -331,17 +345,7 @@ public class SignatureCipherManager {
       matchedTce = true;
     }
 
-    Matcher tceVars = tceGlobalVarsPattern.matcher(script);
-    String tceText = "";
-
-    if (!tceVars.find()) {
-      if (matchedTce) {
-        dumpProblematicScript(script, sourceUrl, "no tce variables match");
-        log.warn("Got tce player script but could not find global variables: {}", sourceUrl);
-      }
-    } else {
-      tceText = tceVars.group(1);
-    }
+  
 
     String nFunction = nFunctionMatcher.group(0);
     String nfParameterName = DataFormatTools.extractBetween(nFunction, "(", ")");
@@ -349,7 +353,7 @@ public class SignatureCipherManager {
 //    nFunction = nFunction.replaceAll("if\\s*\\(\\s*typeof\\s*[\\w$]+\\s*===?.*?\\)\\s*return\\s+" + nfParameterName + "\\s*;?", "");
     nFunction = nFunction.replaceAll("if\\s*\\(typeof\\s*[^\\s()]+\\s*===?.*?\\)return " + nfParameterName + "\\s*;?", "");
 
-    SignatureCipher cipherKey = new SignatureCipher(nFunction, scriptTimestamp.group(2), script, matchedTce, tceText);
+    SignatureCipher cipherKey = new SignatureCipher(nFunction, scriptTimestamp.group(2), script);
 
     while (matcher.find()) {
       String type = matcher.group(1);
