@@ -36,16 +36,18 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-     configure<PublishingExtension> {
-        if (findProperty("MAVEN_PASSWORD") != null && findProperty("MAVEN_USERNAME") != null) {
+    configure<PublishingExtension> {
+        val mavenUsername = findProperty("MAVEN_USERNAME") as String?
+        val mavenPassword = findProperty("MAVEN_PASSWORD") as String?
+        if (!mavenUsername.isNullOrEmpty() && !mavenPassword.isNullOrEmpty()) {
             repositories {
                 val snapshots = "https://maven.lavalink.dev/snapshots"
                 val releases = "https://maven.lavalink.dev/releases"
 
                 maven(if (release) releases else snapshots) {
                     credentials {
-                        password = findProperty("MAVEN_PASSWORD") as String?
-                        username = findProperty("MAVEN_USERNAME") as String?
+                        username = mavenUsername
+                        password = mavenPassword
                     }
                 }
             }
