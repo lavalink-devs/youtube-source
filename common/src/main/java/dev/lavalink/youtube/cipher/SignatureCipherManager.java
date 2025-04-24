@@ -88,17 +88,24 @@ public class SignatureCipherManager {
           "\\s*return\"[\\w-]+([A-z0-9-]+)\"\\s*\\+\\s*\\1\\s*}" +
           "\\s*return\\s*(\\2\\.join\\(\"\"\\)|Array\\.prototype\\.join\\.call\\(\\2,.*?\\))};", Pattern.DOTALL);
 
-  private static final Pattern tceGlobalVarsPattern = Pattern.compile(
-          "(?:^|[;,])\\s*(var\\s+([\\w$]+)\\s*=\\s*" +
-                  "(?:" +
-                  "([\"'])(?:\\\\.|[^\\\\])*?\\3" +  // Matches a quoted string safely
-                  "\\s*\\.\\s*split\\((" +
-                  "([\"'])(?:\\\\.|[^\\\\])*?\\5" +  // Ensures same quote type in split()
-                  "\\))" +
-                  "|" +  // OR condition to handle array notation
-                  "\\[\\s*(?:([\"'])(?:\\\\.|[^\\\\])*?\\6\\s*,?\\s*)+\\]" +
-                  "))(?=\\s*[,;])"
-  );
+          private static final Pattern tceGlobalVarsPattern = Pattern.compile(
+            "('use\\s*strict';)?" +
+                "(?<code>var\\s*" +
+                "(?<varname>[a-zA-Z0-9_$]+)\\s*=\\s*" +
+                "(?<value>" +
+                "(?:\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*')" +
+                "\\.split\\(" +
+                "(?:\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*')" +
+                "\\)" +
+                "|" +
+                "\\[" +
+                "(?:(?:\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*')" +
+                "\\s*,?\\s*)*" +
+                "\\]" +
+                "|" +
+                "\"[^\"]*\"\\.split\\(\"[^\"]*\"\\)" +
+                ")" +
+                ")"); //backward compatiable 9a279502 , 22f02d3d & 6450230e etc
 
   private static final Pattern functionTcePattern = Pattern.compile(
       "function(?:\\s+[a-zA-Z_\\$][a-zA-Z0-9_\\$]*)?\\(\\w\\)\\{" +
@@ -152,10 +159,8 @@ public class SignatureCipherManager {
 
     if (!DataFormatTools.isNullOrEmpty(signature)) {
       try {
-        uri.setParameter(format.getSignatureKey(), !cipher.isTceScript() ? cipher.apply(signature) : cipher.apply(signature , scriptEngine));
+        uri.setParameter(format.getSignatureKey(), !cipher.shouldUseScriptEngine() ? cipher.apply(signature) : cipher.apply(signature , scriptEngine));
       } catch (ScriptException | NoSuchMethodException e) {
-        // URLs can still be played without a resolved n parameter. It just means they're
-        // throttled. But we shouldn't throw an exception anyway as it's not really fatal.
         dumpProblematicScript(cipherCache.get(playerScript).rawScript, playerScript, "Can't transform s parameter " + signature + " with " + " sig function");
       }
       }
@@ -280,15 +285,21 @@ public class SignatureCipherManager {
       dumpProblematicScript(script, sourceUrl, "no timestamp match");
       throw new IllegalStateException("Must find timestamp from script: " + sourceUrl);
     }
-
-    SignatureCipher tceCypherKey = SignatureCipher.fromRawScript(script , scriptTimestamp.group(2));
+    
+    TCEVariable tce;
+    SignatureCipher tceCypherKey = null;
+    Matcher tceVariableMatcher = tceGlobalVarsPattern.matcher(script);
+    if (tceVariableMatcher.find()) {
+        tce = new TCEVariable(tceVariableMatcher.group("varname"), tceVariableMatcher.group("code"),
+        tceVariableMatcher.group("value"));
+        tceCypherKey = SignatureCipher.fromRawScript(script , scriptTimestamp.group(2) , tce);
+    }
 
     if (tceCypherKey != null) {
       return tceCypherKey;
     } 
 
     Matcher actions = actionsPattern.matcher(script);
-
     boolean matchedTce = false;
 
     if (!actions.find()) {
@@ -297,7 +308,6 @@ public class SignatureCipherManager {
     }
 
     String actionBody = actions.group(2);
-
     String reverseKey = extractDollarEscapedFirstGroup(reversePattern, actionBody);
     String slicePart = extractDollarEscapedFirstGroup(slicePattern, actionBody);
     String splicePart = extractDollarEscapedFirstGroup(splicePattern, actionBody);

@@ -25,24 +25,6 @@ public class SignatureCipher {
       "([a-zA-Z0-9$]+)\\[\\2\\[\\d+\\]\\]\\(\\s*\\1\\s*,\\s*\\d+\\s*\\);" +
       "\\s*\\3\\[\\2\\[\\d+\\]\\]\\(\\s*\\1\\s*,\\s*\\d+\\s*\\);" +
       ".*?return\\s*\\1\\[\\2\\[\\d+\\]\\]\\(\\2\\[\\d+\\]\\)\\};");
-  private static final Pattern tceGlobalVarsPattern = Pattern.compile(
-      "('use\\s*strict';)?" +
-          "(?<code>var\\s*" +
-          "(?<varname>[a-zA-Z0-9_$]+)\\s*=\\s*" +
-          "(?<value>" +
-          "(?:\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*')" +
-          "\\.split\\(" +
-          "(?:\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*')" +
-          "\\)" +
-          "|" +
-          "\\[" +
-          "(?:(?:\"[^\"\\\\]*(?:\\\\.[^\"\\\\]*)*\"|'[^'\\\\]*(?:\\\\.[^'\\\\]*)*')" +
-          "\\s*,?\\s*)*" +
-          "\\]" +
-          "|" +
-          "\"[^\"]*\"\\.split\\(\"[^\"]*\"\\)" +
-          ")" +
-          ")");
   private static final Pattern tceSigFunctionActionsPattern = Pattern.compile(
       "var\\s*[a-zA-Z0-9$_]+\\s*=\\s*\\{\\s*[a-zA-Z0-9$_]+\\s*:\\s*function\\((\\w+|\\s*\\w+\\s*,\\s*\\w+\\s*)\\)\\s*\\{\\s*(\\s*var\\s*\\w+=\\w+\\[\\d+\\];\\w+\\[\\d+\\]\\s*=\\s*\\w+\\[\\w+\\s*\\%\\s*\\w+\\[\\w+\\[\\d+\\]\\]\\];\\s*\\w+\\[\\w+\\s*%\\s*\\w+\\[\\w+\\[\\d+\\]\\]\\]\\s*=\\s*\\w+\\s*\\},|\\w+\\[\\w+\\[\\d+\\]\\]\\(\\)\\},)\\s*[a-zA-Z0-9$_]+\\s*:\\s*function\\((\\s*\\w+\\w*,\\s*\\w+\\s*|\\w+)\\)\\s*\\{(\\w+\\[\\w+\\[\\d+\\]\\]\\(\\)|\\s*var\\s*\\w+\\s*=\\s*\\w+\\[\\d+\\]\\s*;\\w+\\[\\d+\\]\\s*=\\w+\\[\\s*\\w+\\s*%\\s*\\w+\\[\\w+\\[\\d+\\]\\]\\]\\s*;\\w+\\[\\s*\\w+\\s*%\\s*\\w\\[\\w+\\[\\d+\\]\\]\\]\\s*=\\s*\\w+\\s*)\\},\\s*[a-zA-Z0-9$_]+\\s*:\\s*function\\s*\\(\\s*\\w+\\s*,\\s*\\w+\\s*\\)\\{\\w+\\[\\w+\\[\\d+\\]\\]\\(\\s*\\d+\\s*,\\s*\\w+\\s*\\)\\}\\};");
 
@@ -52,6 +34,7 @@ public class SignatureCipher {
   public final String rawScript;
   public final String sigFunction;
   public final String sigFunctionActions;
+  public boolean useScriptEngine = false;
 
   public final TCEVariable tceVariable;
 
@@ -63,6 +46,7 @@ public class SignatureCipher {
     this.sigFunction = sigFunction;
     this.sigFunctionActions = sigFunctionActions;
     this.tceVariable = tceVariable;
+    this.useScriptEngine = true;
   }
 
   public SignatureCipher(@NotNull String nFunction, @NotNull String timestamp, @NotNull String rawScript) {
@@ -74,28 +58,12 @@ public class SignatureCipher {
     this.sigFunctionActions = null;
   }
 
-  public static SignatureCipher fromRawScript(@NotNull String jsCode, @NotNull String timestamp) {
-    log.debug("Finding tce global variable from the script...");
-    Matcher tceVariableMatcher = tceGlobalVarsPattern.matcher(jsCode);
-
-    if (!tceVariableMatcher.find()) {
-      log.warn("Failed to find the tce global variable...");
-      return null;
-    }
-
-
-    TCEVariable tce = new TCEVariable(tceVariableMatcher.group("varname"), tceVariableMatcher.group("code"),
-        tceVariableMatcher.group("value"));
-
+  public static SignatureCipher fromRawScript(@NotNull String jsCode, @NotNull String timestamp , @NotNull TCEVariable tce) {
     Matcher nFunctionMatcher = nFunctionTcePattern.matcher(jsCode);
-
     if (!nFunctionMatcher.find()) {
       log.warn("Failed to find the tce variant n function...");
       return null;
     }
-     
-
-
 
     Matcher sigFunctionMatcher = sigFunctionTcePattern.matcher(jsCode);
     if (!sigFunctionMatcher.find()) {
@@ -108,23 +76,25 @@ public class SignatureCipher {
       log.warn("Failed to find the tce variant sig function actions...");
       return null;
     }
-
     String nFunction = nFunctionMatcher.group(0);
     Pattern shortCircuitPattern = Pattern.compile(String.format(
         ";\\s*if\\s*\\(\\s*typeof\\s+[a-zA-Z0-9_$]+\\s*===?\\s*(?:\"undefined\"|'undefined'|%s\\[\\d+\\])\\s*\\)\\s*return\\s+\\w+;",
         tce.getEscapedName()));
     Matcher tceShortCircuitMatcher = shortCircuitPattern.matcher(nFunction);
     if (tceShortCircuitMatcher.find()) {
-      System.out.println("TCE global variable short circuit detected replacing nFunction...");
+      log.warn("TCE global variable short circuit detected replacing nFunction...");
       nFunction = nFunction.replaceAll(shortCircuitPattern.toString(), ";");
     }
-
     return new SignatureCipher(nFunction, sigFunctionMatcher.group(0), sigFunctionActionsMatcher.group(0), timestamp,
         jsCode, tce);
   }
 
   public boolean isTceScript() {
     return this.tceVariable != null;
+  }
+
+  public boolean shouldUseScriptEngine() {
+    return this.useScriptEngine;
 
   }
 
