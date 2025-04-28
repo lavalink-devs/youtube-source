@@ -108,7 +108,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
           if ("Not success status code: 403".equals(message) ||
               "Invalid status code for player api response: 400".equals(message) ||
-                  (message != null && (message.contains("No supported audio streams available") || message.contains("Must find action functions from script")))) {
+                  (message != null && (message.contains("No supported audio streams available") ||
+                          message.contains("Must find action functions from script") ||
+                          message.contains("Must find timestamp from script") ||
+                          message.contains("Must find decipher function from script") ||
+                          message.contains("Must find n function from script")
+                  ))) {
             // As long as the executor position has not surpassed the threshold for which
             // a stream is considered unrecoverable, we can try to renew the playback URL with
             // another client.
