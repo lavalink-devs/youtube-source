@@ -301,7 +301,8 @@ public class SignatureCipherManager {
     Matcher scriptTimestamp = timestampPattern.matcher(script);
     if (!scriptTimestamp.find()) {
       dumpProblematicScript(script, sourceUrl, "no timestamp match");
-      throw new IllegalStateException("Must find timestamp from script: " + sourceUrl);
+      throw new ScriptExtractionException("Must find timestamp from script: " + sourceUrl,
+              ScriptExtractionException.ExtractionFailureType.TIMESTAMP_NOT_FOUND);
     }
     
     TCEVariable tce;
@@ -331,7 +332,8 @@ public class SignatureCipherManager {
         usingGlobalLookup = true;
       } else {
         dumpProblematicScript(script, sourceUrl, "no actions match");
-        throw new IllegalStateException("Must find action functions from script: " + sourceUrl);
+        throw new ScriptExtractionException("Must find action functions from script: " + sourceUrl,
+                ScriptExtractionException.ExtractionFailureType.ACTION_FUNCTIONS_NOT_FOUND);
       }
     }
 
@@ -366,7 +368,8 @@ public class SignatureCipherManager {
         functions = functionTcePattern.matcher(script);
         if (!functions.find()) {
           dumpProblematicScript(script, sourceUrl, "no decipher function match");
-          throw new IllegalStateException("Must find decipher function from script.");
+          throw new ScriptExtractionException("Must find decipher function from script.",
+                  ScriptExtractionException.ExtractionFailureType.DECIPHER_FUNCTION_NOT_FOUND);
         }
         matchedTce = true;
       }
@@ -391,7 +394,8 @@ public class SignatureCipherManager {
 
           if (!nFunctionMatcher.find()) {
             dumpProblematicScript(script, sourceUrl, "no n function match");
-            throw new IllegalStateException("Must find n function from script: " + sourceUrl);
+            throw new ScriptExtractionException("Must find n function from script: " + sourceUrl,
+                    ScriptExtractionException.ExtractionFailureType.N_FUNCTION_NOT_FOUND);
           }
         }
       } else {
@@ -400,7 +404,8 @@ public class SignatureCipherManager {
 
         if (!nFunctionMatcher.find()) {
           dumpProblematicScript(script, sourceUrl, "no n function match");
-          throw new IllegalStateException("Must find n function from script: " + sourceUrl);
+          throw new ScriptExtractionException("Must find n function from script: " + sourceUrl,
+                  ScriptExtractionException.ExtractionFailureType.N_FUNCTION_NOT_FOUND);
         }
 
         // unconditionally set this to true.
