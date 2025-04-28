@@ -86,7 +86,7 @@ public class Android extends StreamingNonMusicClient {
     }
 
     @Override
-    public boolean requiresJSScript() {
+    public boolean requirePlayerScript() {
         return false;
     }
 }

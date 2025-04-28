@@ -217,7 +217,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     StreamFormat format = formats.getBestFormat();
 
     URI resolvedUrl = format.getUrl();
-    if (client.requiresJSScript()) {
+    if (client.requirePlayerScript()) {
       resolvedUrl = sourceManager.getCipherManager()
               .resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), format);
       resolvedUrl = client.transformPlaybackUri(format.getUrl(), resolvedUrl);

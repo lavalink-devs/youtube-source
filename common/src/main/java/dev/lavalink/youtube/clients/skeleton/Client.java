@@ -220,7 +220,7 @@ public interface Client {
         return false;
     }
 
-    default boolean requiresJSScript() {
+    default boolean requirePlayerScript() {
         return true;
     }
 
