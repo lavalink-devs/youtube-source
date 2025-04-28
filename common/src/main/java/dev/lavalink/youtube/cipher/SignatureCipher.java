@@ -26,7 +26,7 @@ public class SignatureCipher {
       "\\s*\\3\\[\\2\\[\\d+\\]\\]\\(\\s*\\1\\s*,\\s*\\d+\\s*\\);" +
       ".*?return\\s*\\1\\[\\2\\[\\d+\\]\\]\\(\\2\\[\\d+\\]\\)\\};");
   private static final Pattern tceSigFunctionActionsPattern = Pattern.compile(
-      "var\\s+([A-Za-z0-9_]+)\\s*=\\s*\\{\\s*(?:[A-Za-z0-9_]+)\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}\\s*,\\s*(?:[A-Za-z0-9_]+)\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}\\s*,\\s*(?:[A-Za-z0-9_]+)\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}\\s*\\};");
+      "var\\s+([A-Za-z0-9_]+)\\s*=\\s*\\{\\s*(?:[A-Za-z0-9_]+)\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{(?:[^{}]*\\[[^\\]]*\\][^{}]*)*\\}\\s*,\\s*(?:[A-Za-z0-9_]+)\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{(?:[^{}]*\\[[^\\]]*\\][^{}]*)*\\}\\s*,\\s*(?:[A-Za-z0-9_]+)\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{(?:[^{}]*\\[[^\\]]*\\][^{}]*)*\\}\\s*\\};");
 
   private final List<CipherOperation> operations = new ArrayList<>();
   public final String nFunction;
