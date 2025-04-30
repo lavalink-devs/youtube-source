@@ -185,8 +185,8 @@ Currently, the following clients are available for use:
 | Identifier        | Opus Formats | OAuth | Age-restriction Support | Playback Support | Metadata Support             | Additional Notes                                     |
 |-------------------|--------------|-------|-------------------------|------------------|------------------------------|------------------------------------------------------|
 | `MUSIC`           | No           | No    | No                      | No               | Search                       | YouTube music search support via `ytmsearch:` prefix |
-| `WEB`             | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix |                                                      |
-| `MWEB`            | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix |                                                      |
+| `WEB`             | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix | frequently dysfunctional                             |
+| `MWEB`            | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix | frequently dysfunctional                             |
 | `WEBEMBEDDED`     | Yes          | No    | Limited                 | Yes + Livestream | Video                        |                                                      |
 | `ANDROID`         | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix | Heavily restricted, frequently dysfunctional         |
 | `ANDROID_MUSIC`   | Yes          | No    | No                      | Yes              | Video, Search, Mix           |                                                      |
