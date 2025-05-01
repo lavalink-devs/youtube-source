@@ -8,5 +8,5 @@ jobs:
       uses: roots/issue-closer@v1.1
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        issue-close-message: "@${issue.user.login} this issue was automatically closed because it did not follow the issue template"
+        issue-close-message: "@${issue.user.login} Your issue has been closed for not meeting the required criteria. Please read the bug report form in full, answering it truthfully and ensuring you have carried out the troubleshooting checks. If your report is not filled to a satisfactory level, we reserve the right to close and lock your issue without any further consideration."
         issue-pattern: ".*- \\[ \\]\\s+I\\s+DO\\s+NOT\\s+confirm\\s+that\\s+this\\s+has\\s+been\\s+filled\\s+out\\s+truthfully\\s*\\..*"
