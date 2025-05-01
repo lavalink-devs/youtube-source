@@ -1,0 +1,12 @@
+name: Autocloser
+on: [issues]
+jobs:
+  autoclose:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Autoclose issues that did not follow issue template
+      uses: roots/issue-closer@v1.1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        issue-close-message: "@${issue.user.login} this issue was automatically closed because it did not follow the issue template"
+        issue-pattern: ".*- \\[ \\]\\s+I\\s+DO\\s+NOT\\s+confirm\\s+that\\s+this\\s+has\\s+been\\s+filled\\s+out\\s+truthfully\\s*\\..*"
