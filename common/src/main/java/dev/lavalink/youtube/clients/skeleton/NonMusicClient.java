@@ -129,7 +129,7 @@ public abstract class NonMusicClient implements Client {
         if (requirePlayerScript()) {
             CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
             SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, playerScript.url);
-            payload = config.withPlaybackSignatureTimestamp(signatureCipher.scriptTimestamp)
+            payload = config.withPlaybackSignatureTimestamp(signatureCipher.timestamp)
                     .setAttributes(httpInterface)
                     .toJsonString();
         }
