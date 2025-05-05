@@ -72,7 +72,7 @@ public class SignatureCipherManagerTest {
                 ""
             );
             
-            SignatureCipherManager cipherManager = new SignatureCipherManager();
+            SignatureCipherManager cipherManager = new SignatureCipherManager("", "");
 
             try {
                 URI uri = cipherManager.resolveFormatUrl(httpInterface, currentTest.uri, getTestStream(currentTest));
@@ -118,7 +118,7 @@ public class SignatureCipherManagerTest {
             
             for (TestCase test: scripts) {
                 System.out.println("Testing legacy script: " + test.uri);
-                SignatureCipherManager cipherManager = new SignatureCipherManager();
+                SignatureCipherManager cipherManager = new SignatureCipherManager("", "");
 
                 try {
                     // Use the same input parameters as the original test
@@ -182,7 +182,7 @@ public class SignatureCipherManagerTest {
     public void testScriptCaching() throws IOException {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpInterface httpInterface = new HttpInterface(httpClient, new HttpClientContext(), true, noOpFilter);
-            SignatureCipherManager cipherManager = new SignatureCipherManager();
+            SignatureCipherManager cipherManager = new SignatureCipherManager("", "");
             
             // Get the current script URL
             String currentPlayerScriptUrl = fetchCurrentPlayerScriptUrl(httpInterface);

@@ -106,8 +106,6 @@ public abstract class NonMusicClient implements Client {
                                                      @Nullable PlayabilityStatus status,
                                                      boolean validatePlayabilityStatus) throws CannotBeLoaded, IOException {
         SignatureCipherManager cipherManager = source.getCipherManager();
-        CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
-        String timestamp = cipherManager.getScriptTimestamp(httpInterface, playerScript.url);
 
         ClientConfig config = getBaseClientConfig(httpInterface);
 

@@ -210,17 +210,12 @@ public class SignatureCipherManager {
     return cachedPlayerScript;
   }
 
-  public String getScriptTimestamp(HttpInterface httpInterface, String scriptUrl) {
-      try {
-        String script = getRawScript(httpInterface, scriptUrl);
-        Matcher scriptTimestamp = timestampPattern.matcher(script);
-        if (scriptTimestamp.find()) {
-          return scriptTimestamp.group(2);
-        } else {
-          log.warn("Falling back to service for timestamp");
-        }
-      } catch (IOException e) {
-          throw new RuntimeException(e);
+  public String getScriptTimestamp(HttpInterface httpInterface, String script, String scriptUrl) {
+      Matcher scriptTimestamp = TIMESTAMP_PATTERN.matcher(script);
+      if (scriptTimestamp.find()) {
+        return scriptTimestamp.group(2);
+      } else {
+        log.warn("Falling back to service for timestamp");
       }
 
       return proxy.getTimestampFromScript(httpInterface, scriptUrl);
@@ -242,7 +237,7 @@ public class SignatureCipherManager {
                 cipherScriptUrl + " ( " + parseTokenScriptUrl(cipherScriptUrl) + " )");
           }
 
-          cipherKey = extractFromScript(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8), cipherScriptUrl);
+          cipherKey = extractFromScript(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8), cipherScriptUrl, httpInterface);
           cipherCache.put(cipherScriptUrl, cipherKey);
         }
       }
@@ -293,12 +288,8 @@ public class SignatureCipherManager {
     }
   }
 
-  private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl) {
-    Matcher scriptTimestamp = TIMESTAMP_PATTERN.matcher(script);
-
-    if (!scriptTimestamp.find()) {
-      scriptExtractionFailed(script, sourceUrl, ExtractionFailureType.TIMESTAMP_NOT_FOUND);
-    }
+  private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl, @NotNull HttpInterface httpInterface) {
+    String scriptTimestamp = getScriptTimestamp(httpInterface, script, sourceUrl);
 
     Matcher globalVarsMatcher = GLOBAL_VARS_PATTERN.matcher(script);
 
@@ -324,7 +315,6 @@ public class SignatureCipherManager {
       scriptExtractionFailed(script, sourceUrl, ExtractionFailureType.N_FUNCTION_NOT_FOUND);
     }
 
-    String timestamp = scriptTimestamp.group(2);
     String globalVars = globalVarsMatcher.group("code");
     String sigActions = sigActionsMatcher.group(0);
     String sigFunction = sigFunctionMatcher.group(0);
@@ -334,7 +324,7 @@ public class SignatureCipherManager {
     // Remove short-circuit that prevents n challenge transformation
     nFunction = nFunction.replaceAll("if\\s*\\(typeof\\s*[^\\s()]+\\s*===?.*?\\)return " + nfParameterName + "\\s*;?", "");
 
-    return new SignatureCipher(timestamp, globalVars, sigActions, sigFunction, nFunction, script);
+    return new SignatureCipher(scriptTimestamp, globalVars, sigActions, sigFunction, nFunction, script);
   }
 
   private void scriptExtractionFailed(String script, String sourceUrl, ExtractionFailureType failureType) {
