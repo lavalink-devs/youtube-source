@@ -208,7 +208,6 @@ public interface Client {
     default boolean supportsFormatLoading() {
         return getOptions().getPlayback();
     }
-
     
     default boolean isEmbedded() {
         return false;
@@ -219,6 +218,10 @@ public interface Client {
      */
     default boolean supportsOAuth() {
         return false;
+    }
+
+    default boolean requirePlayerScript() {
+        return true;
     }
 
     void setPlaylistPageCount(int count);

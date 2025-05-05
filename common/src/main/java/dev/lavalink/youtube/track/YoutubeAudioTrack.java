@@ -17,6 +17,7 @@ import dev.lavalink.youtube.ClientInformation;
 import dev.lavalink.youtube.UrlTools;
 import dev.lavalink.youtube.UrlTools.UrlInfo;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.cipher.ScriptExtractionException;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
@@ -104,11 +105,13 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
             continue;
           }
 
-          String message = e.getMessage();
-
-          if ("Not success status code: 403".equals(message) ||
-              "Invalid status code for player api response: 400".equals(message) ||
-              (message != null && message.contains("No supported audio streams available"))) {
+          if (e instanceof ScriptExtractionException) {
+            // If we're still early in playback, we can try another client
+            if (localExecutor.getPosition() <= BAD_STREAM_POSITION_THRESHOLD_MS) {
+              continue;
+            }
+          } else if ("Not success status code: 403".equals(e.getMessage()) ||
+                  "Invalid status code for player api response: 400".equals(e.getMessage())) {
             // As long as the executor position has not surpassed the threshold for which
             // a stream is considered unrecoverable, we can try to renew the playback URL with
             // another client.
@@ -213,10 +216,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     StreamFormat format = formats.getBestFormat();
 
-    URI resolvedUrl = sourceManager.getCipherManager()
-        .resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), format);
-
-    resolvedUrl = client.transformPlaybackUri(format.getUrl(), resolvedUrl);
+    URI resolvedUrl = format.getUrl();
+    if (client.requirePlayerScript()) {
+      resolvedUrl = sourceManager.getCipherManager()
+              .resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), format);
+      resolvedUrl = client.transformPlaybackUri(format.getUrl(), resolvedUrl);
+    }
 
     return new FormatWithUrl(format, resolvedUrl);
   }

@@ -1,0 +1,12 @@
+name: Autocloser
+on: [issues]
+jobs:
+  autoclose:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Autoclose issues that did not follow issue template
+      uses: roots/issue-closer@v1.1
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        issue-close-message: "@${issue.user.login} Your issue has been closed for not meeting the required criteria. Please read the bug report form in full, answering it truthfully and ensuring you have carried out the troubleshooting checks. If your report is not filled to a satisfactory level, we reserve the right to close and lock your issue without any further consideration."
+        issue-pattern: ".*- \\[ \\]\\s+I\\s+DO\\s+NOT\\s+confirm\\s+that\\s+this\\s+has\\s+been\\s+filled\\s+out\\s+truthfully\\s*\\..*"

@@ -85,6 +85,11 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
             ? decodeUrlEncodedItems(cipher, true)
             : Collections.emptyMap();
 
+        if (DataFormatTools.isNullOrEmpty(url) && DataFormatTools.isNullOrEmpty(cipherInfo.get("url"))) {
+            log.debug("Client '{}' is missing format URL for itag '{}'. SABR response?", getIdentifier(), formatJson.get("itag").text());
+            return false;
+        }
+
         Map<String, String> urlMap = DataFormatTools.isNullOrEmpty(url)
             ? decodeUrlEncodedItems(cipherInfo.get("url"), false)
             : decodeUrlEncodedItems(url, false);

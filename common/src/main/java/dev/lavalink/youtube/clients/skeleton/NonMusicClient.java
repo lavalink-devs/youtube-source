@@ -127,9 +127,14 @@ public abstract class NonMusicClient implements Client {
             config.withRootField("params", params);
         }
 
-        String payload = config.withPlaybackSignatureTimestamp(timestamp)
-            .setAttributes(httpInterface)
-            .toJsonString();
+        String payload = config.setAttributes(httpInterface).toJsonString();
+        if (requirePlayerScript()) {
+            CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
+            SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, playerScript.url);
+            payload = config.withPlaybackSignatureTimestamp(signatureCipher.timestamp)
+                    .setAttributes(httpInterface)
+                    .toJsonString();
+        }
 
         HttpPost request = new HttpPost(PLAYER_URL);
         request.setEntity(new StringEntity(payload, "UTF-8"));
