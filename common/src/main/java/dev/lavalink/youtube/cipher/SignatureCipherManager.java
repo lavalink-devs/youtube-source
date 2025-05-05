@@ -152,20 +152,6 @@ public class SignatureCipherManager {
 
     URIBuilder uri = new URIBuilder(initialUrl);
 
-    // Short circuit
-    if (proxy.isReady()) {
-      if (!DataFormatTools.isNullOrEmpty(signature)) {
-        return proxy.getUriFromProxy(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
-      }
-
-      uri.setParameter("n", proxy.decipherN(httpInterface, nParameter, playerScript));
-      try {
-          return uri.build();
-      } catch (URISyntaxException e) {
-          throw new RuntimeException(e);
-      }
-    }
-
     SignatureCipher cipher = getCipherScript(httpInterface, playerScript);
 
     if (!DataFormatTools.isNullOrEmpty(signature)) {
@@ -195,6 +181,19 @@ public class SignatureCipherManager {
         // URLs can still be played without a resolved n parameter. It just means they're
         // throttled. But we shouldn't throw an exception anyway as it's not really fatal.
         dumpProblematicScript(cipherCache.get(playerScript).rawScript, playerScript, "Can't transform n parameter " + nParameter + " with " + cipher.nFunction + " n function");
+        // Fall back to proxy service
+        if (proxy.isReady()) {
+          if (!DataFormatTools.isNullOrEmpty(signature)) {
+            return proxy.getUriFromProxy(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
+          }
+
+          uri.setParameter("n", proxy.decipherN(httpInterface, nParameter, playerScript));
+          try {
+            return uri.build();
+          } catch (URISyntaxException f) {
+            throw new RuntimeException(f);
+          }
+        }
       }
     }
 
@@ -237,17 +236,17 @@ public class SignatureCipherManager {
   }
 
   public String getScriptTimestamp(HttpInterface httpInterface, String scriptUrl) {
-//      try {
-//        String script = getRawScript(httpInterface, scriptUrl);
-//        Matcher scriptTimestamp = timestampPattern.matcher(script);
-//        if (!scriptTimestamp.find()) {
-//          log.error("TIMESTAMP NOT FOUND");
-//        } else {
-//          log.error("TIMESTAMP: {}", scriptTimestamp.group(2));
-//        }
-//      } catch (IOException e) {
-//          throw new RuntimeException(e);
-//      }
+      try {
+        String script = getRawScript(httpInterface, scriptUrl);
+        Matcher scriptTimestamp = timestampPattern.matcher(script);
+        if (scriptTimestamp.find()) {
+          return scriptTimestamp.group(2);
+        } else {
+          log.warn("Falling back to service for timestamp");
+        }
+      } catch (IOException e) {
+          throw new RuntimeException(e);
+      }
 
       return proxy.getTimestampFromScript(httpInterface, scriptUrl);
   }
