@@ -199,8 +199,6 @@ public class SignatureCipherManager {
     }
 
     try {
-        log.warn("HEY: {}", format);
-        log.warn("YO: {}", uri.build());
       return uri.build(); // setParameter("ratebypass", "yes")  -- legacy parameter that will give 403 if tampered with.
     } catch (URISyntaxException e) {
       throw new RuntimeException(e);
