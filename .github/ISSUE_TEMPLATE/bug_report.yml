@@ -50,6 +50,7 @@ body:
         Provide a minimum viable code sample that we can use to reproduce your issue.
         Exclude any sensitive information, such as IP addresses, tokens, keys, etc.
         If this is not applicable, just write "N/A"
+      render: java
     validations:
       required: true
   - type: textarea
@@ -60,6 +61,7 @@ body:
         Include the ENTIRE stacktrace if available, as well as JSON dump if one is provided.
         You may redact sensitive information such as IP addresses, tokens, keys etc.
         If this is not applicable, just write "N/A".
+      render: text
     validations:
       required: true
   - type: input
