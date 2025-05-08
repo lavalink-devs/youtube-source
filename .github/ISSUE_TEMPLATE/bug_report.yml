@@ -24,7 +24,7 @@ body:
         - label: My issue is reproducible with IPv6 rotation.
           required: true
         - label: I DO NOT confirm that this has been filled out truthfully.
-          required: true
+          required: false
   - type: input
     attributes:
       label: "Version of youtube-source"
