@@ -2,6 +2,7 @@ package dev.lavalink.youtube.clients;
 
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -32,9 +33,9 @@ public class Web extends StreamingNonMusicClient {
     protected static Pattern CONFIG_REGEX = Pattern.compile("ytcfg\\.set\\((\\{.+})\\);");
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
-        .withClientName("WEB")
-        .withClientField("clientVersion", "2.20250403.01.00")
-        .withUserField("lockedSafetyMode", false);
+            .withClientName("WEB")
+            .withClientField("clientVersion", "2.20250403.01.00")
+            .withUserField("lockedSafetyMode", false);
 
     public static String poToken;
 
@@ -88,20 +89,20 @@ public class Web extends StreamingNonMusicClient {
             if (!client.isNull()) {
                 /*
                  * "client": {
-                 *   "hl": "en-GB",
-                 *   "gl": "GB",
-                 *   "remoteHost": "<ip>",
-                 *   "deviceMake": "",
-                 *   "deviceModel": "",
-                 *   "visitorData": "<base64>",
-                 *   "userAgent": "...",
-                 *   "clientName": "WEB",
-                 *   "clientVersion": "2.20240401.05.00",
-                 *   "osVersion": "",
-                 *   "originalUrl": "https://www.youtube.com/",
-                 *   "platform": "DESKTOP",
-                 *   "clientFormFactor": "UNKNOWN_FORM_FACTOR",
-                 *   ...
+                 * "hl": "en-GB",
+                 * "gl": "GB",
+                 * "remoteHost": "<ip>",
+                 * "deviceMake": "",
+                 * "deviceModel": "",
+                 * "visitorData": "<base64>",
+                 * "userAgent": "...",
+                 * "clientName": "WEB",
+                 * "clientVersion": "2.20240401.05.00",
+                 * "osVersion": "",
+                 * "originalUrl": "https://www.youtube.com/",
+                 * "platform": "DESKTOP",
+                 * "clientFormFactor": "UNKNOWN_FORM_FACTOR",
+                 * ...
                  */
                 String clientVersion = client.get("clientVersion").text();
 
@@ -110,11 +111,11 @@ public class Web extends StreamingNonMusicClient {
                     BASE_CONFIG.withClientField("clientVersion", clientVersion);
                 }
 
-//                String visitorData = client.get("visitorData").text();
-//
-//                if (visitorData != null && !visitorData.isEmpty()) {
-//                    BASE_CONFIG.withVisitorData(visitorData);
-//                }
+                // String visitorData = client.get("visitorData").text();
+                //
+                // if (visitorData != null && !visitorData.isEmpty()) {
+                // BASE_CONFIG.withVisitorData(visitorData);
+                // }
             }
         } catch (IOException e) {
             throw ExceptionTools.toRuntimeException(e);
@@ -157,27 +158,27 @@ public class Web extends StreamingNonMusicClient {
     @Override
     @NotNull
     protected List<AudioTrack> extractSearchResults(@NotNull YoutubeAudioSourceManager source,
-                                                    @NotNull JsonBrowser json) {
+            @NotNull JsonBrowser json) {
         return json.get("contents")
-            .get("twoColumnSearchResultsRenderer")
-            .get("primaryContents")
-            .get("sectionListRenderer")
-            .get("contents")
-            .values() // .index(0)
-            .stream()
-            .flatMap(item -> item.get("itemSectionRenderer").get("contents").values().stream()) // actual results
-            .map(item -> extractAudioTrack(item.get("videoRenderer"), source))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .get("twoColumnSearchResultsRenderer")
+                .get("primaryContents")
+                .get("sectionListRenderer")
+                .get("contents")
+                .values() // .index(0)
+                .stream()
+                .flatMap(item -> item.get("itemSectionRenderer").get("contents").values().stream()) // actual results
+                .map(item -> extractAudioTrack(item.get("videoRenderer"), source))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     @Override
     @NotNull
     protected JsonBrowser extractMixPlaylistData(@NotNull JsonBrowser json) {
         return json.get("contents")
-            .get("twoColumnWatchNextResults")
-            .get("playlist") // this doesn't exist if mix is not found
-            .get("playlist");
+                .get("twoColumnWatchNextResults")
+                .get("playlist") // this doesn't exist if mix is not found
+                .get("playlist");
     }
 
     @Override
@@ -188,18 +189,18 @@ public class Web extends StreamingNonMusicClient {
     @NotNull
     protected JsonBrowser extractPlaylistVideoList(@NotNull JsonBrowser json) {
         return json.get("contents")
-            .get("twoColumnBrowseResultsRenderer")
-            .get("tabs")
-            .index(0)
-            .get("tabRenderer")
-            .get("content")
-            .get("sectionListRenderer")
-            .get("contents")
-            .index(0)
-            .get("itemSectionRenderer")
-            .get("contents")
-            .index(0)
-            .get("playlistVideoListRenderer");
+                .get("twoColumnBrowseResultsRenderer")
+                .get("tabs")
+                .index(0)
+                .get("tabRenderer")
+                .get("content")
+                .get("sectionListRenderer")
+                .get("contents")
+                .index(0)
+                .get("itemSectionRenderer")
+                .get("contents")
+                .index(0)
+                .get("playlistVideoListRenderer");
     }
 
     @Override
@@ -207,33 +208,24 @@ public class Web extends StreamingNonMusicClient {
     protected String extractPlaylistContinuationToken(@NotNull JsonBrowser videoList) {
         // WEB continuations seem to be slightly inconsistent.
         JsonBrowser contents = videoList.get("contents");
+
         if (!contents.isNull()) {
             videoList = contents;
         }
+
         return videoList.values()
                 .stream()
                 .filter(item -> !item.get("continuationItemRenderer").isNull())
                 .findFirst()
                 .map(item -> {
-                    JsonBrowser continuationRenderer = item.get("continuationItemRenderer");
-                    JsonBrowser continuationEndpoint = continuationRenderer.get("continuationEndpoint");
-                    // first try if token is at : // continuationEndpoint.continuationCommand.token
+                    JsonBrowser continuationEndpoint = item.get("continuationItemRenderer").get("continuationEndpoint");
                     String token = continuationEndpoint.get("continuationCommand").get("token").text();
-                    if (token != null && !token.isEmpty()) {
+                    if (!DataFormatTools.isNullOrEmpty(token)) {
                         return token;
                     }
-                    // second try if token is at : continuationEndpoint.commandExecutorCommand.commands[1].continuationCommand.token
-                    JsonBrowser commandExecutor = continuationEndpoint.get("commandExecutorCommand");
-                    if (!commandExecutor.isNull()) {
-                        JsonBrowser commands = commandExecutor.get("commands");
-                        if (!commands.isNull() && commands.isList() && commands.values().size() > 1) {
-                            return commands.values().get(1)
-                                    .get("continuationCommand")
-                                    .get("token")
-                                    .text();
-                        }
-                    }
-                    return null;
+
+                    return continuationEndpoint.get("commandExecutorCommand").get("commands").index(1)
+                            .get("continuationCommand").get("token").text();
                 })
                 .orElse(null);
     }
@@ -242,9 +234,9 @@ public class Web extends StreamingNonMusicClient {
     @NotNull
     protected JsonBrowser extractPlaylistContinuationVideos(@NotNull JsonBrowser continuationJson) {
         return continuationJson.get("onResponseReceivedActions")
-            .index(0)
-            .get("appendContinuationItemsAction")
-            .get("continuationItems");
+                .index(0)
+                .get("appendContinuationItemsAction")
+                .get("continuationItems");
     }
 
     @Override
