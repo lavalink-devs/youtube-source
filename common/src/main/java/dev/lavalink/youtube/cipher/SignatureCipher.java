@@ -43,8 +43,8 @@ public class SignatureCipher {
                       @NotNull ScriptEngine scriptEngine) throws ScriptException, NoSuchMethodException {
     String transformed;
 
-    scriptEngine.eval(globalVars + ";" + sigActions + ";sig=" + sigFunction);
-    transformed = (String) ((Invocable) scriptEngine).invokeFunction("sig", text);
+    scriptEngine.eval(globalVars + ";" + sigActions + ";decrypt_sig=" + sigFunction);
+    transformed = (String) ((Invocable) scriptEngine).invokeFunction("decrypt_sig", text);
     return transformed;
   }
 
@@ -87,8 +87,8 @@ public class SignatureCipher {
       throws ScriptException, NoSuchMethodException {
     String transformed;
 
-    scriptEngine.eval(globalVars + ";n=" + nFunction);
-    transformed = (String) ((Invocable) scriptEngine).invokeFunction("n", text);
+    scriptEngine.eval(globalVars + ";decrypt_nsig=" + nFunction);
+    transformed = (String) ((Invocable) scriptEngine).invokeFunction("decrypt_nsig", text);
 
     return transformed;
   }
