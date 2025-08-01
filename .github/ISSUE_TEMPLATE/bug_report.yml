@@ -22,7 +22,7 @@ body:
         - label: I am using (and my issue is reproducible on) the latest version of youtube-source.
           required: true
         - label: My issue is reproducible with IPv6 rotation.
-          required: true
+          required: false
         - label: I DO NOT confirm that this has been filled out truthfully.
           required: false
   - type: input
