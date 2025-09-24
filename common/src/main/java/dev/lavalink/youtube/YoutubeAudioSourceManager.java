@@ -70,40 +70,43 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     protected YoutubeOauth2Handler oauth2Handler;
     protected SignatureCipherManager cipherManager;
 
-    public YoutubeAudioSourceManager() {
-        this(true);
-    }
+    private String cipherProxyUrl;
+    private String cipherProxyPass;
 
-    public YoutubeAudioSourceManager(boolean allowSearch) {
-        this(allowSearch, true, true);
-    }
+//    public YoutubeAudioSourceManager() {
+//        this(true);
+//    }
 
-    public YoutubeAudioSourceManager(boolean allowSearch, boolean allowDirectVideoIds, boolean allowDirectPlaylistIds) {
-        // query order: music -> web -> androidtestsuite -> tvhtml5embedded
-        this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, new Music(), new AndroidVr(), new Web(), new WebEmbedded());
-    }
+//    public YoutubeAudioSourceManager(boolean allowSearch) {
+//        this(allowSearch, true, true);
+//    }
 
-    /**
-     * Construct an instance of YoutubeAudioSourceManager with default settings
-     * and the given clients.
-     * @param clients The clients to use for track loading. They will be queried in
-     *                the order they are provided.
-     */
-    public YoutubeAudioSourceManager(@NotNull Client... clients) {
-        this(true, true, true, clients);
-    }
+//    public YoutubeAudioSourceManager(boolean allowSearch, boolean allowDirectVideoIds, boolean allowDirectPlaylistIds) {
+//        // query order: music -> web -> androidtestsuite -> tvhtml5embedded
+//        this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, new Music(), new AndroidVr(), new Web(), new WebEmbedded());
+//    }
 
-    /**
-     * Construct an instance of YoutubeAudioSourceManager with the given settings
-     * and clients.
-     * @param allowSearch Whether to allow searching for tracks. If disabled, the
-     *                    "ytsearch:" and "ytmsearch:" prefixes will return nothing.
-     * @param clients The clients to use for track loading. They will be queried in
-     *                the order they are provided.
-     */
-    public YoutubeAudioSourceManager(boolean allowSearch, @NotNull Client... clients) {
-        this(allowSearch, true, true, clients);
-    }
+//    /**
+//     * Construct an instance of YoutubeAudioSourceManager with default settings
+//     * and the given clients.
+//     * @param clients The clients to use for track loading. They will be queried in
+//     *                the order they are provided.
+//     */
+//    public YoutubeAudioSourceManager(@NotNull Client... clients) {
+//        this(true, true, true, clients);
+//    }
+
+//    /**
+//     * Construct an instance of YoutubeAudioSourceManager with the given settings
+//     * and clients.
+//     * @param allowSearch Whether to allow searching for tracks. If disabled, the
+//     *                    "ytsearch:" and "ytmsearch:" prefixes will return nothing.
+//     * @param clients The clients to use for track loading. They will be queried in
+//     *                the order they are provided.
+//     */
+//    public YoutubeAudioSourceManager(boolean allowSearch, @NotNull Client... clients) {
+//        this(allowSearch, true, true, clients);
+//    }
 
     /**
      * Construct an instance of YoutubeAudioSourceManager with the given settings
@@ -120,12 +123,16 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     public YoutubeAudioSourceManager(boolean allowSearch,
                                      boolean allowDirectVideoIds,
                                      boolean allowDirectPlaylistIds,
+                                     String cipherProxyUrl,
+                                     String cipherProxyPass,
                                      @NotNull Client... clients) {
         this(
             new YoutubeSourceOptions()
                 .setAllowSearch(allowSearch)
                 .setAllowDirectVideoIds(allowDirectVideoIds)
-                .setAllowDirectPlaylistIds(allowDirectPlaylistIds),
+                .setAllowDirectPlaylistIds(allowDirectPlaylistIds)
+                .setCipherProxyUrl(cipherProxyUrl)
+                .setCipherProxyPass(cipherProxyPass),
             clients
         );
     }
@@ -137,7 +144,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         this.allowDirectVideoIds = options.isAllowDirectVideoIds();
         this.allowDirectPlaylistIds = options.isAllowDirectPlaylistIds();
         this.clients = clients;
-        this.cipherManager = new SignatureCipherManager();
+        this.cipherManager = new SignatureCipherManager(options.getCipherProxyUrl(), options.getCipherProxyPass());
         this.oauth2Handler = new YoutubeOauth2Handler(httpInterfaceManager);
 
         contextFilter = new YoutubeHttpContextFilter();
@@ -435,5 +442,21 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
         @Nullable
         AudioItem route(@NotNull Client client) throws CannotBeLoaded, IOException;
+    }
+
+    public String getCipherProxyUrl() {
+        return cipherProxyUrl;
+    }
+
+    public void setCipherProxyUrl(String cipherProxyUrl) {
+        this.cipherProxyUrl = cipherProxyUrl;
+    }
+
+    public String getCipherProxyPass() {
+        return cipherProxyPass;
+    }
+
+    public void setCipherProxyPass(String cipherProxyPass) {
+        this.cipherProxyPass = cipherProxyPass;
     }
 }

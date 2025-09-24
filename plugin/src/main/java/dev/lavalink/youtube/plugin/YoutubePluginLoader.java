@@ -155,7 +155,7 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
 
         if (clientProvider == null) {
             log.warn("ClientProvider instance is missing. The YouTube source will be initialised with default clients.");
-            source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds);
+            source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, Objects.requireNonNull(youtubeConfig).getCipherProxyUrl(), youtubeConfig.getCipherProxyPass());
         } else {
             String[] clients;
 
@@ -179,7 +179,7 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
                 }
             }
 
-            source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, clientProvider.getClients(clients, this::getOptionsForClient));
+            source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, Objects.requireNonNull(youtubeConfig).getCipherProxyUrl(), youtubeConfig.getCipherProxyPass(), clientProvider.getClients(clients, this::getOptionsForClient));
         }
 
         log.info("YouTube source initialised with clients: {} ", Arrays.stream(source.getClients()).map(Client::getIdentifier).collect(Collectors.joining(", ")));
@@ -198,6 +198,11 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
             }
 
             rotator.setup();
+        }
+
+        if (youtubeConfig.getCipherProxyUrl() != null) {
+            source.setCipherProxyUrl(youtubeConfig.getCipherProxyUrl());
+            source.setCipherProxyPass(youtubeConfig.getCipherProxyPass());
         }
 
         Integer playlistLoadLimit = serverConfig.getYoutubePlaylistLoadLimit();
