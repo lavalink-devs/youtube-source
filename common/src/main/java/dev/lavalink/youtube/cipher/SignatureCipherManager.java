@@ -46,6 +46,7 @@ public class SignatureCipherManager {
   private static final Logger log = LoggerFactory.getLogger(SignatureCipherManager.class);
 
   private static final String VARIABLE_PART = "[a-zA-Z_\\$][a-zA-Z_0-9\\$]*";
+  private static final String VARIABLE_PART_OBJECT_DECLARATION = "[\"']?[a-zA-Z_\\$][a-zA-Z_0-9\\$]*[\"']?";
 
   private static final Pattern TIMESTAMP_PATTERN = Pattern.compile("(signatureTimestamp|sts):(\\d+)");
 
@@ -59,7 +60,10 @@ public class SignatureCipherManager {
   );
 
   private static final Pattern ACTIONS_PATTERN = Pattern.compile(
-      "var\\s+([A-Za-z0-9_]+)\\s*=\\s*\\{\\s*[A-Za-z0-9_]+\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{[^{}]*(?:\\{[^{}]*}[^{}]*)*}\\s*,\\s*[A-Za-z0-9_]+\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{[^{}]*(?:\\{[^{}]*}[^{}]*)*}\\s*,\\s*[A-Za-z0-9_]+\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{[^{}]*(?:\\{[^{}]*}[^{}]*)*}\\s*};");
+      "var\\s+([$A-Za-z0-9_]+)\\s*=\\s*\\{" +
+          "\\s*" + VARIABLE_PART_OBJECT_DECLARATION + "\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{[^{}]*(?:\\{[^{}]*}[^{}]*)*}\\s*," +
+          "\\s*" + VARIABLE_PART_OBJECT_DECLARATION + "\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{[^{}]*(?:\\{[^{}]*}[^{}]*)*}\\s*," +
+          "\\s*" + VARIABLE_PART_OBJECT_DECLARATION + "\\s*:\\s*function\\s*\\([^)]*\\)\\s*\\{[^{}]*(?:\\{[^{}]*}[^{}]*)*}\\s*};");
 
   private static final Pattern SIG_FUNCTION_PATTERN = Pattern.compile(
       "function(?:\\s+" + VARIABLE_PART + ")?\\((" + VARIABLE_PART + ")\\)\\{" +
@@ -88,17 +92,19 @@ public class SignatureCipherManager {
   private final Set<String> dumpedScriptUrls;
   private final ScriptEngine scriptEngine;
   private final Object cipherLoadLock;
+  private final SigCipherProxy proxy;
 
   protected volatile CachedPlayerScript cachedPlayerScript;
 
   /**
    * Create a new signature cipher manager
    */
-  public SignatureCipherManager() {
+  public SignatureCipherManager(String proxyUrl, String proxyPass) {
     this.cipherCache = new ConcurrentHashMap<>();
     this.dumpedScriptUrls = new HashSet<>();
     this.scriptEngine = new RhinoScriptEngineFactory().getScriptEngine();
     this.cipherLoadLock = new Object();
+    this.proxy = new SigCipherProxy(proxyUrl, proxyPass);
   }
 
   /**
@@ -119,6 +125,7 @@ public class SignatureCipherManager {
     URI initialUrl = format.getUrl();
 
     URIBuilder uri = new URIBuilder(initialUrl);
+
     SignatureCipher cipher = getCipherScript(httpInterface, playerScript);
 
     if (!DataFormatTools.isNullOrEmpty(signature)) {
@@ -153,6 +160,19 @@ public class SignatureCipherManager {
         // URLs can still be played without a resolved n parameter. It just means they're
         // throttled. But we shouldn't throw an exception anyway as it's not really fatal.
         dumpProblematicScript(cipherCache.get(playerScript).rawScript, playerScript, "Can't transform n parameter " + nParameter + " with " + cipher.nFunction + " n function");
+        // Fall back to proxy service
+        if (proxy.isReady()) {
+          if (!DataFormatTools.isNullOrEmpty(signature)) {
+            return proxy.getUriFromProxy(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
+          }
+
+          uri.setParameter("n", proxy.decipherN(httpInterface, nParameter, playerScript));
+          try {
+            return uri.build();
+          } catch (URISyntaxException f) {
+            throw new RuntimeException(f);
+          }
+        }
       }
     }
 
@@ -194,6 +214,17 @@ public class SignatureCipherManager {
     return cachedPlayerScript;
   }
 
+  public String getScriptTimestamp(HttpInterface httpInterface, String script, String scriptUrl) {
+      Matcher scriptTimestamp = TIMESTAMP_PATTERN.matcher(script);
+      if (scriptTimestamp.find()) {
+        return scriptTimestamp.group(2);
+      } else {
+        log.warn("Falling back to service for timestamp");
+      }
+
+      return proxy.getTimestampFromScript(httpInterface, scriptUrl);
+  }
+
   public SignatureCipher getCipherScript(@NotNull HttpInterface httpInterface,
                                          @NotNull String cipherScriptUrl) throws IOException {
     SignatureCipher cipherKey = cipherCache.get(cipherScriptUrl);
@@ -210,13 +241,31 @@ public class SignatureCipherManager {
                 cipherScriptUrl + " ( " + parseTokenScriptUrl(cipherScriptUrl) + " )");
           }
 
-          cipherKey = extractFromScript(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8), cipherScriptUrl);
+          cipherKey = extractFromScript(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8), cipherScriptUrl, httpInterface);
           cipherCache.put(cipherScriptUrl, cipherKey);
         }
       }
     }
 
     return cipherKey;
+  }
+
+  public String getRawScript(@NotNull HttpInterface httpInterface,
+                                         @NotNull String cipherScriptUrl) throws IOException {
+    synchronized (cipherLoadLock) {
+      log.debug("getting raw player script {}", cipherScriptUrl);
+
+      try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(parseTokenScriptUrl(cipherScriptUrl)))) {
+        int statusCode = response.getStatusLine().getStatusCode();
+
+        if (!HttpClientTools.isSuccessWithContent(statusCode)) {
+          throw new IOException("Received non-success response code " + statusCode + " from script url " +
+                  cipherScriptUrl + " ( " + parseTokenScriptUrl(cipherScriptUrl) + " )");
+        }
+
+        return EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+      }
+    }
   }
 
   private List<String> getQuotedFunctions(@Nullable String... functionNames) {
@@ -243,12 +292,8 @@ public class SignatureCipherManager {
     }
   }
 
-  private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl) {
-    Matcher scriptTimestamp = TIMESTAMP_PATTERN.matcher(script);
-
-    if (!scriptTimestamp.find()) {
-      scriptExtractionFailed(script, sourceUrl, ExtractionFailureType.TIMESTAMP_NOT_FOUND);
-    }
+  private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl, @NotNull HttpInterface httpInterface) {
+    String scriptTimestamp = getScriptTimestamp(httpInterface, script, sourceUrl);
 
     Matcher globalVarsMatcher = GLOBAL_VARS_PATTERN.matcher(script);
 
@@ -274,7 +319,6 @@ public class SignatureCipherManager {
       scriptExtractionFailed(script, sourceUrl, ExtractionFailureType.N_FUNCTION_NOT_FOUND);
     }
 
-    String timestamp = scriptTimestamp.group(2);
     String globalVars = globalVarsMatcher.group("code");
     String sigActions = sigActionsMatcher.group(0);
     String sigFunction = sigFunctionMatcher.group(0);
@@ -284,7 +328,7 @@ public class SignatureCipherManager {
     // Remove short-circuit that prevents n challenge transformation
     nFunction = nFunction.replaceAll("if\\s*\\(typeof\\s*[^\\s()]+\\s*===?.*?\\)return " + nfParameterName + "\\s*;?", "");
 
-    return new SignatureCipher(timestamp, globalVars, sigActions, sigFunction, nFunction, script);
+    return new SignatureCipher(scriptTimestamp, globalVars, sigActions, sigFunction, nFunction, script);
   }
 
   private void scriptExtractionFailed(String script, String sourceUrl, ExtractionFailureType failureType) {
