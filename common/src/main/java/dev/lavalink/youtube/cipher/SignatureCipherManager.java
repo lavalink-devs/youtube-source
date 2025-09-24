@@ -126,6 +126,20 @@ public class SignatureCipherManager {
 
     URIBuilder uri = new URIBuilder(initialUrl);
 
+      if (proxy.isReady()) {
+          log.info("Doing sig extraction over proxy");
+          if (!DataFormatTools.isNullOrEmpty(signature)) {
+              return proxy.getUriFromProxy(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
+          }
+
+          uri.setParameter("n", proxy.decipherN(httpInterface, nParameter, playerScript));
+          try {
+              return uri.build();
+          } catch (URISyntaxException f) {
+              throw new RuntimeException(f);
+          }
+      }
+
     SignatureCipher cipher = getCipherScript(httpInterface, playerScript);
 
     if (!DataFormatTools.isNullOrEmpty(signature)) {
@@ -160,19 +174,6 @@ public class SignatureCipherManager {
         // URLs can still be played without a resolved n parameter. It just means they're
         // throttled. But we shouldn't throw an exception anyway as it's not really fatal.
         dumpProblematicScript(cipherCache.get(playerScript).rawScript, playerScript, "Can't transform n parameter " + nParameter + " with " + cipher.nFunction + " n function");
-        // Fall back to proxy service
-        if (proxy.isReady()) {
-          if (!DataFormatTools.isNullOrEmpty(signature)) {
-            return proxy.getUriFromProxy(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
-          }
-
-          uri.setParameter("n", proxy.decipherN(httpInterface, nParameter, playerScript));
-          try {
-            return uri.build();
-          } catch (URISyntaxException f) {
-            throw new RuntimeException(f);
-          }
-        }
       }
     }
 
@@ -290,6 +291,22 @@ public class SignatureCipherManager {
     } catch (Exception e) {
       log.error("Failed to dump problematic YouTube player script {} (issue detected with script: {})", sourceUrl, issue);
     }
+  }
+
+  public String getTimestamp(HttpInterface httpInterface, String sourceUrl) throws IOException {
+      synchronized (cipherLoadLock) {
+          log.debug("Timestamp from script {}", sourceUrl);
+
+          try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(parseTokenScriptUrl(sourceUrl)))) {
+              int statusCode = response.getStatusLine().getStatusCode();
+
+              if (!HttpClientTools.isSuccessWithContent(statusCode)) {
+                  throw new IOException("Received non-success response code " + statusCode + " from script url " +
+                          sourceUrl + " ( " + parseTokenScriptUrl(sourceUrl) + " )");
+              }
+              return getScriptTimestamp(httpInterface, EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8), sourceUrl);
+          }
+      }
   }
 
   private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl, @NotNull HttpInterface httpInterface) {
