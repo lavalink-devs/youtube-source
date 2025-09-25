@@ -161,7 +161,10 @@ public class StreamFormat {
         ", type=" + type +
         ", bitrate=" + bitrate +
         ", audioChannels=" + audioChannels +
-        ", isDrc=" + isDrc + ", nParam=" + nParameter + ", sigKey=" + signatureKey + ", sig=" + signature +
+        ", isDrc=" + isDrc +
+        ", nParam=" + nParameter +
+        ", sigKey=" + signatureKey +
+        ", sig=" + signature +
         '}';
   }
 }

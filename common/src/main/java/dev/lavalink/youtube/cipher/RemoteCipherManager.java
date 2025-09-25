@@ -124,15 +124,7 @@ public class RemoteCipherManager implements CipherManager {
         synchronized (cipherLoadLock) {
             log.debug("Timestamp from script {}", sourceUrl);
 
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(CipherUtils.parseTokenScriptUrl(sourceUrl)))) {
-                int statusCode = response.getStatusLine().getStatusCode();
-
-                if (!HttpClientTools.isSuccessWithContent(statusCode)) {
-                    throw new IOException("Received non-success response code " + statusCode + " from script url " +
-                        sourceUrl + " ( " + CipherUtils.parseTokenScriptUrl(sourceUrl) + " )");
-                }
-                return getTimestampFromScript(httpInterface, sourceUrl);
-            }
+            return getTimestampFromScript(httpInterface, sourceUrl);
         }
     }
 
@@ -151,10 +143,8 @@ public class RemoteCipherManager implements CipherManager {
 
         String requestBody = JsonWriter.string()
             .object()
-            .value("player_url", "https://youtube.com" + playerScript)
-            .value("encrypted_signature", "")
+            .value("player_url", playerScript)
             .value("n_param", n)
-            .value("video_id", "test")
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
@@ -166,7 +156,7 @@ public class RemoteCipherManager implements CipherManager {
             String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
 
             if (statusCode >= 200 && statusCode < 300) {
-                if (responseBody == null || responseBody.isEmpty()) {
+                if (DataFormatTools.isNullOrEmpty(responseBody)) {
                     throw new IOException("Received empty successful response from decryption proxy.");
                 }
 
@@ -189,11 +179,10 @@ public class RemoteCipherManager implements CipherManager {
 
         String requestBody = JsonWriter.string()
             .object()
-            .value("player_url", "https://youtube.com" + playerScript)
+            .value("player_url", playerScript)
             .value("encrypted_signature", sig)
             .value("n_param", nParam)
             .value("signature_key", sigKey)
-            .value("video_id", "test")
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
@@ -205,7 +194,7 @@ public class RemoteCipherManager implements CipherManager {
             String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
 
             if (statusCode >= 200 && statusCode < 300) {
-                if (responseBody == null || responseBody.isEmpty()) {
+                if (DataFormatTools.isNullOrEmpty(responseBody)) {
                     throw new IOException("Received empty successful response from decryption proxy.");
                 }
 
@@ -216,19 +205,19 @@ public class RemoteCipherManager implements CipherManager {
 
                 URIBuilder uriBuilder = new URIBuilder(initial);
 
-                if (returnedSignature != null && !returnedSignature.isEmpty()) {
+                if (!DataFormatTools.isNullOrEmpty(returnedSignature)) {
                     if (sigKey == null || sigKey.trim().isEmpty()) {
                         log.error("Warning: Decrypted signature received, but sigKey is null or empty. Using default 'sig'.");
                         sigKey = "sig";
                     }
                     uriBuilder.setParameter(sigKey.trim(), returnedSignature);
-                } else if (sig != null && !sig.isEmpty()) {
+                } else if (!DataFormatTools.isNullOrEmpty(sig)) {
                     log.warn("Warning: Original signature parameter 's' was present, but no decrypted signature returned from proxy.");
                 }
 
-                if (returnedN != null && !returnedN.isEmpty()) {
+                if (!DataFormatTools.isNullOrEmpty(returnedN)) {
                     uriBuilder.setParameter("n", returnedN);
-                } else if (nParam != null && !nParam.isEmpty()) {
+                } else if (!DataFormatTools.isNullOrEmpty(nParam)) {
                     log.error("Warning: Original parameter 'n' was present, but no decrypted n-parameter returned from proxy.");
                 }
 
@@ -247,8 +236,7 @@ public class RemoteCipherManager implements CipherManager {
 
         String requestBody = JsonWriter.string()
             .object()
-            .value("player_url", "https://youtube.com" + playerScript)
-            .value("video_id", "test")
+            .value("player_url", playerScript)
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
@@ -260,7 +248,7 @@ public class RemoteCipherManager implements CipherManager {
             String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
 
             if (statusCode >= 200 && statusCode < 300) {
-                if (responseBody == null || responseBody.isEmpty()) {
+                if (DataFormatTools.isNullOrEmpty(responseBody)) {
                     throw new IOException("Received empty successful response from decryption proxy.");
                 }
                 log.debug("Received response from proxy: {}", responseBody);

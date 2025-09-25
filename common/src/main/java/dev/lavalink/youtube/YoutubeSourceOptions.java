@@ -1,11 +1,13 @@
 package dev.lavalink.youtube;
 
+import org.jetbrains.annotations.Nullable;
+
 public class YoutubeSourceOptions {
     private boolean allowSearch = true;
     private boolean allowDirectVideoIds = true;
     private boolean allowDirectPlaylistIds = true;
     private String remoteCipherUrl;
-    private String remoteCipherPass;
+    private String remoteCipherPassword;
 
     public boolean isAllowSearch() {
         return allowSearch;
@@ -38,17 +40,14 @@ public class YoutubeSourceOptions {
         return remoteCipherUrl;
     }
 
-    public YoutubeSourceOptions setRemoteCipherUrl(String remoteCipherUrl) {
+    public YoutubeSourceOptions setRemoteCipherUrl(String remoteCipherUrl, @Nullable String remoteCipherPassword) {
         this.remoteCipherUrl = remoteCipherUrl;
+        this.remoteCipherPassword = remoteCipherPassword;
         return this;
     }
 
-    public String getRemoteCipherPass() {
-        return remoteCipherPass;
+    public String getRemoteCipherPassword() {
+        return remoteCipherPassword;
     }
 
-    public YoutubeSourceOptions setRemoteCipherPass(String remoteCipherPass) {
-        this.remoteCipherPass = remoteCipherPass;
-        return this;
-    }
 }

@@ -2,6 +2,7 @@ package dev.lavalink.youtube;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity;
@@ -139,8 +140,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         this.allowDirectVideoIds = options.isAllowDirectVideoIds();
         this.allowDirectPlaylistIds = options.isAllowDirectPlaylistIds();
         this.clients = clients;
-        if (options.getRemoteCipherUrl() != null && !options.getRemoteCipherUrl().isEmpty()) {
-            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl(), options.getRemoteCipherPass());
+        if (!DataFormatTools.isNullOrEmpty(options.getRemoteCipherUrl())) {
+            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl(), options.getRemoteCipherPassword());
         } else {
             this.cipherManager = new LocalSignatureCipherManager();
         }
