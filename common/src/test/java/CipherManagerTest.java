@@ -1,6 +1,7 @@
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextFilter;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import dev.lavalink.youtube.cipher.SignatureCipherManager;
+import dev.lavalink.youtube.cipher.LocalSignatureCipherManager;
+import dev.lavalink.youtube.cipher.CipherManager;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -20,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SignatureCipherManagerTest {
+public class CipherManagerTest {
     private TestCase[] scripts = new TestCase[]{
             new TestCase("https://www.youtube.com/s/player/4fcd6e4a/player_ias.vflset/en_US/base.js", "o_L251jm8yhZkWtBW", "lXoxI3XvToqn6A", "2aq0aqSyOoJXtK73m-uME_jv7-pT15gOFC02RFkGMqWpzEICs69VdbwQ0LDp1v7j8xx92efCJlYFYb1sUkkBSPOlPmXgIARw8JQ0qOAOAA", "wAOAOq0QJ8ARAIgXmPlOPSBkkUs1bYFYlJCfe29xx8q7v1pDL0QwbdV96sCIEzpWqMGkFR20CFOg51Tp-7vj_EMu-m37KtXJoOySqa0"),
             new TestCase("https://www.youtube.com/s/player/363db69b/player_ias.vflset/en_US/base.js", "eWYu5d5YeY_4LyEDc", "XJQqf-N7Xra3gg", "2aq0aqSyOoJXtK73m-uME_jv7-pT15gOFC02RFkGMqWpzEICs69VdbwQ0LDp1v7j8xx92efCJlYFYb1sUkkBSPOlPmXgIARw8JQ0qOAOAA", "0aqSyOoJXtK73m-uME_jv7-pT15gOFC02RFkGMqWpzEICs6EVdbwQ0LDp1v7j8xx92efCJlYFYb1sUkkBSPOlPmXgIARw8JQ0qOAOAA")
@@ -35,7 +36,7 @@ public class SignatureCipherManagerTest {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpInterface httpInterface = new HttpInterface(httpClient, new HttpClientContext(), true, noOpFilter);
             for (TestCase test: scripts) {
-                SignatureCipherManager cipherManager = new SignatureCipherManager("", "");
+                CipherManager cipherManager = new LocalSignatureCipherManager();
 
                 try {
                     URI uri = cipherManager.resolveFormatUrl(httpInterface, test.uri, getTestStream(test));
@@ -73,7 +74,7 @@ public class SignatureCipherManagerTest {
                 ""
             );
             
-            SignatureCipherManager cipherManager = new SignatureCipherManager("", "");
+            CipherManager cipherManager = new LocalSignatureCipherManager();
 
             try {
                 URI uri = cipherManager.resolveFormatUrl(httpInterface, currentTest.uri, getTestStream(currentTest));
@@ -119,7 +120,7 @@ public class SignatureCipherManagerTest {
             
             for (TestCase test: scripts) {
                 System.out.println("Testing legacy script: " + test.uri);
-                SignatureCipherManager cipherManager = new SignatureCipherManager("", "");
+                CipherManager cipherManager = new LocalSignatureCipherManager();
 
                 try {
                     // Use the same input parameters as the original test
@@ -184,7 +185,7 @@ public class SignatureCipherManagerTest {
     public void testScriptCaching() throws IOException {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpInterface httpInterface = new HttpInterface(httpClient, new HttpClientContext(), true, noOpFilter);
-            SignatureCipherManager cipherManager = new SignatureCipherManager("", "");
+            CipherManager cipherManager = new LocalSignatureCipherManager();
             
             // Get the current script URL
             String currentPlayerScriptUrl = fetchCurrentPlayerScriptUrl(httpInterface);

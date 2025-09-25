@@ -4,8 +4,8 @@ public class YoutubeSourceOptions {
     private boolean allowSearch = true;
     private boolean allowDirectVideoIds = true;
     private boolean allowDirectPlaylistIds = true;
-    private String cipherProxyUrl;
-    private String cipherProxyPass;
+    private String remoteCipherUrl;
+    private String remoteCipherPass;
 
     public boolean isAllowSearch() {
         return allowSearch;
@@ -34,21 +34,21 @@ public class YoutubeSourceOptions {
         return this;
     }
 
-    public String getCipherProxyUrl() {
-        return cipherProxyUrl;
+    public String getRemoteCipherUrl() {
+        return remoteCipherUrl;
     }
 
-    public YoutubeSourceOptions setCipherProxyUrl(String cipherProxyUrl) {
-        this.cipherProxyUrl = cipherProxyUrl;
+    public YoutubeSourceOptions setRemoteCipherUrl(String remoteCipherUrl) {
+        this.remoteCipherUrl = remoteCipherUrl;
         return this;
     }
 
-    public String getCipherProxyPass() {
-        return cipherProxyPass;
+    public String getRemoteCipherPass() {
+        return remoteCipherPass;
     }
 
-    public YoutubeSourceOptions setCipherProxyPass(String cipherProxyPass) {
-        this.cipherProxyPass = cipherProxyPass;
+    public YoutubeSourceOptions setRemoteCipherPass(String remoteCipherPass) {
+        this.remoteCipherPass = remoteCipherPass;
         return this;
     }
 }

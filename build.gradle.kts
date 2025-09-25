@@ -41,8 +41,8 @@ subprojects {
         val mavenPassword = findProperty("MAVEN_PASSWORD") as String?
         if (!mavenUsername.isNullOrEmpty() && !mavenPassword.isNullOrEmpty()) {
             repositories {
-                val snapshots = "https://maven.kikkia.dev/snapshots"
-                val releases = "https://maven.kikkia.dev/releases"
+                val snapshots = "https://maven.lavalink.dev/snapshots"
+                val releases = "https://maven.lavalink.dev/releases"
 
                 maven(if (release) releases else snapshots) {
                     credentials {

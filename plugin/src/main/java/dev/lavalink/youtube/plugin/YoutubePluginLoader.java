@@ -9,9 +9,8 @@ import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv6Block;
 import dev.arbjerg.lavalink.api.AudioPlayerManagerConfiguration;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.YoutubeSource;
+import dev.lavalink.youtube.YoutubeSourceOptions;
 import dev.lavalink.youtube.clients.ClientOptions;
-import dev.lavalink.youtube.clients.Web;
-import dev.lavalink.youtube.clients.WebEmbedded;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import lavalink.server.config.RateLimitConfig;
 import lavalink.server.config.ServerConfig;
@@ -155,7 +154,13 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
 
         if (clientProvider == null) {
             log.warn("ClientProvider instance is missing. The YouTube source will be initialised with default clients.");
-            source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, Objects.requireNonNull(youtubeConfig).getCipherProxyUrl(), youtubeConfig.getCipherProxyPass());
+            YoutubeSourceOptions options = new YoutubeSourceOptions()
+                .setAllowSearch(allowSearch)
+                .setAllowDirectVideoIds(allowDirectVideoIds)
+                .setAllowDirectPlaylistIds(allowDirectPlaylistIds)
+                .setRemoteCipherUrl(Objects.requireNonNull(youtubeConfig).getRemoteCipherUrl())
+                .setRemoteCipherPass(youtubeConfig.getRemoteCipherPass());
+            source = new YoutubeAudioSourceManager(options);
         } else {
             String[] clients;
 
@@ -178,8 +183,13 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
                     }
                 }
             }
-
-            source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, Objects.requireNonNull(youtubeConfig).getCipherProxyUrl(), youtubeConfig.getCipherProxyPass(), clientProvider.getClients(clients, this::getOptionsForClient));
+            YoutubeSourceOptions options = new YoutubeSourceOptions()
+                .setAllowSearch(allowSearch)
+                .setAllowDirectVideoIds(allowDirectVideoIds)
+                .setAllowDirectPlaylistIds(allowDirectPlaylistIds)
+                .setRemoteCipherUrl(Objects.requireNonNull(youtubeConfig).getRemoteCipherUrl())
+                .setRemoteCipherPass(youtubeConfig.getRemoteCipherPass());
+            source = new YoutubeAudioSourceManager(options, clientProvider.getClients(clients, this::getOptionsForClient));
         }
 
         log.info("YouTube source initialised with clients: {} ", Arrays.stream(source.getClients()).map(Client::getIdentifier).collect(Collectors.joining(", ")));
@@ -200,9 +210,8 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
             rotator.setup();
         }
 
-        if (youtubeConfig.getCipherProxyUrl() != null) {
-            source.setCipherProxyUrl(youtubeConfig.getCipherProxyUrl());
-            source.setCipherProxyPass(youtubeConfig.getCipherProxyPass());
+        if (youtubeConfig.getRemoteCipherUrl() != null) {
+            source.setRemoteCipherManagerUrlPass(youtubeConfig.getRemoteCipherUrl(), youtubeConfig.getRemoteCipherPass());
         }
 
         Integer playlistLoadLimit = serverConfig.getYoutubePlaylistLoadLimit();
