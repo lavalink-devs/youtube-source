@@ -12,41 +12,41 @@ import javax.script.ScriptException;
  * Describes one signature cipher
  */
 public class SignatureCipher {
-	private static final Logger log = LoggerFactory.getLogger(SignatureCipher.class);
+    private static final Logger log = LoggerFactory.getLogger(SignatureCipher.class);
 
-	public final String timestamp;
-	public final String globalVars;
-	public final String sigActions;
-	public final String sigFunction;
-	public final String nFunction;
-	public final String rawScript;
+    public final String timestamp;
+    public final String globalVars;
+    public final String sigActions;
+    public final String sigFunction;
+    public final String nFunction;
+    public final String rawScript;
 
-	public SignatureCipher(@NotNull String timestamp,
-	                       @NotNull String globalVars,
-	                       @NotNull String sigActions,
-	                       @NotNull String sigFunction,
-	                       @NotNull String nFunction,
-	                       @NotNull String rawScript) {
-		this.timestamp = timestamp;
-		this.globalVars = globalVars;
-		this.sigActions = sigActions;
-		this.sigFunction = sigFunction;
-		this.nFunction = nFunction;
-		this.rawScript = rawScript;
-	}
+    public SignatureCipher(@NotNull String timestamp,
+                           @NotNull String globalVars,
+                           @NotNull String sigActions,
+                           @NotNull String sigFunction,
+                           @NotNull String nFunction,
+                           @NotNull String rawScript) {
+        this.timestamp = timestamp;
+        this.globalVars = globalVars;
+        this.sigActions = sigActions;
+        this.sigFunction = sigFunction;
+        this.nFunction = nFunction;
+        this.rawScript = rawScript;
+    }
 
-	/**
-	 * @param text Text to apply the cipher on
-	 * @return The result of the cipher on the input text
-	 */
-	public String apply(@NotNull String text,
-	                    @NotNull ScriptEngine scriptEngine) throws ScriptException, NoSuchMethodException {
-		String transformed;
+    /**
+     * @param text Text to apply the cipher on
+     * @return The result of the cipher on the input text
+     */
+    public String apply(@NotNull String text,
+                        @NotNull ScriptEngine scriptEngine) throws ScriptException, NoSuchMethodException {
+        String transformed;
 
-		scriptEngine.eval(globalVars + ";" + sigActions + ";decrypt_sig=" + sigFunction);
-		transformed = (String) ((Invocable) scriptEngine).invokeFunction("decrypt_sig", text);
-		return transformed;
-	}
+        scriptEngine.eval(globalVars + ";" + sigActions + ";decrypt_sig=" + sigFunction);
+        transformed = (String) ((Invocable) scriptEngine).invokeFunction("decrypt_sig", text);
+        return transformed;
+    }
 
 //  /**
 //   * @param text Text to apply the cipher on
@@ -78,20 +78,20 @@ public class SignatureCipher {
 //    return builder.toString();
 //  }
 
-	/**
-	 * @param text         Text to transform
-	 * @param scriptEngine JavaScript engine to execute function
-	 * @return The result of the n parameter transformation
-	 */
-	public String transform(@NotNull String text, @NotNull ScriptEngine scriptEngine)
-		throws ScriptException, NoSuchMethodException {
-		String transformed;
+    /**
+     * @param text         Text to transform
+     * @param scriptEngine JavaScript engine to execute function
+     * @return The result of the n parameter transformation
+     */
+    public String transform(@NotNull String text, @NotNull ScriptEngine scriptEngine)
+        throws ScriptException, NoSuchMethodException {
+        String transformed;
 
-		scriptEngine.eval(globalVars + ";decrypt_nsig=" + nFunction);
-		transformed = (String) ((Invocable) scriptEngine).invokeFunction("decrypt_nsig", text);
+        scriptEngine.eval(globalVars + ";decrypt_nsig=" + nFunction);
+        transformed = (String) ((Invocable) scriptEngine).invokeFunction("decrypt_nsig", text);
 
-		return transformed;
-	}
+        return transformed;
+    }
 
 //  /**
 //   * @param operation The operation to add to this cipher
