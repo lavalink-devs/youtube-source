@@ -88,7 +88,7 @@ public class YoutubeConfig {
         return remoteCipher;
     }
 
-    public void setRemoteCipherUrl(YoutubeRemoteCipherConfig remoteCipher) {
+    public void setRemoteCipher(YoutubeRemoteCipherConfig remoteCipher) {
         this.remoteCipher = remoteCipher;
     }
 
