@@ -6,7 +6,7 @@ import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
-import dev.lavalink.youtube.cipher.SignatureCipherManager.CachedPlayerScript;
+import dev.lavalink.youtube.cipher.CipherManager.CachedPlayerScript;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
 import org.apache.http.entity.ContentType;

@@ -14,6 +14,7 @@ public class YoutubeConfig {
     private boolean allowSearch = true;
     private boolean allowDirectVideoIds = true;
     private boolean allowDirectPlaylistIds = true;
+    private YoutubeRemoteCipherConfig remoteCipher;
     private Pot pot = null;
     private String[] clients;
     private Map<String, ClientOptions> clientOptions = new HashMap<>();
@@ -82,4 +83,13 @@ public class YoutubeConfig {
     public void setOauth(YoutubeOauthConfig oauth) {
         this.oauth = oauth;
     }
+
+    public YoutubeRemoteCipherConfig getRemoteCipher() {
+        return remoteCipher;
+    }
+
+    public void setRemoteCipher(YoutubeRemoteCipherConfig remoteCipher) {
+        this.remoteCipher = remoteCipher;
+    }
+
 }

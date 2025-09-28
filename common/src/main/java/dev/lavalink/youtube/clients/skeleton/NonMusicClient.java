@@ -8,9 +8,8 @@ import com.sedmelluq.discord.lavaplayer.track.*;
 import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.OptionDisabledException;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
-import dev.lavalink.youtube.cipher.SignatureCipher;
-import dev.lavalink.youtube.cipher.SignatureCipherManager;
-import dev.lavalink.youtube.cipher.SignatureCipherManager.CachedPlayerScript;
+import dev.lavalink.youtube.cipher.CipherManager;
+import dev.lavalink.youtube.cipher.CipherManager.CachedPlayerScript;
 import dev.lavalink.youtube.clients.ClientConfig;
 import dev.lavalink.youtube.track.TemporalInfo;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -105,7 +104,7 @@ public abstract class NonMusicClient implements Client {
                                                      @NotNull String videoId,
                                                      @Nullable PlayabilityStatus status,
                                                      boolean validatePlayabilityStatus) throws CannotBeLoaded, IOException {
-        SignatureCipherManager cipherManager = source.getCipherManager();
+        CipherManager cipherManager = source.getCipherManager();
 
         ClientConfig config = getBaseClientConfig(httpInterface);
 
@@ -128,8 +127,8 @@ public abstract class NonMusicClient implements Client {
         String payload = config.setAttributes(httpInterface).toJsonString();
         if (requirePlayerScript()) {
             CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
-            SignatureCipher signatureCipher = cipherManager.getCipherScript(httpInterface, playerScript.url);
-            payload = config.withPlaybackSignatureTimestamp(signatureCipher.timestamp)
+            String timestamp = cipherManager.getTimestamp(httpInterface, playerScript.url);
+            payload = config.withPlaybackSignatureTimestamp(timestamp)
                     .setAttributes(httpInterface)
                     .toJsonString();
         }

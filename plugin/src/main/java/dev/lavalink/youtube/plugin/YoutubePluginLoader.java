@@ -10,8 +10,6 @@ import dev.arbjerg.lavalink.api.AudioPlayerManagerConfiguration;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.YoutubeSource;
 import dev.lavalink.youtube.clients.ClientOptions;
-import dev.lavalink.youtube.clients.Web;
-import dev.lavalink.youtube.clients.WebEmbedded;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import lavalink.server.config.RateLimitConfig;
 import lavalink.server.config.ServerConfig;
@@ -178,7 +176,6 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
                     }
                 }
             }
-
             source = new YoutubeAudioSourceManager(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, clientProvider.getClients(clients, this::getOptionsForClient));
         }
 
@@ -198,6 +195,10 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
             }
 
             rotator.setup();
+        }
+
+        if (youtubeConfig != null && youtubeConfig.getRemoteCipher() != null) {
+            source.setRemoteCipherManagerUrlPass(youtubeConfig.getRemoteCipher().getUrl(), youtubeConfig.getRemoteCipher().getPassword());
         }
 
         Integer playlistLoadLimit = serverConfig.getYoutubePlaylistLoadLimit();

@@ -2,6 +2,7 @@ package dev.lavalink.youtube;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity;
@@ -13,7 +14,9 @@ import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import dev.lavalink.youtube.UrlTools.UrlInfo;
-import dev.lavalink.youtube.cipher.SignatureCipherManager;
+import dev.lavalink.youtube.cipher.LocalSignatureCipherManager;
+import dev.lavalink.youtube.cipher.RemoteCipherManager;
+import dev.lavalink.youtube.cipher.CipherManager;
 import dev.lavalink.youtube.clients.*;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.http.YoutubeAccessTokenTracker;
@@ -68,7 +71,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
     protected YoutubeHttpContextFilter contextFilter;
     protected YoutubeOauth2Handler oauth2Handler;
-    protected SignatureCipherManager cipherManager;
+    protected CipherManager cipherManager;
 
     public YoutubeAudioSourceManager() {
         this(true);
@@ -137,7 +140,11 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         this.allowDirectVideoIds = options.isAllowDirectVideoIds();
         this.allowDirectPlaylistIds = options.isAllowDirectPlaylistIds();
         this.clients = clients;
-        this.cipherManager = new SignatureCipherManager();
+        if (!DataFormatTools.isNullOrEmpty(options.getRemoteCipherUrl())) {
+            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl(), options.getRemoteCipherPassword());
+        } else {
+            this.cipherManager = new LocalSignatureCipherManager();
+        }
         this.oauth2Handler = new YoutubeOauth2Handler(httpInterfaceManager);
 
         contextFilter = new YoutubeHttpContextFilter();
@@ -363,7 +370,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     }
 
     @NotNull
-    public SignatureCipherManager getCipherManager() {
+    public CipherManager getCipherManager() {
         return cipherManager;
     }
 
@@ -436,4 +443,29 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         @Nullable
         AudioItem route(@NotNull Client client) throws CannotBeLoaded, IOException;
     }
+
+    @Nullable
+    public String getRemoteCipherUrl() {
+        if (cipherManager instanceof RemoteCipherManager) {
+            return ((RemoteCipherManager) cipherManager).getRemoteUrl();
+        }
+        return null;
+    }
+
+    @Nullable
+    public String getRemoteCipherPass() {
+        if (cipherManager instanceof RemoteCipherManager) {
+            return ((RemoteCipherManager) cipherManager).getRemotePass();
+        }
+        return null;
+    }
+
+    public void setRemoteCipherManagerUrlPass(String cipherProxyUrl, @Nullable String cipherProxyPass) {
+        this.cipherManager = new RemoteCipherManager(cipherProxyUrl, cipherProxyPass);
+    }
+
+    public void setLocalSignatureCipherManager() {
+        this.cipherManager = new LocalSignatureCipherManager();
+    }
+
 }

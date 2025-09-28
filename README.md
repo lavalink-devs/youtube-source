@@ -18,6 +18,8 @@ Which clients are used is entirely configurable.
   - Information on using OAuth tokens with `youtube-source`.
 - [Using a poToken](#using-a-potoken)
   - Information on using a `poToken` with `youtube-source`.
+- [Using a remote cipher server](#using-a-remote-cipher-server)
+  - Information on using a remote cipher server with `youtube-source`.
 - [REST Routes (`plugin` only)](#rest-routes-plugin-only)
   - Information on the REST routes provided by the `youtube-source` plugin module.
 - [Migration Information](#migration-from-lavaplayers-built-in-youtube-source)
@@ -298,6 +300,31 @@ plugins:
     pot:
       token: "paste your po_token here"
       visitorData: "paste your visitor_data here"
+```
+
+## Using a remote cipher server
+
+It becomes harder and harder to keep up with YouTube's cipher changes, as they become more frequent and complex.
+To help with this, you can use a remote cipher server to handle signature deciphering for you.
+You can use [yt-cipher](https://github.com/kikkia/yt-cipher), which is a simple Deno server that exposes a REST API for deciphering signatures.
+Check out the repository for more information on how to set it up.
+
+If you want to implement your own, you can follow the [yt-cipher API specification](https://github.com/kikkia/yt-cipher#api-specification).
+
+### Lavaplayer
+```java
+YoutubeSourceOptions options = new YoutubeSourceOptions()
+    .setRemoteCipherUrl("http://localhost:8001", "your_secret_password"); // The base URL of your remote cipher server & the password to authenticate with your remote cipher server.
+YoutubeAudioSourceManager sourceManager = new YoutubeAudioSourceManager(options, ...);
+```
+
+### Lavalink
+```yaml
+plugins:
+  youtube:
+    remoteCipher:
+      url: "http://localhost:8001" # The base URL of your remote cipher server.
+      password: "your_secret_password" # The password to authenticate with your remote cipher server.
 ```
 
 ## REST routes (`plugin` only)
