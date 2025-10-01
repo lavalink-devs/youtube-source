@@ -141,6 +141,8 @@ public class RemoteCipherManager implements CipherManager {
     private String decipherN(HttpInterface httpInterface, String n, String playerScript) throws IOException {
         HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
 
+        log.debug("Deciphering N param: {} with script: {}", n, playerScript);
+
         String requestBody = JsonWriter.string()
             .object()
             .value("player_url", playerScript)
@@ -164,6 +166,8 @@ public class RemoteCipherManager implements CipherManager {
 
                 String returnedN = json.get("decrypted_n_sig").text();
 
+                log.debug("Received decrypted N: {}", returnedN);
+
                 if (returnedN != null && !returnedN.isEmpty()) {
                     return returnedN;
                 }
@@ -176,6 +180,8 @@ public class RemoteCipherManager implements CipherManager {
 
     private URI getUri(HttpInterface httpInterface, String sig, String sigKey, String nParam, URI initial, String playerScript) throws IOException {
         HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
+
+        log.debug("Deciphering N param: {} and Signature: {} with script: {}", nParam, sig, playerScript);
 
         String requestBody = JsonWriter.string()
             .object()
@@ -202,6 +208,8 @@ public class RemoteCipherManager implements CipherManager {
 
                 String returnedSignature = json.get("decrypted_signature").text();
                 String returnedN = json.get("decrypted_n_sig").text();
+
+                log.debug("Received Decrypted N: {} and Decrypted Sig: {}", returnedN, returnedSignature);
 
                 URIBuilder uriBuilder = new URIBuilder(initial);
 
@@ -233,6 +241,8 @@ public class RemoteCipherManager implements CipherManager {
 
     private String getTimestampFromScript(HttpInterface httpInterface, String playerScript) throws IOException {
         HttpPost request = new HttpPost(getRemoteEndpoint("get_sts"));
+
+        log.debug("Getting timestamp for script: {}", playerScript);
 
         String requestBody = JsonWriter.string()
             .object()
