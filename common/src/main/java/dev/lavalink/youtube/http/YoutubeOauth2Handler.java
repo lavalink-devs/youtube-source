@@ -69,6 +69,10 @@ public class YoutubeOauth2Handler {
         }
     }
 
+    public boolean hasAccessToken() {
+        return accessToken != null;
+    }
+
     public boolean shouldRefreshAccessToken() {
         return enabled && !DataFormatTools.isNullOrEmpty(refreshToken) && (DataFormatTools.isNullOrEmpty(accessToken) || System.currentTimeMillis() >= tokenExpires);
     }

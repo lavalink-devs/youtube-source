@@ -55,6 +55,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         new Music(), new AndroidVr(), new Web(), new WebEmbedded()
     };
 
+    private static boolean loggedOauthClientNoAccountWarning = false;
+
     private static final String PROTOCOL_REGEX = "(?:http://|https://|)";
     private static final String DOMAIN_REGEX = "(?:www\\.|m\\.|music\\.|)youtube\\.com";
     private static final String SHORT_DOMAIN_REGEX = "(?:www\\.|)youtu\\.be";
@@ -227,6 +229,14 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
             for (Client client : clients) {
                 if (!client.canHandleRequest(reference.identifier)) {
                     continue;
+                }
+
+                boolean shouldLogOauthWarning = client.supportsOAuth() && !loggedOauthClientNoAccountWarning &&
+                    !oauth2Handler.hasAccessToken() && client.getOptions().getPlayback();
+
+                if (shouldLogOauthWarning) {
+                    loggedOauthClientNoAccountWarning = true;
+                    log.warn("!!! You are using an OAuth-enabled client without a valid OAuth token! This client may not play videos!");
                 }
 
                 log.debug("Attempting to load {} with client \"{}\"", reference.identifier, client.getIdentifier());
