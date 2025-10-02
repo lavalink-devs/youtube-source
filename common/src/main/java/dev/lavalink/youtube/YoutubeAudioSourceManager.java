@@ -52,10 +52,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     public static final String MUSIC_SEARCH_PREFIX = "ytmsearch:";
 
     public static final Client[] DEFAULT_CLIENTS = new Client[] {
-        new Music(),
-        new AndroidVr(),
-        new Web(),
-        new WebEmbedded()
+        new Music(), new AndroidVr(), new Web(), new WebEmbedded()
     };
 
     private static final String PROTOCOL_REGEX = "(?:http://|https://|)";
@@ -89,7 +86,6 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     }
 
     public YoutubeAudioSourceManager(boolean allowSearch, boolean allowDirectVideoIds, boolean allowDirectPlaylistIds) {
-        // query order: music -> web -> androidtestsuite -> tvhtml5embedded
         this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, DEFAULT_CLIENTS);
     }
 
