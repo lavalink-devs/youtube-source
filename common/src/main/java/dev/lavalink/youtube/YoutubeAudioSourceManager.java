@@ -51,6 +51,13 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     public static final String SEARCH_PREFIX = "ytsearch:";
     public static final String MUSIC_SEARCH_PREFIX = "ytmsearch:";
 
+    public static final Client[] DEFAULT_CLIENTS = new Client[] {
+        new Music(),
+        new AndroidVr(),
+        new Web(),
+        new WebEmbedded()
+    };
+
     private static final String PROTOCOL_REGEX = "(?:http://|https://|)";
     private static final String DOMAIN_REGEX = "(?:www\\.|m\\.|music\\.|)youtube\\.com";
     private static final String SHORT_DOMAIN_REGEX = "(?:www\\.|)youtu\\.be";
@@ -83,7 +90,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
     public YoutubeAudioSourceManager(boolean allowSearch, boolean allowDirectVideoIds, boolean allowDirectPlaylistIds) {
         // query order: music -> web -> androidtestsuite -> tvhtml5embedded
-        this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, new Music(), new AndroidVr(), new Web(), new WebEmbedded());
+        this(allowSearch, allowDirectVideoIds, allowDirectPlaylistIds, DEFAULT_CLIENTS);
     }
 
     /**
@@ -133,19 +140,20 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         );
     }
 
-    public YoutubeAudioSourceManager(YoutubeSourceOptions options,
+    public YoutubeAudioSourceManager(@NotNull YoutubeSourceOptions options,
                                      @NotNull Client... clients) {
         this.httpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
         this.allowSearch = options.isAllowSearch();
         this.allowDirectVideoIds = options.isAllowDirectVideoIds();
         this.allowDirectPlaylistIds = options.isAllowDirectPlaylistIds();
         this.clients = clients;
+        this.oauth2Handler = new YoutubeOauth2Handler(httpInterfaceManager);
+
         if (!DataFormatTools.isNullOrEmpty(options.getRemoteCipherUrl())) {
             this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl(), options.getRemoteCipherPassword());
         } else {
             this.cipherManager = new LocalSignatureCipherManager();
         }
-        this.oauth2Handler = new YoutubeOauth2Handler(httpInterfaceManager);
 
         contextFilter = new YoutubeHttpContextFilter();
         contextFilter.setTokenTracker(new YoutubeAccessTokenTracker(httpInterfaceManager));
@@ -375,6 +383,23 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     }
 
     /**
+     * Gets the cipher manager as a {@link RemoteCipherManager} instance, if applicable, otherwise null.
+     * @return The cipher manager as a {@link RemoteCipherManager} instance or null.
+     */
+    @Nullable
+    public RemoteCipherManager getRemoteCipherManager() {
+        if (cipherManager instanceof RemoteCipherManager) {
+            return (RemoteCipherManager) cipherManager;
+        }
+
+        return null;
+    }
+
+    public void setCipherManager(@NotNull CipherManager cipherManager) {
+        this.cipherManager = cipherManager;
+    }
+
+    /**
      * Returns a client by the given type, if registered.
      * @param cls The class of the client to return.
      * @return The client instance, or null if it's not registered.
@@ -443,29 +468,4 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         @Nullable
         AudioItem route(@NotNull Client client) throws CannotBeLoaded, IOException;
     }
-
-    @Nullable
-    public String getRemoteCipherUrl() {
-        if (cipherManager instanceof RemoteCipherManager) {
-            return ((RemoteCipherManager) cipherManager).getRemoteUrl();
-        }
-        return null;
-    }
-
-    @Nullable
-    public String getRemoteCipherPass() {
-        if (cipherManager instanceof RemoteCipherManager) {
-            return ((RemoteCipherManager) cipherManager).getRemotePass();
-        }
-        return null;
-    }
-
-    public void setRemoteCipherManagerUrlPass(String cipherProxyUrl, @Nullable String cipherProxyPass) {
-        this.cipherManager = new RemoteCipherManager(cipherProxyUrl, cipherProxyPass);
-    }
-
-    public void setLocalSignatureCipherManager() {
-        this.cipherManager = new LocalSignatureCipherManager();
-    }
-
 }

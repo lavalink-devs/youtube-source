@@ -1,5 +1,6 @@
 package dev.lavalink.youtube.plugin;
 
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.ClientOptions;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import org.slf4j.Logger;
@@ -13,10 +14,13 @@ public interface ClientProvider {
     Logger log = LoggerFactory.getLogger(ClientProvider.class);
 
     default String[] getDefaultClients() {
-        // This is a default list of clients. This list matches that of the
-        // YoutubeAudioSourceManager. If that is updated, this should probably be
-        // updated too.
-        return new String[] { "MUSIC", "WEB", "ANDROID_TESTSUITE", "TVHTML5EMBEDDED" };
+        String[] clientIdentifiers = new String[YoutubeAudioSourceManager.DEFAULT_CLIENTS.length];
+
+        for (int i = 0; i < clientIdentifiers.length; i++) {
+            clientIdentifiers[i] = YoutubeAudioSourceManager.DEFAULT_CLIENTS[i].getIdentifier();
+        }
+
+        return clientIdentifiers;
     }
 
     Client[] getClients(String[] clients, OptionsProvider optionsProvider);
