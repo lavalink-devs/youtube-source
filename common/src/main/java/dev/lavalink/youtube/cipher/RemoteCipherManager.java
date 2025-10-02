@@ -35,7 +35,7 @@ public class RemoteCipherManager implements CipherManager {
     private static final Logger log = LoggerFactory.getLogger(RemoteCipherManager.class);
 
     private final Object cipherLoadLock;
-    private final String remoteUrl;
+    private final @NotNull String remoteUrl;
     private final @Nullable String remotePass;
 
     protected volatile CachedPlayerScript cachedPlayerScript;
@@ -43,12 +43,13 @@ public class RemoteCipherManager implements CipherManager {
     /**
      * Create a new remote cipher manager
      */
-    public RemoteCipherManager(String remoteUrl, @Nullable String remotePass) {
+    public RemoteCipherManager(@NotNull String remoteUrl, @Nullable String remotePass) {
         this.cipherLoadLock = new Object();
         this.remoteUrl = remoteUrl;
         this.remotePass = remotePass;
     }
 
+    @NotNull
     public String getRemoteUrl() {
         return remoteUrl;
     }
