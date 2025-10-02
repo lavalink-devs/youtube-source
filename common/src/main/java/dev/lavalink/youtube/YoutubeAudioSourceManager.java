@@ -73,8 +73,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     protected final boolean allowDirectPlaylistIds;
     protected final Client[] clients;
 
-    protected YoutubeHttpContextFilter contextFilter;
     protected YoutubeOauth2Handler oauth2Handler;
+    protected YoutubeHttpContextFilter contextFilter;
     protected CipherManager cipherManager;
 
     public YoutubeAudioSourceManager() {
@@ -145,17 +145,17 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         this.clients = clients;
         this.oauth2Handler = new YoutubeOauth2Handler(httpInterfaceManager);
 
-        if (!DataFormatTools.isNullOrEmpty(options.getRemoteCipherUrl())) {
-            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl(), options.getRemoteCipherPassword());
-        } else {
-            this.cipherManager = new LocalSignatureCipherManager();
-        }
-
         contextFilter = new YoutubeHttpContextFilter();
         contextFilter.setTokenTracker(new YoutubeAccessTokenTracker(httpInterfaceManager));
         contextFilter.setOauth2Handler(oauth2Handler);
 
         httpInterfaceManager.setHttpContextFilter(contextFilter);
+
+        if (!DataFormatTools.isNullOrEmpty(options.getRemoteCipherUrl())) {
+            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl(), options.getRemoteCipherPassword());
+        } else {
+            this.cipherManager = new LocalSignatureCipherManager();
+        }
     }
 
     @Override
