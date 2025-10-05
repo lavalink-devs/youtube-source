@@ -307,7 +307,7 @@ plugins:
 It becomes harder and harder to keep up with YouTube's cipher changes, as they become more frequent and complex.
 To help with this, you can use a remote cipher server to handle signature deciphering for you.
 You can use [yt-cipher](https://github.com/kikkia/yt-cipher), which is a simple Deno server that exposes a REST API for deciphering signatures.
-Check out the repository for more information on how to host it yourself or use their public instance at `https://cipher.kikkia.dev/api/`.
+Check out the repository for more information on how to set it up.
 
 If you want to implement your own, you can follow the [yt-cipher API specification](https://github.com/kikkia/yt-cipher#api-specification).
 

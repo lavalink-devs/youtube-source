@@ -141,11 +141,11 @@ public class RemoteCipherManager implements CipherManager {
     }
 
     private void applyHeaders(HttpRequest request) {
-        if (remotePass != null && !remotePass.isEmpty()) {
+        if (!DataFormatTools.isNullOrEmpty(remotePass)) {
             request.addHeader("Authorization", remotePass);
         }
 
-        if (userAgent != null && !userAgent.isEmpty()) {
+        if (!DataFormatTools.isNullOrEmpty(userAgent)) {
             request.addHeader("User-Agent", userAgent);
         }
 
