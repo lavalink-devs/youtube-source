@@ -8,6 +8,7 @@ public class YoutubeSourceOptions {
     private boolean allowDirectPlaylistIds = true;
     private String remoteCipherUrl;
     private String remoteCipherPassword;
+    private String remoteCipherUserAgent;
 
     public boolean isAllowSearch() {
         return allowSearch;
@@ -40,14 +41,20 @@ public class YoutubeSourceOptions {
         return remoteCipherUrl;
     }
 
-    public YoutubeSourceOptions setRemoteCipherUrl(String remoteCipherUrl, @Nullable String remoteCipherPassword) {
+    public YoutubeSourceOptions setRemoteCipherUrl(String remoteCipherUrl, @Nullable String remoteCipherPassword, @Nullable String remoteCipherUserAgent) {
         this.remoteCipherUrl = remoteCipherUrl;
         this.remoteCipherPassword = remoteCipherPassword;
+        this.remoteCipherUserAgent = remoteCipherUserAgent;
         return this;
     }
 
     public String getRemoteCipherPassword() {
         return remoteCipherPassword;
+    }
+
+    @Nullable
+    public String getRemoteCipherUserAgent() {
+        return remoteCipherUserAgent;
     }
 
 }

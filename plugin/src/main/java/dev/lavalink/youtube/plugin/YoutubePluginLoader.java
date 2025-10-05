@@ -182,7 +182,7 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
 
             if (cipherConfig != null) {
                 log.info("Using remote cipher server with URL \"{}\"", cipherConfig.getUrl());
-                sourceOptions.setRemoteCipherUrl(cipherConfig.getUrl(), cipherConfig.getPassword());
+                sourceOptions.setRemoteCipherUrl(cipherConfig.getUrl(), cipherConfig.getPassword(), cipherConfig.getUserAgent());
             }
         }
 

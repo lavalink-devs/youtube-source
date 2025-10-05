@@ -37,16 +37,23 @@ public class RemoteCipherManager implements CipherManager {
     private final Object cipherLoadLock;
     private final @NotNull String remoteUrl;
     private final @Nullable String remotePass;
+    private final @Nullable String userAgent;
+    private final @NotNull String pluginVersion;
 
     protected volatile CachedPlayerScript cachedPlayerScript;
 
     /**
      * Create a new remote cipher manager
      */
-    public RemoteCipherManager(@NotNull String remoteUrl, @Nullable String remotePass) {
+    public RemoteCipherManager(@NotNull String remoteUrl,
+                               @Nullable String remotePass,
+                               @Nullable String userAgent,
+                               @NotNull String pluginVersion) {
         this.cipherLoadLock = new Object();
         this.remoteUrl = remoteUrl;
         this.remotePass = remotePass;
+        this.userAgent = userAgent;
+        this.pluginVersion = pluginVersion;
     }
 
     @NotNull
@@ -133,10 +140,16 @@ public class RemoteCipherManager implements CipherManager {
         return remoteUrl.endsWith("/") ? remoteUrl + path : remoteUrl + "/" + path;
     }
 
-    private void applyPass(HttpRequest request) {
+    private void applyHeaders(HttpRequest request) {
         if (remotePass != null && !remotePass.isEmpty()) {
             request.addHeader("Authorization", remotePass);
         }
+
+        if (userAgent != null && !userAgent.isEmpty()) {
+            request.addHeader("User-Agent", userAgent);
+        }
+
+        request.addHeader("Plugin-Version", pluginVersion);
     }
 
     private String decipherN(HttpInterface httpInterface, String n, String playerScript) throws IOException {
@@ -151,7 +164,7 @@ public class RemoteCipherManager implements CipherManager {
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-        applyPass(request);
+        applyHeaders(request);
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
@@ -193,7 +206,7 @@ public class RemoteCipherManager implements CipherManager {
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-        applyPass(request);
+        applyHeaders(request);
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
@@ -251,7 +264,7 @@ public class RemoteCipherManager implements CipherManager {
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-        applyPass(request);
+        applyHeaders(request);
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
