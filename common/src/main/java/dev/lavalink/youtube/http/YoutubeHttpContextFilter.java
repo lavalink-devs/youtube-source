@@ -22,7 +22,7 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   private static final String ATTRIBUTE_RESET_RETRY = "isResetRetry";
   public static final String ATTRIBUTE_USER_AGENT_SPECIFIED = "clientUserAgent";
   public static final String ATTRIBUTE_VISITOR_DATA_SPECIFIED = "clientVisitorData";
-  public static final String REMOTE_CIPHER_REQUEST_ATTRIBUTE = "remoteCipherRequest";
+  public static final String ATTRIBUTE_CIPHER_REQUEST_SPECIFIED = "remoteCipherRequest";
 
   private static final HttpContextRetryCounter retryCounter = new HttpContextRetryCounter("yt-token-retry");
 
@@ -161,6 +161,6 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   }
 
   private boolean isRemoteCipherRequest(HttpClientContext context) {
-    return context.removeAttribute(REMOTE_CIPHER_REQUEST_ATTRIBUTE) == Boolean.TRUE;
+    return context.removeAttribute(ATTRIBUTE_CIPHER_REQUEST_SPECIFIED) == Boolean.TRUE;
   }
 }

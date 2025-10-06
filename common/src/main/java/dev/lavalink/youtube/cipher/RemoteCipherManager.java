@@ -242,7 +242,7 @@ public class RemoteCipherManager implements CipherManager {
     }
 
     public HttpInterface configureHttpInterface(HttpInterface httpInterface) {
-        httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.REMOTE_CIPHER_REQUEST_ATTRIBUTE, true);
+        httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.ATTRIBUTE_CIPHER_REQUEST_SPECIFIED, true);
         return httpInterface;
     }
 }
