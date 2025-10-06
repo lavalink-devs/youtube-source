@@ -66,6 +66,16 @@ public class RemoteCipherManager implements CipherManager {
         return remotePass;
     }
 
+    @Nullable
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    @NotNull
+    public String getPluginVersion() {
+        return pluginVersion;
+    }
+
     /**
      * Produces a valid playback URL for the specified track
      *
@@ -140,17 +150,6 @@ public class RemoteCipherManager implements CipherManager {
         return remoteUrl.endsWith("/") ? remoteUrl + path : remoteUrl + "/" + path;
     }
 
-    private void applyHeaders(HttpRequest request) {
-        if (!DataFormatTools.isNullOrEmpty(remotePass)) {
-            request.addHeader("Authorization", remotePass);
-        }
-
-        if (!DataFormatTools.isNullOrEmpty(userAgent)) {
-            request.addHeader("User-Agent", userAgent);
-        }
-
-        request.addHeader("Plugin-Version", pluginVersion);
-    }
 
     private String decipherN(HttpInterface httpInterface, String n, String playerScript) throws IOException {
         HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
@@ -164,7 +163,6 @@ public class RemoteCipherManager implements CipherManager {
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-        applyHeaders(request);
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
@@ -206,7 +204,6 @@ public class RemoteCipherManager implements CipherManager {
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-        applyHeaders(request);
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
@@ -264,7 +261,6 @@ public class RemoteCipherManager implements CipherManager {
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-        applyHeaders(request);
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
