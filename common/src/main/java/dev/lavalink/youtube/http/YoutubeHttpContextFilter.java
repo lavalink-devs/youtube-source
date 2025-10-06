@@ -3,8 +3,6 @@ package dev.lavalink.youtube.http;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextRetryCounter;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
-import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
-import dev.lavalink.youtube.cipher.RemoteCipherManager;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.CookieStore;
@@ -12,7 +10,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +27,6 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
 
   private YoutubeAccessTokenTracker tokenTracker;
   private YoutubeOauth2Handler oauth2Handler;
-  private RemoteCipherManager remoteCipherManager;
 
   public void setTokenTracker(@NotNull YoutubeAccessTokenTracker tokenTracker) {
     this.tokenTracker = tokenTracker;
@@ -40,9 +36,6 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
     this.oauth2Handler = oauth2Handler;
   }
 
-  public void setRemoteCipherManager(@Nullable RemoteCipherManager remoteCipherManager) {
-      this.remoteCipherManager = remoteCipherManager;
-  }
 
   @Override
   public void onContextOpen(HttpClientContext context) {
@@ -101,16 +94,6 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
           oauth2Handler.applyToken(request);
         }
       }
-    } else if (remoteCipherManager != null && request.getURI().toString().startsWith(remoteCipherManager.getRemoteUrl())) {
-        if (!DataFormatTools.isNullOrEmpty(remoteCipherManager.getRemotePass())) {
-            request.addHeader("Authorization", remoteCipherManager.getRemotePass());
-        }
-
-        if (!DataFormatTools.isNullOrEmpty(remoteCipherManager.getUserAgent())) {
-            request.addHeader("User-Agent", remoteCipherManager.getUserAgent());
-        }
-
-        request.addHeader("Plugin-Version", remoteCipherManager.getPluginVersion());
     }
 
 //    try {

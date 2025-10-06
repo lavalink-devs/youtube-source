@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterfaceManager;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
@@ -35,25 +36,19 @@ public class RemoteCipherManager implements CipherManager {
     private static final Logger log = LoggerFactory.getLogger(RemoteCipherManager.class);
 
     private final Object cipherLoadLock;
+    private final HttpInterfaceManager httpInterfaceManager;
     private final @NotNull String remoteUrl;
-    private final @Nullable String remotePass;
-    private final @Nullable String userAgent;
-    private final @NotNull String pluginVersion;
 
     protected volatile CachedPlayerScript cachedPlayerScript;
 
     /**
      * Create a new remote cipher manager
      */
-    public RemoteCipherManager(@NotNull String remoteUrl,
-                               @Nullable String remotePass,
-                               @Nullable String userAgent,
-                               @NotNull String pluginVersion) {
+    public RemoteCipherManager(@NotNull HttpInterfaceManager httpInterfaceManager,
+                               @NotNull String remoteUrl) {
         this.cipherLoadLock = new Object();
+        this.httpInterfaceManager = httpInterfaceManager;
         this.remoteUrl = remoteUrl;
-        this.remotePass = remotePass;
-        this.userAgent = userAgent;
-        this.pluginVersion = pluginVersion;
     }
 
     @NotNull
@@ -61,20 +56,6 @@ public class RemoteCipherManager implements CipherManager {
         return remoteUrl;
     }
 
-    @Nullable
-    public String getRemotePass() {
-        return remotePass;
-    }
-
-    @Nullable
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    @NotNull
-    public String getPluginVersion() {
-        return pluginVersion;
-    }
 
     /**
      * Produces a valid playback URL for the specified track
@@ -87,8 +68,8 @@ public class RemoteCipherManager implements CipherManager {
      */
     @NotNull
     public URI resolveFormatUrl(@NotNull HttpInterface httpInterface,
-                                @NotNull String playerScript,
-                                @NotNull StreamFormat format) throws IOException {
+                                 @NotNull String playerScript,
+                                 @NotNull StreamFormat format) throws IOException {
         String signature = format.getSignature();
         String nParameter = format.getNParameter();
         URI initialUrl = format.getUrl();
@@ -96,10 +77,10 @@ public class RemoteCipherManager implements CipherManager {
         URIBuilder uri = new URIBuilder(initialUrl);
 
         if (!DataFormatTools.isNullOrEmpty(signature)) {
-            return getUri(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
+            return getUri(format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
         }
 
-        uri.setParameter("n", decipherN(httpInterface, nParameter, playerScript));
+        uri.setParameter("n", decipherN(nParameter, playerScript));
         try {
             return uri.build();
         } catch (URISyntaxException f) {
@@ -142,7 +123,7 @@ public class RemoteCipherManager implements CipherManager {
         synchronized (cipherLoadLock) {
             log.debug("Timestamp from script {}", sourceUrl);
 
-            return getTimestampFromScript(httpInterface, sourceUrl);
+            return getTimestampFromScript(sourceUrl);
         }
     }
 
@@ -151,7 +132,7 @@ public class RemoteCipherManager implements CipherManager {
     }
 
 
-    private String decipherN(HttpInterface httpInterface, String n, String playerScript) throws IOException {
+    private String decipherN(String n, String playerScript) throws IOException {
         HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
 
         log.debug("Deciphering N param: {} with script: {}", n, playerScript);
@@ -164,7 +145,8 @@ public class RemoteCipherManager implements CipherManager {
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
-        try (CloseableHttpResponse response = httpInterface.execute(request)) {
+        try (HttpInterface httpInterface = httpInterfaceManager.getInterface();
+             CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
             HttpEntity entity = response.getEntity();
             String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
@@ -190,7 +172,7 @@ public class RemoteCipherManager implements CipherManager {
         }
     }
 
-    private URI getUri(HttpInterface httpInterface, String sig, String sigKey, String nParam, URI initial, String playerScript) throws IOException {
+    private URI getUri(String sig, String sigKey, String nParam, URI initial, String playerScript) throws IOException {
         HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
 
         log.debug("Deciphering N param: {} and Signature: {} with script: {}", nParam, sig, playerScript);
@@ -205,7 +187,8 @@ public class RemoteCipherManager implements CipherManager {
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
-        try (CloseableHttpResponse response = httpInterface.execute(request)) {
+        try (HttpInterface httpInterface = httpInterfaceManager.getInterface();
+             CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
             HttpEntity entity = response.getEntity();
             String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
@@ -250,7 +233,7 @@ public class RemoteCipherManager implements CipherManager {
         }
     }
 
-    private String getTimestampFromScript(HttpInterface httpInterface, String playerScript) throws IOException {
+    private String getTimestampFromScript(String playerScript) throws IOException {
         HttpPost request = new HttpPost(getRemoteEndpoint("get_sts"));
 
         log.debug("Getting timestamp for script: {}", playerScript);
@@ -262,7 +245,8 @@ public class RemoteCipherManager implements CipherManager {
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
-        try (CloseableHttpResponse response = httpInterface.execute(request)) {
+        try (HttpInterface httpInterface = httpInterfaceManager.getInterface();
+             CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
             HttpEntity entity = response.getEntity();
             String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
