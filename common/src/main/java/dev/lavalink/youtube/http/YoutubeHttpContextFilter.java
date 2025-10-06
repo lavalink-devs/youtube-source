@@ -87,6 +87,8 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
     String userAgent = context.getAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED, String.class);
 
     if (isRemoteCipherRequest(context)) {
+        context.removeAttribute(CIPHER_REQUEST_ATTRIBUTE);
+
         if (!DataFormatTools.isNullOrEmpty(remoteCipherPass)) {
             request.addHeader("Authorization", remoteCipherPass);
         }
@@ -140,9 +142,6 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   public boolean onRequestResponse(HttpClientContext context,
                                    HttpUriRequest request,
                                    HttpResponse response) {
-    if (response.getStatusLine().getStatusCode() == 429 && !isRemoteCipherRequest(context)) {
-      throw new FriendlyException("This IP address has been blocked by YouTube (429).", COMMON, null);
-    }
 
 //    if (tokenTracker.isTokenFetchContext(context) || retryCounter.getRetryCount(context) >= 1) {
 //      return false;
