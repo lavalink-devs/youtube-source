@@ -150,11 +150,11 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         contextFilter = new YoutubeHttpContextFilter();
         contextFilter.setTokenTracker(new YoutubeAccessTokenTracker(httpInterfaceManager));
         contextFilter.setOauth2Handler(oauth2Handler);
-
         httpInterfaceManager.setHttpContextFilter(contextFilter);
 
         if (!DataFormatTools.isNullOrEmpty(options.getRemoteCipherUrl())) {
-            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl(), options.getRemoteCipherPassword());
+            contextFilter.setCipherConfig(options.getRemoteCipherPassword(), options.getRemoteCipherUserAgent(), YoutubeSource.VERSION);
+            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl());
         } else {
             this.cipherManager = new LocalSignatureCipherManager();
         }

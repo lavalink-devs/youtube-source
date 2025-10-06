@@ -325,6 +325,7 @@ plugins:
     remoteCipher:
       url: "http://localhost:8001" # The base URL of your remote cipher server.
       password: "your_secret_password" # The password to authenticate with your remote cipher server.
+      userAgent: "your_service_name" # Optional user-agent header, used for metrics on the backend. 
 ```
 
 ## REST routes (`plugin` only)

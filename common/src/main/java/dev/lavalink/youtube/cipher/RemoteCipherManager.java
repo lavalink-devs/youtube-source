@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
@@ -36,17 +37,15 @@ public class RemoteCipherManager implements CipherManager {
 
     private final Object cipherLoadLock;
     private final @NotNull String remoteUrl;
-    private final @Nullable String remotePass;
 
     protected volatile CachedPlayerScript cachedPlayerScript;
 
     /**
      * Create a new remote cipher manager
      */
-    public RemoteCipherManager(@NotNull String remoteUrl, @Nullable String remotePass) {
+    public RemoteCipherManager(@NotNull String remoteUrl) {
         this.cipherLoadLock = new Object();
         this.remoteUrl = remoteUrl;
-        this.remotePass = remotePass;
     }
 
     @NotNull
@@ -54,10 +53,6 @@ public class RemoteCipherManager implements CipherManager {
         return remoteUrl;
     }
 
-    @Nullable
-    public String getRemotePass() {
-        return remotePass;
-    }
 
     /**
      * Produces a valid playback URL for the specified track
@@ -70,8 +65,8 @@ public class RemoteCipherManager implements CipherManager {
      */
     @NotNull
     public URI resolveFormatUrl(@NotNull HttpInterface httpInterface,
-                                @NotNull String playerScript,
-                                @NotNull StreamFormat format) throws IOException {
+                                 @NotNull String playerScript,
+                                 @NotNull StreamFormat format) throws IOException {
         String signature = format.getSignature();
         String nParameter = format.getNParameter();
         URI initialUrl = format.getUrl();
@@ -133,13 +128,9 @@ public class RemoteCipherManager implements CipherManager {
         return remoteUrl.endsWith("/") ? remoteUrl + path : remoteUrl + "/" + path;
     }
 
-    private void applyPass(HttpRequest request) {
-        if (remotePass != null && !remotePass.isEmpty()) {
-            request.addHeader("Authorization", remotePass);
-        }
-    }
 
     private String decipherN(HttpInterface httpInterface, String n, String playerScript) throws IOException {
+        httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.CIPHER_REQUEST_ATTRIBUTE, true);
         HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
 
         log.debug("Deciphering N param: {} with script: {}", n, playerScript);
@@ -151,7 +142,6 @@ public class RemoteCipherManager implements CipherManager {
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-        applyPass(request);
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
@@ -180,6 +170,7 @@ public class RemoteCipherManager implements CipherManager {
     }
 
     private URI getUri(HttpInterface httpInterface, String sig, String sigKey, String nParam, URI initial, String playerScript) throws IOException {
+        httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.CIPHER_REQUEST_ATTRIBUTE, true);
         HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
 
         log.debug("Deciphering N param: {} and Signature: {} with script: {}", nParam, sig, playerScript);
@@ -193,7 +184,6 @@ public class RemoteCipherManager implements CipherManager {
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-        applyPass(request);
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
@@ -241,6 +231,7 @@ public class RemoteCipherManager implements CipherManager {
     }
 
     private String getTimestampFromScript(HttpInterface httpInterface, String playerScript) throws IOException {
+        httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.CIPHER_REQUEST_ATTRIBUTE, true);
         HttpPost request = new HttpPost(getRemoteEndpoint("get_sts"));
 
         log.debug("Getting timestamp for script: {}", playerScript);
@@ -251,7 +242,6 @@ public class RemoteCipherManager implements CipherManager {
             .end()
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-        applyPass(request);
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
             int statusCode = response.getStatusLine().getStatusCode();
@@ -274,3 +264,4 @@ public class RemoteCipherManager implements CipherManager {
     }
 
 }
+
