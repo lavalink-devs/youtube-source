@@ -20,7 +20,6 @@ import dev.lavalink.youtube.cipher.CipherManager;
 import dev.lavalink.youtube.clients.*;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.http.YoutubeAccessTokenTracker;
-import dev.lavalink.youtube.http.RemoteCipherHttpContextFilter;
 import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
 import dev.lavalink.youtube.http.YoutubeOauth2Handler;
 import dev.lavalink.youtube.track.YoutubeAudioTrack;
@@ -154,13 +153,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         httpInterfaceManager.setHttpContextFilter(contextFilter);
 
         if (!DataFormatTools.isNullOrEmpty(options.getRemoteCipherUrl())) {
-            HttpInterfaceManager cipherHttpInterfaceManager = HttpClientTools.createCookielessThreadLocalManager();
-            cipherHttpInterfaceManager.setHttpContextFilter(new RemoteCipherHttpContextFilter(
-                options.getRemoteCipherPassword(),
-                options.getRemoteCipherUserAgent(),
-                YoutubeSource.VERSION
-            ));
-            this.cipherManager = new RemoteCipherManager(cipherHttpInterfaceManager, options.getRemoteCipherUrl());
+            contextFilter.setCipherConfig(options.getRemoteCipherPassword(), options.getRemoteCipherUserAgent(), YoutubeSource.VERSION);
+            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl());
         } else {
             this.cipherManager = new LocalSignatureCipherManager();
         }
