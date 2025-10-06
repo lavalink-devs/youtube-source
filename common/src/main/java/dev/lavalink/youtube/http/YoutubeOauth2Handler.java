@@ -83,7 +83,7 @@ public class YoutubeOauth2Handler {
     }
 
     public boolean isOauthFetchContext(HttpClientContext context) {
-        return context.getAttribute(OAUTH_FETCH_CONTEXT_ATTRIBUTE) == Boolean.TRUE;
+        return context.removeAttribute(OAUTH_FETCH_CONTEXT_ATTRIBUTE) == Boolean.TRUE;
     }
 
     /**

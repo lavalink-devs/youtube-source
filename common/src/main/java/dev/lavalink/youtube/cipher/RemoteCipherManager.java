@@ -2,23 +2,19 @@ package dev.lavalink.youtube.cipher;
 
 import com.grack.nanojson.JsonWriter;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
-import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
-import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import dev.lavalink.youtube.ExceptionWithResponseBody;
 import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +31,6 @@ import static com.sedmelluq.discord.lavaplayer.tools.ExceptionTools.throwWithDeb
 public class RemoteCipherManager implements CipherManager {
     private static final Logger log = LoggerFactory.getLogger(RemoteCipherManager.class);
 
-    private final Object cipherLoadLock;
     private final @NotNull String remoteUrl;
 
     protected volatile CachedPlayerScript cachedPlayerScript;
@@ -44,7 +39,6 @@ public class RemoteCipherManager implements CipherManager {
      * Create a new remote cipher manager
      */
     public RemoteCipherManager(@NotNull String remoteUrl) {
-        this.cipherLoadLock = new Object();
         this.remoteUrl = remoteUrl;
     }
 
@@ -65,8 +59,8 @@ public class RemoteCipherManager implements CipherManager {
      */
     @NotNull
     public URI resolveFormatUrl(@NotNull HttpInterface httpInterface,
-                                 @NotNull String playerScript,
-                                 @NotNull StreamFormat format) throws IOException {
+                                @NotNull String playerScript,
+                                @NotNull StreamFormat format) throws IOException {
         String signature = format.getSignature();
         String nParameter = format.getNParameter();
         URI initialUrl = format.getUrl();
@@ -74,10 +68,10 @@ public class RemoteCipherManager implements CipherManager {
         URIBuilder uri = new URIBuilder(initialUrl);
 
         if (!DataFormatTools.isNullOrEmpty(signature)) {
-            return getUri(httpInterface, format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
+            return getUri(configureHttpInterface(httpInterface), format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
         }
 
-        uri.setParameter("n", decipherN(httpInterface, nParameter, playerScript));
+        uri.setParameter("n", decipherN(configureHttpInterface(httpInterface), nParameter, playerScript));
         try {
             return uri.build();
         } catch (URISyntaxException f) {
@@ -85,30 +79,19 @@ public class RemoteCipherManager implements CipherManager {
         }
     }
 
-    private CachedPlayerScript getPlayerScript(@NotNull HttpInterface httpInterface) {
-        synchronized (cipherLoadLock) {
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com/embed/"))) {
-                HttpClientTools.assertSuccessWithContent(response, "fetch player script (embed)");
-
-                String responseText = EntityUtils.toString(response.getEntity());
-                String scriptUrl = DataFormatTools.extractBetween(responseText, "\"jsUrl\":\"", "\"");
-
-                if (scriptUrl == null) {
-                    throw throwWithDebugInfo(log, null, "no jsUrl found", "html", responseText);
-                }
-
-                return (cachedPlayerScript = new CachedPlayerScript(scriptUrl));
-            } catch (IOException e) {
-                throw ExceptionTools.toRuntimeException(e);
-            }
-        }
-    }
-
     public CachedPlayerScript getCachedPlayerScript(@NotNull HttpInterface httpInterface) {
         if (cachedPlayerScript == null || System.currentTimeMillis() >= cachedPlayerScript.expireTimestampMs) {
-            synchronized (cipherLoadLock) {
+            synchronized (this) {
                 if (cachedPlayerScript == null || System.currentTimeMillis() >= cachedPlayerScript.expireTimestampMs) {
-                    return getPlayerScript(httpInterface);
+                    try {
+                        return (cachedPlayerScript = getPlayerScript(httpInterface));
+                    } catch (RuntimeException e) {
+                        if (e instanceof ExceptionWithResponseBody) {
+                            throw throwWithDebugInfo(log, null, e.getMessage(), "html", ((ExceptionWithResponseBody) e).getResponseBody());
+                        }
+
+                        throw e;
+                    }
                 }
             }
         }
@@ -117,10 +100,9 @@ public class RemoteCipherManager implements CipherManager {
     }
 
     public String getTimestamp(HttpInterface httpInterface, String sourceUrl) throws IOException {
-        synchronized (cipherLoadLock) {
+        synchronized (this) {
             log.debug("Timestamp from script {}", sourceUrl);
-
-            return getTimestampFromScript(httpInterface, sourceUrl);
+            return getTimestampFromScript(configureHttpInterface(httpInterface), sourceUrl);
         }
     }
 
@@ -128,9 +110,7 @@ public class RemoteCipherManager implements CipherManager {
         return remoteUrl.endsWith("/") ? remoteUrl + path : remoteUrl + "/" + path;
     }
 
-
     private String decipherN(HttpInterface httpInterface, String n, String playerScript) throws IOException {
-        httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.CIPHER_REQUEST_ATTRIBUTE, true);
         HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
 
         log.debug("Deciphering N param: {} with script: {}", n, playerScript);
@@ -154,7 +134,6 @@ public class RemoteCipherManager implements CipherManager {
                 }
 
                 JsonBrowser json = JsonBrowser.parse(responseBody);
-
                 String returnedN = json.get("decrypted_n_sig").text();
 
                 log.debug("Received decrypted N: {}", returnedN);
@@ -162,6 +141,7 @@ public class RemoteCipherManager implements CipherManager {
                 if (returnedN != null && !returnedN.isEmpty()) {
                     return returnedN;
                 }
+
                 return "";
             } else {
                 throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody);
@@ -170,7 +150,6 @@ public class RemoteCipherManager implements CipherManager {
     }
 
     private URI getUri(HttpInterface httpInterface, String sig, String sigKey, String nParam, URI initial, String playerScript) throws IOException {
-        httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.CIPHER_REQUEST_ATTRIBUTE, true);
         HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
 
         log.debug("Deciphering N param: {} and Signature: {} with script: {}", nParam, sig, playerScript);
@@ -231,7 +210,6 @@ public class RemoteCipherManager implements CipherManager {
     }
 
     private String getTimestampFromScript(HttpInterface httpInterface, String playerScript) throws IOException {
-        httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.CIPHER_REQUEST_ATTRIBUTE, true);
         HttpPost request = new HttpPost(getRemoteEndpoint("get_sts"));
 
         log.debug("Getting timestamp for script: {}", playerScript);
@@ -263,5 +241,9 @@ public class RemoteCipherManager implements CipherManager {
         }
     }
 
+    public HttpInterface configureHttpInterface(HttpInterface httpInterface) {
+        httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.REMOTE_CIPHER_REQUEST_ATTRIBUTE, true);
+        return httpInterface;
+    }
 }
 

@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import dev.lavalink.youtube.ExceptionWithResponseBody;
 import dev.lavalink.youtube.YoutubeSource;
 import dev.lavalink.youtube.cipher.ScriptExtractionException.ExtractionFailureType;
 import dev.lavalink.youtube.track.format.StreamFormat;
@@ -91,7 +92,6 @@ public class LocalSignatureCipherManager implements CipherManager {
     private final ConcurrentMap<String, SignatureCipher> cipherCache;
     private final Set<String> dumpedScriptUrls;
     private final ScriptEngine scriptEngine;
-    private final Object cipherLoadLock;
 
     protected volatile CachedPlayerScript cachedPlayerScript;
 
@@ -102,7 +102,6 @@ public class LocalSignatureCipherManager implements CipherManager {
         this.cipherCache = new ConcurrentHashMap<>();
         this.dumpedScriptUrls = new HashSet<>();
         this.scriptEngine = new RhinoScriptEngineFactory().getScriptEngine();
-        this.cipherLoadLock = new Object();
     }
 
     /**
@@ -168,30 +167,19 @@ public class LocalSignatureCipherManager implements CipherManager {
         }
     }
 
-    private CachedPlayerScript getPlayerScript(@NotNull HttpInterface httpInterface) {
-        synchronized (cipherLoadLock) {
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com/embed/"))) {
-                HttpClientTools.assertSuccessWithContent(response, "fetch player script (embed)");
-
-                String responseText = EntityUtils.toString(response.getEntity());
-                String scriptUrl = DataFormatTools.extractBetween(responseText, "\"jsUrl\":\"", "\"");
-
-                if (scriptUrl == null) {
-                    throw throwWithDebugInfo(log, null, "no jsUrl found", "html", responseText);
-                }
-
-                return (cachedPlayerScript = new CachedPlayerScript(scriptUrl));
-            } catch (IOException e) {
-                throw ExceptionTools.toRuntimeException(e);
-            }
-        }
-    }
-
     public CachedPlayerScript getCachedPlayerScript(@NotNull HttpInterface httpInterface) {
         if (cachedPlayerScript == null || System.currentTimeMillis() >= cachedPlayerScript.expireTimestampMs) {
-            synchronized (cipherLoadLock) {
+            synchronized (this) {
                 if (cachedPlayerScript == null || System.currentTimeMillis() >= cachedPlayerScript.expireTimestampMs) {
-                    return getPlayerScript(httpInterface);
+                    try {
+                        return (cachedPlayerScript = getPlayerScript(httpInterface));
+                    } catch (RuntimeException e) {
+                        if (e instanceof ExceptionWithResponseBody) {
+                            throw throwWithDebugInfo(log, null, e.getMessage(), "html", ((ExceptionWithResponseBody) e).getResponseBody());
+                        }
+
+                        throw e;
+                    }
                 }
             }
         }
@@ -204,7 +192,7 @@ public class LocalSignatureCipherManager implements CipherManager {
         SignatureCipher cipherKey = cipherCache.get(cipherScriptUrl);
 
         if (cipherKey == null) {
-            synchronized (cipherLoadLock) {
+            synchronized (this) {
                 log.debug("Parsing player script {}", cipherScriptUrl);
 
                 try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(CipherUtils.parseTokenScriptUrl(cipherScriptUrl)))) {
@@ -226,7 +214,7 @@ public class LocalSignatureCipherManager implements CipherManager {
 
     public String getRawScript(@NotNull HttpInterface httpInterface,
                                @NotNull String cipherScriptUrl) throws IOException {
-        synchronized (cipherLoadLock) {
+        synchronized (this) {
             log.debug("getting raw player script {}", cipherScriptUrl);
 
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(CipherUtils.parseTokenScriptUrl(cipherScriptUrl)))) {
@@ -267,7 +255,7 @@ public class LocalSignatureCipherManager implements CipherManager {
     }
 
     public String getTimestamp(HttpInterface httpInterface, String sourceUrl) throws IOException {
-        synchronized (cipherLoadLock) {
+        synchronized (this) {
             log.debug("Timestamp from script {}", sourceUrl);
 
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(CipherUtils.parseTokenScriptUrl(sourceUrl)))) {

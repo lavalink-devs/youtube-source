@@ -1,6 +1,5 @@
 package dev.lavalink.youtube.http;
 
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.http.HttpContextRetryCounter;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.COMMON;
 import static dev.lavalink.youtube.http.YoutubeOauth2Handler.OAUTH_INJECT_CONTEXT_ATTRIBUTE;
 
 public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
@@ -24,7 +22,7 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   private static final String ATTRIBUTE_RESET_RETRY = "isResetRetry";
   public static final String ATTRIBUTE_USER_AGENT_SPECIFIED = "clientUserAgent";
   public static final String ATTRIBUTE_VISITOR_DATA_SPECIFIED = "clientVisitorData";
-  public static final String CIPHER_REQUEST_ATTRIBUTE = "cipher-request";
+  public static final String REMOTE_CIPHER_REQUEST_ATTRIBUTE = "remoteCipherRequest";
 
   private static final HttpContextRetryCounter retryCounter = new HttpContextRetryCounter("yt-token-retry");
 
@@ -46,9 +44,9 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   public void setCipherConfig(@Nullable String remotePass,
                               @Nullable String userAgent,
                               @NotNull String pluginVersion) {
-      this.remoteCipherPass = remotePass;
-      this.remoteCipherUserAgent = userAgent;
-      this.pluginVersion = pluginVersion;
+    this.remoteCipherPass = remotePass;
+    this.remoteCipherUserAgent = userAgent;
+    this.pluginVersion = pluginVersion;
   }
 
 
@@ -87,17 +85,15 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
     String userAgent = context.getAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED, String.class);
 
     if (isRemoteCipherRequest(context)) {
-        context.removeAttribute(CIPHER_REQUEST_ATTRIBUTE);
+      if (!DataFormatTools.isNullOrEmpty(remoteCipherPass)) {
+        request.addHeader("Authorization", remoteCipherPass);
+      }
 
-        if (!DataFormatTools.isNullOrEmpty(remoteCipherPass)) {
-            request.addHeader("Authorization", remoteCipherPass);
-        }
+      if (!DataFormatTools.isNullOrEmpty(remoteCipherUserAgent)) {
+        request.addHeader("User-Agent", remoteCipherUserAgent);
+      }
 
-        if (!DataFormatTools.isNullOrEmpty(remoteCipherUserAgent)) {
-            request.addHeader("User-Agent", remoteCipherUserAgent);
-        }
-
-        request.addHeader("Plugin-Version", pluginVersion);
+      request.addHeader("Plugin-Version", pluginVersion);
     } else if (!request.getURI().getHost().contains("googlevideo")) {
       if (userAgent != null) {
         request.setHeader("User-Agent", userAgent);
@@ -165,6 +161,6 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
   }
 
   private boolean isRemoteCipherRequest(HttpClientContext context) {
-    return context.getAttribute(CIPHER_REQUEST_ATTRIBUTE) == Boolean.TRUE;
+    return context.removeAttribute(REMOTE_CIPHER_REQUEST_ATTRIBUTE) == Boolean.TRUE;
   }
 }

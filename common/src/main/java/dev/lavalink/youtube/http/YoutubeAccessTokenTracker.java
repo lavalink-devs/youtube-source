@@ -63,7 +63,7 @@ public class YoutubeAccessTokenTracker {
   }
 
   public boolean isTokenFetchContext(@NotNull HttpClientContext context) {
-    return context.getAttribute(TOKEN_FETCH_CONTEXT_ATTRIBUTE) == Boolean.TRUE;
+    return context.removeAttribute(TOKEN_FETCH_CONTEXT_ATTRIBUTE) == Boolean.TRUE;
   }
 
   private String fetchVisitorId() throws IOException {
