@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 import static com.sedmelluq.discord.lavaplayer.tools.ExceptionTools.throwWithDebugInfo;
 
 /**
- * Handles parsing and caching of ciphers via a remote proxy
+ * Handles parsing and caching of ciphers via a remote service
  */
 public class RemoteCipherManager implements CipherManager {
     private static final Logger log = LoggerFactory.getLogger(RemoteCipherManager.class);
@@ -143,7 +143,7 @@ public class RemoteCipherManager implements CipherManager {
 
             if (statusCode >= 200 && statusCode < 300) {
                 if (DataFormatTools.isNullOrEmpty(responseBody)) {
-                    throw new IOException("Received empty successful response from decryption proxy.");
+                    throw new IOException("Received empty successful response from remote cipher service.");
                 }
 
                 JsonBrowser json = JsonBrowser.parse(responseBody);
@@ -157,7 +157,7 @@ public class RemoteCipherManager implements CipherManager {
 
                 return "";
             } else {
-                throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody);
+                throw new IOException("Remote cipher service request failed with status code: " + statusCode + ". Response: " + responseBody);
             }
         }
     }
@@ -184,7 +184,7 @@ public class RemoteCipherManager implements CipherManager {
 
             if (statusCode >= 200 && statusCode < 300) {
                 if (DataFormatTools.isNullOrEmpty(responseBody)) {
-                    throw new IOException("Received empty successful response from decryption proxy.");
+                    throw new IOException("Received empty successful response from remote cipher service.");
                 }
 
                 JsonBrowser json = JsonBrowser.parse(responseBody);
@@ -203,19 +203,19 @@ public class RemoteCipherManager implements CipherManager {
                     }
                     uriBuilder.setParameter(sigKey.trim(), returnedSignature);
                 } else if (!DataFormatTools.isNullOrEmpty(sig)) {
-                    log.warn("Warning: Original signature parameter 's' was present, but no decrypted signature returned from proxy.");
+                    log.warn("Warning: Original signature parameter 's' was present, but no decrypted signature returned from remote cipher service.");
                 }
 
                 if (!DataFormatTools.isNullOrEmpty(returnedN)) {
                     uriBuilder.setParameter("n", returnedN);
                 } else if (!DataFormatTools.isNullOrEmpty(nParam)) {
-                    log.error("Warning: Original parameter 'n' was present, but no decrypted n-parameter returned from proxy.");
+                    log.error("Warning: Original parameter 'n' was present, but no decrypted n-parameter returned from remote cipher service.");
                 }
 
                 return uriBuilder.build();
 
             } else {
-                throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody + " SIG: " + sig);
+                throw new IOException("Remote cipher service request failed with status code: " + statusCode + ". Response: " + responseBody + " SIG: " + sig);
             }
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
@@ -241,15 +241,15 @@ public class RemoteCipherManager implements CipherManager {
 
             if (statusCode >= 200 && statusCode < 300) {
                 if (DataFormatTools.isNullOrEmpty(responseBody)) {
-                    throw new IOException("Received empty successful response from decryption proxy.");
+                    throw new IOException("Received empty successful response from remote cipher service.");
                 }
-                log.debug("Received response from proxy: {}", responseBody);
+                log.debug("Received response from remote cipher service: {}", responseBody);
 
                 JsonBrowser json = JsonBrowser.parse(responseBody);
 
                 return json.get("sts").text();
             } else {
-                throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody);
+                throw new IOException("Remote cipher service request failed with status code: " + statusCode + ". Response: " + responseBody);
             }
         }
     }
@@ -294,19 +294,19 @@ public class RemoteCipherManager implements CipherManager {
 
             if (statusCode >= 200 && statusCode < 300) {
                 if (DataFormatTools.isNullOrEmpty(responseBody)) {
-                    throw new IOException("Received empty successful response from decryption proxy.");
+                    throw new IOException("Received empty successful response from remote cipher service.");
                 }
 
                 JsonBrowser json = JsonBrowser.parse(responseBody);
                 String resolvedUrl = json.get("resolved_url").text();
 
                 if (resolvedUrl == null || resolvedUrl.isEmpty()) {
-                    throw new IOException("Proxy did not return a resolved URL.");
+                    throw new IOException("Remote cipher service did not return a resolved URL.");
                 }
 
                 return new URI(resolvedUrl);
             } else {
-                throw new IOException("Proxy request to resolve URL failed with status code: " + statusCode + ". Response: " + responseBody);
+                throw new IOException("Remote cipher service request to resolve URL failed with status code: " + statusCode + ". Response: " + responseBody);
             }
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
