@@ -9,6 +9,7 @@ public class YoutubeSourceOptions {
     private String remoteCipherUrl;
     private String remoteCipherPassword;
     private String remoteCipherUserAgent;
+    private boolean remoteCipherUseResolveEndpoint;
 
     public boolean isAllowSearch() {
         return allowSearch;
@@ -41,10 +42,11 @@ public class YoutubeSourceOptions {
         return remoteCipherUrl;
     }
 
-    public YoutubeSourceOptions setRemoteCipherUrl(String remoteCipherUrl, @Nullable String remoteCipherPassword, @Nullable String remoteCipherUserAgent) {
+    public YoutubeSourceOptions setRemoteCipher(String remoteCipherUrl, @Nullable String remoteCipherPassword, @Nullable String remoteCipherUserAgent, boolean useResolveEndpoint) {
         this.remoteCipherUrl = remoteCipherUrl;
         this.remoteCipherPassword = remoteCipherPassword;
         this.remoteCipherUserAgent = remoteCipherUserAgent;
+        this.remoteCipherUseResolveEndpoint = useResolveEndpoint;
         return this;
     }
 
@@ -55,6 +57,10 @@ public class YoutubeSourceOptions {
     @Nullable
     public String getRemoteCipherUserAgent() {
         return remoteCipherUserAgent;
+    }
+
+    public boolean useRemoteCipherResolveEndpoint() {
+        return remoteCipherUseResolveEndpoint;
     }
 
 }

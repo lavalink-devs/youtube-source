@@ -34,12 +34,14 @@ public class RemoteCipherManager implements CipherManager {
     private final @NotNull String remoteUrl;
 
     protected volatile CachedPlayerScript cachedPlayerScript;
+    private final boolean useResolveEndpoint;
 
     /**
      * Create a new remote cipher manager
      */
-    public RemoteCipherManager(@NotNull String remoteUrl) {
+    public RemoteCipherManager(@NotNull String remoteUrl, boolean useResolveEndpoint) {
         this.remoteUrl = remoteUrl;
+        this.useResolveEndpoint = useResolveEndpoint;
     }
 
     @NotNull
@@ -67,7 +69,9 @@ public class RemoteCipherManager implements CipherManager {
 
         URIBuilder uri = new URIBuilder(initialUrl);
 
-        if (!DataFormatTools.isNullOrEmpty(signature)) {
+        if (useResolveEndpoint) {
+            return resolveUrl(configureHttpInterface(httpInterface), initialUrl, playerScript);
+        } else if (!DataFormatTools.isNullOrEmpty(signature)) {
             return getUri(configureHttpInterface(httpInterface), format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
         }
 
@@ -244,6 +248,44 @@ public class RemoteCipherManager implements CipherManager {
     public HttpInterface configureHttpInterface(HttpInterface httpInterface) {
         httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.ATTRIBUTE_CIPHER_REQUEST_SPECIFIED, true);
         return httpInterface;
+    }
+
+    private URI resolveUrl(HttpInterface httpInterface, URI streamUrl, String playerScript) throws IOException {
+        HttpPost request = new HttpPost(getRemoteEndpoint("resolve_url"));
+        log.debug("Resolving stream url {} with player script {}", streamUrl, playerScript);
+
+        String requestBody = JsonWriter.string()
+            .object()
+            .value("stream_url", streamUrl.toString())
+            .value("player_url", playerScript)
+            .end()
+            .done();
+        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+        try (CloseableHttpResponse response = httpInterface.execute(request)) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            HttpEntity entity = response.getEntity();
+            String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
+
+            if (statusCode >= 200 && statusCode < 300) {
+                if (DataFormatTools.isNullOrEmpty(responseBody)) {
+                    throw new IOException("Received empty successful response from decryption proxy.");
+                }
+
+                JsonBrowser json = JsonBrowser.parse(responseBody);
+                String resolvedUrl = json.get("resolved_url").text();
+
+                if (resolvedUrl == null || resolvedUrl.isEmpty()) {
+                    throw new IOException("Proxy did not return a resolved URL.");
+                }
+
+                return new URI(resolvedUrl);
+            } else {
+                throw new IOException("Proxy request to resolve URL failed with status code: " + statusCode + ". Response: " + responseBody);
+            }
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 
