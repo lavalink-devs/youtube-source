@@ -1,6 +1,7 @@
 package dev.lavalink.youtube.cipher;
 
 import com.grack.nanojson.JsonWriter;
+import com.grack.nanojson.JsonStringWriter;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -63,16 +64,24 @@ public class RemoteCipherManager implements CipherManager {
     public URI resolveFormatUrl(@NotNull HttpInterface httpInterface,
                                 @NotNull String playerScript,
                                 @NotNull StreamFormat format) throws IOException {
+        if (useResolveEndpoint) {
+            return resolveUrl(
+                configureHttpInterface(httpInterface),
+                format.getUrl(),
+                playerScript,
+                format.getSignature(),
+                format.getNParameter(),
+                format.getSignatureKey()
+            );
+        }
+
         String signature = format.getSignature();
         String nParameter = format.getNParameter();
         URI initialUrl = format.getUrl();
-
         URIBuilder uri = new URIBuilder(initialUrl);
 
-        if (useResolveEndpoint) {
-            return resolveUrl(configureHttpInterface(httpInterface), initialUrl, playerScript);
-        } else if (!DataFormatTools.isNullOrEmpty(signature)) {
-            return getUri(configureHttpInterface(httpInterface), format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
+        if (!DataFormatTools.isNullOrEmpty(signature)) {
+            return getUri(configureHttpInterface(httpInterface), signature, format.getSignatureKey(), nParameter, initialUrl, playerScript);
         }
 
         uri.setParameter("n", decipherN(configureHttpInterface(httpInterface), nParameter, playerScript));
@@ -250,16 +259,32 @@ public class RemoteCipherManager implements CipherManager {
         return httpInterface;
     }
 
-    private URI resolveUrl(HttpInterface httpInterface, URI streamUrl, String playerScript) throws IOException {
+    private URI resolveUrl(HttpInterface httpInterface,
+                           URI baseUrl,
+                           String playerScript,
+                           String signature,
+                           String nParam,
+                           String sigKey) throws IOException {
         HttpPost request = new HttpPost(getRemoteEndpoint("resolve_url"));
-        log.debug("Resolving stream url {} with player script {}", streamUrl, playerScript);
+        log.debug("Resolving stream url {} with player script {}", baseUrl, playerScript);
 
-        String requestBody = JsonWriter.string()
+        JsonStringWriter writer = JsonWriter.string()
             .object()
-            .value("stream_url", streamUrl.toString())
-            .value("player_url", playerScript)
-            .end()
-            .done();
+            .value("stream_url", baseUrl.toString())
+            .value("player_url", playerScript);
+
+        if (signature != null) {
+            writer.value("encrypted_signature", signature);
+        }
+        if (nParam != null) {
+            writer.value("n_param", nParam);
+        }
+        if (sigKey != null) {
+            writer.value("signature_key", sigKey);
+        }
+
+        String requestBody = writer.end().done();
+
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
         try (CloseableHttpResponse response = httpInterface.execute(request)) {
