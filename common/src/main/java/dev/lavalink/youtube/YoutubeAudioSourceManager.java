@@ -154,7 +154,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
         if (!DataFormatTools.isNullOrEmpty(options.getRemoteCipherUrl())) {
             contextFilter.setCipherConfig(options.getRemoteCipherPassword(), options.getRemoteCipherUserAgent(), YoutubeSource.VERSION);
-            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl(), options.useRemoteCipherResolveEndpoint());
+            this.cipherManager = new RemoteCipherManager(options.getRemoteCipherUrl());
         } else {
             this.cipherManager = new LocalSignatureCipherManager();
         }
