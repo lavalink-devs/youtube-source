@@ -41,7 +41,7 @@ public class YoutubeSourceOptions {
         return remoteCipherUrl;
     }
 
-    public YoutubeSourceOptions setRemoteCipherUrl(String remoteCipherUrl, @Nullable String remoteCipherPassword, @Nullable String remoteCipherUserAgent) {
+    public YoutubeSourceOptions setRemoteCipher(String remoteCipherUrl, @Nullable String remoteCipherPassword, @Nullable String remoteCipherUserAgent) {
         this.remoteCipherUrl = remoteCipherUrl;
         this.remoteCipherPassword = remoteCipherPassword;
         this.remoteCipherUserAgent = remoteCipherUserAgent;
@@ -56,5 +56,6 @@ public class YoutubeSourceOptions {
     public String getRemoteCipherUserAgent() {
         return remoteCipherUserAgent;
     }
+
 
 }
