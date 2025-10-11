@@ -9,6 +9,7 @@ import dev.lavalink.youtube.ExceptionWithResponseBody;
 import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -62,7 +63,7 @@ public class RemoteCipherManager implements CipherManager {
                                 @NotNull String playerScript,
                                 @NotNull StreamFormat format) throws IOException {
         return resolveUrl(
-            configureHttpInterface(httpInterface),
+            httpInterface,
             format.getUrl(),
             playerScript,
             format.getSignature(),
@@ -94,7 +95,7 @@ public class RemoteCipherManager implements CipherManager {
     public String getTimestamp(HttpInterface httpInterface, String sourceUrl) throws IOException {
         synchronized (this) {
             log.debug("Timestamp from script {}", sourceUrl);
-            return getTimestampFromScript(configureHttpInterface(httpInterface), sourceUrl);
+            return getTimestampFromScript(httpInterface, sourceUrl);
         }
     }
 
@@ -114,23 +115,13 @@ public class RemoteCipherManager implements CipherManager {
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
-        try (CloseableHttpResponse response = httpInterface.execute(request)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            HttpEntity entity = response.getEntity();
-            String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
+        try (CloseableHttpResponse response = configureHttpInterface(httpInterface).execute(request)) {
+            String responseBody = validateAndGetResponseBody(response);
 
-            if (statusCode >= 200 && statusCode < 300) {
-                if (DataFormatTools.isNullOrEmpty(responseBody)) {
-                    throw new IOException("Received empty successful response from remote cipher service.");
-                }
-                log.debug("Received response from remote cipher service: {}", responseBody);
+            log.debug("Received response from remote cipher service: {}", responseBody);
 
-                JsonBrowser json = JsonBrowser.parse(responseBody);
-
-                return json.get("sts").text();
-            } else {
-                throw new IOException("Remote cipher service request failed with status code: " + statusCode + ". Response: " + responseBody);
-            }
+            JsonBrowser json = JsonBrowser.parse(responseBody);
+            return json.get("sts").text();
         }
     }
 
@@ -164,33 +155,38 @@ public class RemoteCipherManager implements CipherManager {
         }
 
         String requestBody = writer.end().done();
-
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
-        try (CloseableHttpResponse response = httpInterface.execute(request)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            HttpEntity entity = response.getEntity();
-            String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
+        try (CloseableHttpResponse response = configureHttpInterface(httpInterface).execute(request)) {
+            String responseBody = validateAndGetResponseBody(response);
+            JsonBrowser json = JsonBrowser.parse(responseBody);
+            String resolvedUrl = json.get("resolved_url").text();
 
-            if (statusCode >= 200 && statusCode < 300) {
-                if (DataFormatTools.isNullOrEmpty(responseBody)) {
-                    throw new IOException("Received empty successful response from remote cipher service.");
-                }
-
-                JsonBrowser json = JsonBrowser.parse(responseBody);
-                String resolvedUrl = json.get("resolved_url").text();
-
-                if (resolvedUrl == null || resolvedUrl.isEmpty()) {
-                    throw new IOException("Remote cipher service did not return a resolved URL.");
-                }
-
-                return new URI(resolvedUrl);
-            } else {
-                throw new IOException("Remote cipher service request to resolve URL failed with status code: " + statusCode + ". Response: " + responseBody);
+            if (resolvedUrl == null || resolvedUrl.isEmpty()) {
+                throw new IOException("Remote cipher service did not return a resolved URL.");
             }
+
+            return new URI(resolvedUrl);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @NotNull
+    public String validateAndGetResponseBody(@NotNull HttpResponse response) throws IOException {
+        int statusCode = response.getStatusLine().getStatusCode();
+        HttpEntity entity = response.getEntity();
+        String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
+
+        if (statusCode < 200 || statusCode >= 300) {
+            throw new IOException("Remote cipher service request to resolve URL failed with status code: " + statusCode + ". Response: " + responseBody);
+        }
+
+        if (DataFormatTools.isNullOrEmpty(responseBody)) {
+            throw new IOException("Received empty successful response from remote cipher service.");
+        }
+
+        return responseBody;
     }
 }
 
