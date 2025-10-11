@@ -22,9 +22,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.sedmelluq.discord.lavaplayer.tools.ExceptionTools.throwWithDebugInfo;
-
 /**
  * Handles parsing and caching of ciphers via a remote proxy
  */
@@ -34,7 +35,8 @@ public class RemoteCipherManager implements CipherManager {
     private final @NotNull String remoteUrl;
 
     protected volatile CachedPlayerScript cachedPlayerScript;
-
+    private final Map<String, String> cachedTimestamps = new ConcurrentHashMap<>();
+ 
     /**
      * Create a new remote cipher manager
      */
@@ -100,10 +102,15 @@ public class RemoteCipherManager implements CipherManager {
     }
 
     public String getTimestamp(HttpInterface httpInterface, String sourceUrl) throws IOException {
-        synchronized (this) {
-            log.debug("Timestamp from script {}", sourceUrl);
-            return getTimestampFromScript(configureHttpInterface(httpInterface), sourceUrl);
+        String cached = this.cachedTimestamps.get(sourceUrl);
+        if (cached != null) {
+            return cached;
         }
+
+        log.debug("Timestamp from script {}", sourceUrl);
+        String timestamp = getTimestampFromScript(configureHttpInterface(httpInterface), sourceUrl);
+        this.cachedTimestamps.put(sourceUrl, timestamp);
+        return timestamp;
     }
 
     private String getRemoteEndpoint(String path) {
