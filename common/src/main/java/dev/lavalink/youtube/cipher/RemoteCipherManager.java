@@ -4,6 +4,7 @@ import com.grack.nanojson.JsonWriter;
 import com.grack.nanojson.JsonStringWriter;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.ExceptionWithResponseBody;
 import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
@@ -178,7 +179,7 @@ public class RemoteCipherManager implements CipherManager {
         HttpEntity entity = response.getEntity();
         String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
 
-        if (statusCode < 200 || statusCode >= 300) {
+        if (!HttpClientTools.isSuccessWithContent(statusCode)) {
             throw new IOException("Remote cipher service request to resolve URL failed with status code: " + statusCode + ". Response: " + responseBody);
         }
 
