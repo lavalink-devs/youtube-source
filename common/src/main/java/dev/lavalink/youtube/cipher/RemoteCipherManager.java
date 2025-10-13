@@ -1,16 +1,18 @@
 package dev.lavalink.youtube.cipher;
 
 import com.grack.nanojson.JsonWriter;
+import com.grack.nanojson.JsonStringWriter;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.ExceptionWithResponseBody;
 import dev.lavalink.youtube.http.YoutubeHttpContextFilter;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
@@ -27,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.sedmelluq.discord.lavaplayer.tools.ExceptionTools.throwWithDebugInfo;
 /**
- * Handles parsing and caching of ciphers via a remote proxy
+ * Handles parsing and caching of ciphers via a remote service
  */
 public class RemoteCipherManager implements CipherManager {
     private static final Logger log = LoggerFactory.getLogger(RemoteCipherManager.class);
@@ -63,22 +65,14 @@ public class RemoteCipherManager implements CipherManager {
     public URI resolveFormatUrl(@NotNull HttpInterface httpInterface,
                                 @NotNull String playerScript,
                                 @NotNull StreamFormat format) throws IOException {
-        String signature = format.getSignature();
-        String nParameter = format.getNParameter();
-        URI initialUrl = format.getUrl();
-
-        URIBuilder uri = new URIBuilder(initialUrl);
-
-        if (!DataFormatTools.isNullOrEmpty(signature)) {
-            return getUri(configureHttpInterface(httpInterface), format.getSignature(), format.getSignatureKey(), nParameter, initialUrl, playerScript);
-        }
-
-        uri.setParameter("n", decipherN(configureHttpInterface(httpInterface), nParameter, playerScript));
-        try {
-            return uri.build();
-        } catch (URISyntaxException f) {
-            throw new RuntimeException(f);
-        }
+        return resolveUrl(
+            httpInterface,
+            format.getUrl(),
+            playerScript,
+            format.getSignature(),
+            format.getNParameter(),
+            format.getSignatureKey()
+        );
     }
 
     public CachedPlayerScript getCachedPlayerScript(@NotNull HttpInterface httpInterface) {
@@ -117,105 +111,6 @@ public class RemoteCipherManager implements CipherManager {
         return remoteUrl.endsWith("/") ? remoteUrl + path : remoteUrl + "/" + path;
     }
 
-    private String decipherN(HttpInterface httpInterface, String n, String playerScript) throws IOException {
-        HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
-
-        log.debug("Deciphering N param: {} with script: {}", n, playerScript);
-
-        String requestBody = JsonWriter.string()
-            .object()
-            .value("player_url", playerScript)
-            .value("n_param", n)
-            .end()
-            .done();
-        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-
-        try (CloseableHttpResponse response = httpInterface.execute(request)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            HttpEntity entity = response.getEntity();
-            String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
-
-            if (statusCode >= 200 && statusCode < 300) {
-                if (DataFormatTools.isNullOrEmpty(responseBody)) {
-                    throw new IOException("Received empty successful response from decryption proxy.");
-                }
-
-                JsonBrowser json = JsonBrowser.parse(responseBody);
-                String returnedN = json.get("decrypted_n_sig").text();
-
-                log.debug("Received decrypted N: {}", returnedN);
-
-                if (returnedN != null && !returnedN.isEmpty()) {
-                    return returnedN;
-                }
-
-                return "";
-            } else {
-                throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody);
-            }
-        }
-    }
-
-    private URI getUri(HttpInterface httpInterface, String sig, String sigKey, String nParam, URI initial, String playerScript) throws IOException {
-        HttpPost request = new HttpPost(getRemoteEndpoint("decrypt_signature"));
-
-        log.debug("Deciphering N param: {} and Signature: {} with script: {}", nParam, sig, playerScript);
-
-        String requestBody = JsonWriter.string()
-            .object()
-            .value("player_url", playerScript)
-            .value("encrypted_signature", sig)
-            .value("n_param", nParam)
-            .value("signature_key", sigKey)
-            .end()
-            .done();
-        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-
-        try (CloseableHttpResponse response = httpInterface.execute(request)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            HttpEntity entity = response.getEntity();
-            String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
-
-            if (statusCode >= 200 && statusCode < 300) {
-                if (DataFormatTools.isNullOrEmpty(responseBody)) {
-                    throw new IOException("Received empty successful response from decryption proxy.");
-                }
-
-                JsonBrowser json = JsonBrowser.parse(responseBody);
-
-                String returnedSignature = json.get("decrypted_signature").text();
-                String returnedN = json.get("decrypted_n_sig").text();
-
-                log.debug("Received Decrypted N: {} and Decrypted Sig: {}", returnedN, returnedSignature);
-
-                URIBuilder uriBuilder = new URIBuilder(initial);
-
-                if (!DataFormatTools.isNullOrEmpty(returnedSignature)) {
-                    if (sigKey == null || sigKey.trim().isEmpty()) {
-                        log.error("Warning: Decrypted signature received, but sigKey is null or empty. Using default 'sig'.");
-                        sigKey = "sig";
-                    }
-                    uriBuilder.setParameter(sigKey.trim(), returnedSignature);
-                } else if (!DataFormatTools.isNullOrEmpty(sig)) {
-                    log.warn("Warning: Original signature parameter 's' was present, but no decrypted signature returned from proxy.");
-                }
-
-                if (!DataFormatTools.isNullOrEmpty(returnedN)) {
-                    uriBuilder.setParameter("n", returnedN);
-                } else if (!DataFormatTools.isNullOrEmpty(nParam)) {
-                    log.error("Warning: Original parameter 'n' was present, but no decrypted n-parameter returned from proxy.");
-                }
-
-                return uriBuilder.build();
-
-            } else {
-                throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody + " SIG: " + sig);
-            }
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private String getTimestampFromScript(HttpInterface httpInterface, String playerScript) throws IOException {
         HttpPost request = new HttpPost(getRemoteEndpoint("get_sts"));
 
@@ -228,29 +123,78 @@ public class RemoteCipherManager implements CipherManager {
             .done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
-        try (CloseableHttpResponse response = httpInterface.execute(request)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            HttpEntity entity = response.getEntity();
-            String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
+        try (CloseableHttpResponse response = configureHttpInterface(httpInterface).execute(request)) {
+            String responseBody = validateAndGetResponseBody(response);
 
-            if (statusCode >= 200 && statusCode < 300) {
-                if (DataFormatTools.isNullOrEmpty(responseBody)) {
-                    throw new IOException("Received empty successful response from decryption proxy.");
-                }
-                log.debug("Received response from proxy: {}", responseBody);
+            log.debug("Received response from remote cipher service: {}", responseBody);
 
-                JsonBrowser json = JsonBrowser.parse(responseBody);
-
-                return json.get("sts").text();
-            } else {
-                throw new IOException("Decryption proxy request failed with status code: " + statusCode + ". Response: " + responseBody);
-            }
+            JsonBrowser json = JsonBrowser.parse(responseBody);
+            return json.get("sts").text();
         }
     }
 
     public HttpInterface configureHttpInterface(HttpInterface httpInterface) {
         httpInterface.getContext().setAttribute(YoutubeHttpContextFilter.ATTRIBUTE_CIPHER_REQUEST_SPECIFIED, true);
         return httpInterface;
+    }
+
+    private URI resolveUrl(HttpInterface httpInterface,
+                           URI baseUrl,
+                           String playerScript,
+                           String signature,
+                           String nParam,
+                           String sigKey) throws IOException {
+        HttpPost request = new HttpPost(getRemoteEndpoint("resolve_url"));
+        log.debug("Resolving stream url {} with player script {}", baseUrl, playerScript);
+
+        JsonStringWriter writer = JsonWriter.string()
+            .object()
+            .value("stream_url", baseUrl.toString())
+            .value("player_url", playerScript);
+
+        if (signature != null) {
+            writer.value("encrypted_signature", signature);
+        }
+        if (nParam != null) {
+            writer.value("n_param", nParam);
+        }
+        if (sigKey != null) {
+            writer.value("signature_key", sigKey);
+        }
+
+        String requestBody = writer.end().done();
+        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+        try (CloseableHttpResponse response = configureHttpInterface(httpInterface).execute(request)) {
+            String responseBody = validateAndGetResponseBody(response);
+            JsonBrowser json = JsonBrowser.parse(responseBody);
+            String resolvedUrl = json.get("resolved_url").text();
+
+            if (resolvedUrl == null || resolvedUrl.isEmpty()) {
+                throw new IOException("Remote cipher service did not return a resolved URL.");
+            }
+
+            return new URI(resolvedUrl);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @NotNull
+    public String validateAndGetResponseBody(@NotNull HttpResponse response) throws IOException {
+        int statusCode = response.getStatusLine().getStatusCode();
+        HttpEntity entity = response.getEntity();
+        String responseBody = (entity != null) ? EntityUtils.toString(entity, StandardCharsets.UTF_8) : null;
+
+        if (!HttpClientTools.isSuccessWithContent(statusCode)) {
+            throw new IOException("Remote cipher service request to resolve URL failed with status code: " + statusCode + ". Response: " + responseBody);
+        }
+
+        if (DataFormatTools.isNullOrEmpty(responseBody)) {
+            throw new IOException("Received empty successful response from remote cipher service.");
+        }
+
+        return responseBody;
     }
 }
 
