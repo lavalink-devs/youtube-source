@@ -125,10 +125,11 @@ public abstract class NonMusicClient implements Client {
         }
 
         String payload = config.setAttributes(httpInterface).toJsonString();
+
         if (requirePlayerScript()) {
             CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
-            String timestamp = cipherManager.getTimestamp(httpInterface, playerScript.url);
-            payload = config.withPlaybackSignatureTimestamp(timestamp)
+
+            payload = config.withPlaybackSignatureTimestamp(playerScript.signatureTimestamp)
                     .setAttributes(httpInterface)
                     .toJsonString();
         }

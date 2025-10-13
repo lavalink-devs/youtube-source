@@ -265,6 +265,7 @@ public class LocalSignatureCipherManager implements CipherManager {
                     throw new IOException("Received non-success response code " + statusCode + " from script url " +
                         sourceUrl + " ( " + CipherUtils.parseTokenScriptUrl(sourceUrl) + " )");
                 }
+
                 return getScriptTimestamp(httpInterface, EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8), sourceUrl);
             }
         }

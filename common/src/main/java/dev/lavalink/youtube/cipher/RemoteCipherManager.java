@@ -95,35 +95,30 @@ public class RemoteCipherManager implements CipherManager {
 
     public String getTimestamp(HttpInterface httpInterface, String sourceUrl) throws IOException {
         synchronized (this) {
-            log.debug("Timestamp from script {}", sourceUrl);
-            return getTimestampFromScript(httpInterface, sourceUrl);
+            HttpPost request = new HttpPost(getRemoteEndpoint("get_sts"));
+
+            log.debug("Getting timestamp for script: {}", sourceUrl);
+
+            String requestBody = JsonWriter.string()
+                .object()
+                .value("player_url", sourceUrl)
+                .end()
+                .done();
+            request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+
+            try (CloseableHttpResponse response = configureHttpInterface(httpInterface).execute(request)) {
+                String responseBody = validateAndGetResponseBody(response);
+
+                log.debug("Received response from remote cipher service: {}", responseBody);
+
+                JsonBrowser json = JsonBrowser.parse(responseBody);
+                return json.get("sts").text();
+            }
         }
     }
 
     private String getRemoteEndpoint(String path) {
         return remoteUrl.endsWith("/") ? remoteUrl + path : remoteUrl + "/" + path;
-    }
-
-    private String getTimestampFromScript(HttpInterface httpInterface, String playerScript) throws IOException {
-        HttpPost request = new HttpPost(getRemoteEndpoint("get_sts"));
-
-        log.debug("Getting timestamp for script: {}", playerScript);
-
-        String requestBody = JsonWriter.string()
-            .object()
-            .value("player_url", playerScript)
-            .end()
-            .done();
-        request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
-
-        try (CloseableHttpResponse response = configureHttpInterface(httpInterface).execute(request)) {
-            String responseBody = validateAndGetResponseBody(response);
-
-            log.debug("Received response from remote cipher service: {}", responseBody);
-
-            JsonBrowser json = JsonBrowser.parse(responseBody);
-            return json.get("sts").text();
-        }
     }
 
     public HttpInterface configureHttpInterface(HttpInterface httpInterface) {

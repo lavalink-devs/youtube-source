@@ -48,7 +48,7 @@ public interface CipherManager {
                     throw new ExceptionWithResponseBody("no jsUrl found", responseText);
                 }
 
-                return new CachedPlayerScript(scriptUrl);
+                return new CachedPlayerScript(scriptUrl, getTimestamp(httpInterface, scriptUrl));
             } catch (IOException e) {
                 throw ExceptionTools.toRuntimeException(e);
             }
@@ -57,10 +57,12 @@ public interface CipherManager {
 
     class CachedPlayerScript {
         public final String url;
+        public final String signatureTimestamp;
         public final long expireTimestampMs;
 
-        protected CachedPlayerScript(@NotNull String url) {
+        protected CachedPlayerScript(@NotNull String url, @NotNull String signatureTimestamp) {
             this.url = url;
+            this.signatureTimestamp = signatureTimestamp;
             this.expireTimestampMs = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1);
         }
     }
