@@ -108,11 +108,17 @@ public class YoutubeOauth2Handler {
         log.info("!!! DO NOT AUTHORISE WITH YOUR MAIN ACCOUNT, USE A BURNER !!!");
         log.info("==================================================");
 
-        // Should this be a daemon?
-        new Thread(() -> pollForToken(deviceCode, interval == 0 ? 5000 : interval), "youtube-source-token-poller").start();
+        Thread pollThread = new Thread(() -> pollForToken(deviceCode, interval == 0 ? 5000 : interval), "youtube-source-token-poller");
+        pollThread.setDaemon(true);
+        pollThread.start();
     }
 
-    private JsonObject fetchDeviceCode() {
+    /**
+     * Retrieves a device code for use with the OAuth flow.
+     * The returned payload will contain a user code and a device code, as well as a recommended poll interval,
+     * which must be used to complete the flow.
+     */
+    public JsonObject fetchDeviceCode() {
         // @formatter:off
         String requestJson = JsonWriter.string()
             .object()
@@ -137,7 +143,18 @@ public class YoutubeOauth2Handler {
         }
     }
 
-    private void pollForToken(String deviceCode, long interval) {
+    /**
+     * Retrieve a refresh token from a given device code. This might not yield a successful response
+     * if the OAuth flow for the given device code has not yet been completed, or the device code is invalid.
+     * @param deviceCode The device code obtained from {@link #fetchDeviceCode()}
+     */
+    public JsonObject fetchRefreshToken(String deviceCode) throws IOException {
+        try (HttpInterface httpInterface = getHttpInterface()) {
+            return fetchRefreshToken(httpInterface, deviceCode);
+        }
+    }
+
+    private JsonObject fetchRefreshToken(HttpInterface httpInterface, String deviceCode) throws IOException {
         // @formatter:off
         String requestJson = JsonWriter.string()
             .object()
@@ -153,45 +170,60 @@ public class YoutubeOauth2Handler {
         StringEntity body = new StringEntity(requestJson, ContentType.APPLICATION_JSON);
         request.setEntity(body);
 
-        while (true) {
-            try (HttpInterface httpInterface = getHttpInterface();
-                 CloseableHttpResponse response = httpInterface.execute(request)) {
-                HttpClientTools.assertSuccessWithContent(response, "oauth2 token fetch");
-                JsonObject parsed = JsonParser.object().from(response.getEntity().getContent());
+        try (CloseableHttpResponse response = httpInterface.execute(request)) {
+            HttpClientTools.assertSuccessWithContent(response, "oauth2 token fetch");
+            JsonObject parsed = JsonParser.object().from(response.getEntity().getContent());
+            log.debug("oauth2 token fetch response: {}", JsonWriter.string(parsed));
+            return parsed;
+        } catch (IOException | JsonParserException e) {
+            throw ExceptionTools.toRuntimeException(e);
+        }
+    }
 
-                log.debug("oauth2 token fetch response: {}", JsonWriter.string(parsed));
+    private void pollForToken(String deviceCode, long interval) {
+        try (HttpInterface httpInterface = getHttpInterface()) {
+            while (true) {
+                try {
+                    JsonObject response = fetchRefreshToken(httpInterface, deviceCode);
 
-                if (parsed.has("error") && !parsed.isNull("error")) {
-                    String error = parsed.getString("error");
+                    if (response.has("error") && !response.isNull("error")) {
+                        String error = response.getString("error");
 
-                    switch (error) {
-                        case "authorization_pending":
-                        case "slow_down":
-                            Thread.sleep(interval);
-                            continue;
-                        case "expired_token":
-                            log.error("OAUTH INTEGRATION: The device token has expired. OAuth integration has been canceled.");
-                        case "access_denied":
-                            log.error("OAUTH INTEGRATION: Account linking was denied. OAuth integration has been canceled.");
-                        default:
-                            log.error("Unhandled OAuth2 error: {}", error);
+                        switch (error) {
+                            case "authorization_pending":
+                            case "slow_down":
+                                Thread.sleep(interval);
+                                continue;
+                            case "expired_token":
+                                log.error("OAUTH INTEGRATION: The device token has expired. OAuth integration has been canceled.");
+                                break;
+                            case "access_denied":
+                                log.error("OAUTH INTEGRATION: Account linking was denied. OAuth integration has been canceled.");
+                                break;
+                            default:
+                                log.error("Unhandled OAuth2 error: {}", error);
+                                break;
+                        }
+
+                        return;
                     }
 
+                    updateTokens(response);
+                    log.info("OAUTH INTEGRATION: Token retrieved successfully. Store your refresh token as this can be reused. ({})", refreshToken);
+                    enabled = true;
                     return;
+                } catch (InterruptedException | RuntimeException e) {
+                    log.error("Failed to fetch OAuth2 token response", e);
                 }
-
-                updateTokens(parsed);
-                log.info("OAUTH INTEGRATION: Token retrieved successfully. Store your refresh token as this can be reused. ({})", refreshToken);
-                enabled = true;
-                return;
-            } catch (IOException | JsonParserException | InterruptedException e) {
-                log.error("Failed to fetch OAuth2 token response", e);
             }
+        } catch (IOException e) {
+            log.error("Failed to acquire HTTP interface for token polling", e);
         }
     }
 
     /**
      * Refreshes an access token using a supplied refresh token.
+     *
      * @param force Whether to forcefully renew the access token, even if it doesn't necessarily
      *              need to be refreshed yet.
      */
@@ -236,16 +268,15 @@ public class YoutubeOauth2Handler {
      * @return The JSON response as a JsonObject.
      */
     public JsonObject createNewAccessToken(String refreshToken) {
-
         // @formatter:off
         String requestJson = JsonWriter.string()
-                .object()
-                    .value("client_id", CLIENT_ID)
-                    .value("client_secret", CLIENT_SECRET)
-                    .value("refresh_token", refreshToken)
-                    .value("grant_type", "refresh_token")
-                .end()
-                .done();
+            .object()
+                .value("client_id", CLIENT_ID)
+                .value("client_secret", CLIENT_SECRET)
+                .value("refresh_token", refreshToken)
+                .value("grant_type", "refresh_token")
+            .end()
+            .done();
         // @formatter:on
 
         HttpPost request = new HttpPost("https://www.youtube.com/o/oauth2/token");
