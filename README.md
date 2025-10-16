@@ -209,7 +209,7 @@ of efficacy. **You do _not_ need to use `poToken` with OAuth.**
 
 > [!WARNING]
 > Similar to the `poToken` method, this is NOT a silver bullet solution, and worst case could get your account terminated!
-> For this reason, it is advised that **you use burner accounts and NOT your primary!**.
+> For this reason, it is advised that **you use burner accounts and NOT your primary!**
 > This method may also trigger ratelimit errors if used in a high traffic environment.
 > USE WITH CAUTION!
 
