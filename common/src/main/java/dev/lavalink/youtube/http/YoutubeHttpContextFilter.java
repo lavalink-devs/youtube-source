@@ -109,7 +109,7 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
 
       if (isRequestFromOauthedClient && Client.PLAYER_URL.equals(request.getURI().toString())) {
         // Look at the userdata for any provided oauth-token
-        String oauthToken = (String) context.removeAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE);
+        String oauthToken = context.getAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, String.class);
         // only apply the token to /player requests.
         if (oauthToken != null && !oauthToken.isEmpty()) {
           oauth2Handler.applyToken(request, oauthToken);
