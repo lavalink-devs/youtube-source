@@ -2,6 +2,7 @@ package dev.lavalink.youtube.plugin;
 
 import com.grack.nanojson.JsonObject;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.ClientInformation;
@@ -181,8 +182,10 @@ public class YoutubeRestHandler {
     }
 
     @GetMapping("/youtube/oauth/{refreshToken}")
-    public JsonObject createNewAccessToken(@PathVariable("refreshToken") String refreshToken) {
-        return getYoutubeSource().getOauth2Handler().createNewAccessToken(refreshToken);
+    public String createNewAccessToken(@PathVariable("refreshToken") String refreshToken) {
+        // TODO: This probably won't have content type set to JSON anymore as JsonBrowser doesn't extend Map, so have to return
+        //       raw JSON string. Need to check this out.
+        return getYoutubeSource().getOauth2Handler().createNewAccessToken(refreshToken).format();
     }
 
     @PostMapping("/youtube")
