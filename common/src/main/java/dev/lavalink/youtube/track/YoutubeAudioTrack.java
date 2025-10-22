@@ -86,7 +86,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
         log.debug("Failed to parse token from userData", e);
       }
 
-      List<Throwable> exceptions = new ArrayList<>();
+      List<ClientException> exceptions = new ArrayList<>();
 
       for (Client client : clients) {
         if (!client.supportsFormatLoading()) {
@@ -101,12 +101,26 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
         } catch (CannotBeLoaded e) {
           throw e;
         } catch (Exception e) {
+          if (e instanceof ScriptExtractionException) {
+            // If we're still early in playback, we can try another client
+            if (localExecutor.getPosition() >= BAD_STREAM_POSITION_THRESHOLD_MS) {
+              throw e;
+            }
+          } else if ("Not success status code: 403".equals(e.getMessage()) ||
+                  "Invalid status code for player api response: 400".equals(e.getMessage())) {
+            // As long as the executor position has not surpassed the threshold for which
+            // a stream is considered unrecoverable, we can try to renew the playback URL with
+            // another client.
+            if (localExecutor.getPosition() >= BAD_STREAM_POSITION_THRESHOLD_MS) {
+              throw e;
+            }
+          }
           exceptions.add(new ClientException(e.getMessage(), client, e));
         }
       }
 
       if (!exceptions.isEmpty()) {
-        throw ExceptionTools.wrapUnfriendlyExceptions("All clients failed to load the track.", Severity.SUSPICIOUS, new AllClientsFailedException(exceptions));
+        throw new AllClientsFailedException(exceptions);
       }
     } catch (CannotBeLoaded e) {
       throw ExceptionTools.wrapUnfriendlyExceptions("This video is unavailable", Severity.SUSPICIOUS, e.getCause());

@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
@@ -215,7 +216,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     @Nullable
     protected AudioItem loadItemOnce(@NotNull AudioReference reference) {
         AudioItem item = null;
-        List<Throwable> exceptions = new ArrayList<>();
+        List<ClientException> exceptions = new ArrayList<>();
 
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             Router router = getRouter(httpInterface, reference.identifier);
@@ -261,8 +262,14 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
             throw ExceptionTools.toRuntimeException(e);
         }
 
-        if (item == null && !exceptions.isEmpty()) {
-            throw new AllClientsFailedException(exceptions);
+        if (!exceptions.isEmpty()) {
+            if (item == null) {
+                throw new AllClientsFailedException(exceptions);
+            }
+
+            String exceptionSummary = exceptions.stream().map(ClientException::getFormattedMessage).collect(Collectors.toList()).toString();
+
+            log.debug("Exceptions suppressed whilst loading {}: {}", reference.identifier, exceptionSummary);
         }
 
         return item;
