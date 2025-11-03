@@ -90,6 +90,7 @@ public class LocalSignatureCipherManager implements CipherManager {
         Pattern.DOTALL);
 
     private final ConcurrentMap<String, SignatureCipher> cipherCache;
+    private final ConcurrentMap<String, String> stsCache;
     private final Set<String> dumpedScriptUrls;
     private final ScriptEngine scriptEngine;
 
@@ -100,6 +101,7 @@ public class LocalSignatureCipherManager implements CipherManager {
      */
     public LocalSignatureCipherManager() {
         this.cipherCache = new ConcurrentHashMap<>();
+        this.stsCache = new ConcurrentHashMap<>();
         this.dumpedScriptUrls = new HashSet<>();
         this.scriptEngine = new RhinoScriptEngineFactory().getScriptEngine();
     }
@@ -255,8 +257,22 @@ public class LocalSignatureCipherManager implements CipherManager {
     }
 
     public String getTimestamp(HttpInterface httpInterface, String sourceUrl) throws IOException {
+        // Check cache first
+        String cachedSts = stsCache.get(sourceUrl);
+        if (cachedSts != null) {
+            log.debug("STS cache hit for script URL: {}", sourceUrl);
+            return cachedSts;
+        }
+
         synchronized (this) {
-            log.debug("Timestamp from script {}", sourceUrl);
+            // Double-check after acquiring lock
+            cachedSts = stsCache.get(sourceUrl);
+            if (cachedSts != null) {
+                log.debug("STS cache hit (after lock) for script URL: {}", sourceUrl);
+                return cachedSts;
+            }
+
+            log.debug("STS cache miss - fetching timestamp from script {}", sourceUrl);
 
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet(CipherUtils.parseTokenScriptUrl(sourceUrl)))) {
                 int statusCode = response.getStatusLine().getStatusCode();
@@ -266,7 +282,10 @@ public class LocalSignatureCipherManager implements CipherManager {
                         sourceUrl + " ( " + CipherUtils.parseTokenScriptUrl(sourceUrl) + " )");
                 }
 
-                return getScriptTimestamp(httpInterface, EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8), sourceUrl);
+                String sts = getScriptTimestamp(httpInterface, EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8), sourceUrl);
+                stsCache.put(sourceUrl, sts);
+                log.debug("Cached STS {} for script URL: {}", sts, sourceUrl);
+                return sts;
             }
         }
     }
@@ -322,5 +341,32 @@ public class LocalSignatureCipherManager implements CipherManager {
     private void scriptExtractionFailed(String script, String sourceUrl, ExtractionFailureType failureType) {
         dumpProblematicScript(script, sourceUrl, "must find " + failureType.friendlyName);
         throw new ScriptExtractionException("Must find " + failureType.friendlyName + " from script: " + sourceUrl, failureType);
+    }
+
+    /**
+     * Clears the STS cache. Useful for testing and when player script updates are detected.
+     */
+    public void clearStsCache() {
+        stsCache.clear();
+        log.debug("STS cache cleared");
+    }
+
+    /**
+     * Removes a specific STS entry from the cache.
+     * @param scriptUrl The player script URL whose STS should be removed from cache
+     */
+    public void evictStsFromCache(@NotNull String scriptUrl) {
+        String removed = stsCache.remove(scriptUrl);
+        if (removed != null) {
+            log.debug("Evicted STS {} for script URL: {}", removed, scriptUrl);
+        }
+    }
+
+    /**
+     * Returns the current size of the STS cache.
+     * @return The number of cached STS entries
+     */
+    public int getStsCacheSize() {
+        return stsCache.size();
     }
 }
