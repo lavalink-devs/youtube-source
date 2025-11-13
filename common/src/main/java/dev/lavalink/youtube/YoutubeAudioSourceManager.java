@@ -34,10 +34,12 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
@@ -213,7 +215,8 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
 
     @Nullable
     protected AudioItem loadItemOnce(@NotNull AudioReference reference) {
-        Throwable lastException = null;
+        AudioItem item = null;
+        List<ClientException> exceptions = new ArrayList<>();
 
         try (HttpInterface httpInterface = httpInterfaceManager.getInterface()) {
             Router router = getRouter(httpInterface, reference.identifier);
@@ -243,28 +246,33 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 httpInterface.getContext().setAttribute(Client.OAUTH_CLIENT_ATTRIBUTE, client.supportsOAuth());
 
                 try {
-                    AudioItem item = router.route(client);
-
-                    if (item != null) {
-                        return item;
-                    }
+                    item = router.route(client);
                 } catch (CannotBeLoaded cbl) {
                     throw ExceptionTools.wrapUnfriendlyExceptions("This video cannot be loaded.", Severity.SUSPICIOUS, cbl.getCause());
                 } catch (Throwable t) {
                     log.debug("Client \"{}\" threw a non-fatal exception, storing and proceeding...", client.getIdentifier(), t);
-                    t.addSuppressed(ClientInformation.create(client));
-                    lastException = t;
+                    exceptions.add(new ClientException(t.getMessage(), client, t));
+                }
+
+                if (item != null) {
+                    break;
                 }
             }
         } catch (IOException e) {
             throw ExceptionTools.toRuntimeException(e);
         }
 
-        if (lastException != null) {
-            throw ExceptionTools.wrapUnfriendlyExceptions("This video cannot be loaded.", SUSPICIOUS, lastException);
+        if (!exceptions.isEmpty()) {
+            if (item == null) {
+                throw new AllClientsFailedException(exceptions);
+            }
+
+            String exceptionSummary = exceptions.stream().map(ClientException::getFormattedMessage).collect(Collectors.toList()).toString();
+
+            log.debug("Exceptions suppressed whilst loading {}: {}", reference.identifier, exceptionSummary);
         }
 
-        return null;
+        return item;
     }
 
     @Nullable
