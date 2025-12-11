@@ -132,6 +132,14 @@ public class ClientConfig {
         return this;
     }
 
+    public void withEncryptedHostFlags(String encryptedHostFlags) {
+        if (encryptedHostFlags != null) {
+            Map<String, Object> playbackContext = putOnceAndJoin(root, "playbackContext");
+            Map<String, Object> contentPlaybackContext = putOnceAndJoin(playbackContext, "contentPlaybackContext");
+            contentPlaybackContext.put("encryptedHostFlags", encryptedHostFlags);
+        }
+    }
+
     public ClientConfig withRootField(@NotNull String key,
                                       @Nullable Object value) {
         root.put(key, value);
