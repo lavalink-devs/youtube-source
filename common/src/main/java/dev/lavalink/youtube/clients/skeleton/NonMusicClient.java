@@ -99,84 +99,83 @@ public abstract class NonMusicClient implements Client {
      * @throws IOException If a HTTP request fails, etc.
      */
     @NotNull
-    protected JsonBrowser loadTrackInfoFromInnertube(@NotNull YoutubeAudioSourceManager source,
-                                                     @NotNull HttpInterface httpInterface,
-                                                     @NotNull String videoId,
-                                                     @Nullable PlayabilityStatus status,
-                                                     boolean validatePlayabilityStatus) throws CannotBeLoaded, IOException {
-        CipherManager cipherManager = source.getCipherManager();
+protected JsonBrowser loadTrackInfoFromInnertube(@NotNull YoutubeAudioSourceManager source,
+                                                 @NotNull HttpInterface httpInterface,
+                                                 @NotNull String videoId,
+                                                 @Nullable PlayabilityStatus status,
+                                                 boolean validatePlayabilityStatus) throws CannotBeLoaded, IOException {
+    CipherManager cipherManager = source.getCipherManager();
 
-        ClientConfig config = getBaseClientConfig(httpInterface);
+    ClientConfig config = getBaseClientConfig(httpInterface);
 
-        if (status == null) {
-            // Only add embed info if the status is not NON_EMBEDDABLE.
-            config.withClientField("clientScreen", "EMBED")
-                .withThirdPartyEmbedUrl("https://google.com");
-        }
-
-        config.withRootField("videoId", videoId)
-            .withRootField("racyCheckOk", true)
-            .withRootField("contentCheckOk", true);
-
-        String params = getPlayerParams();
-
-        if (params != null) {
-            config.withRootField("params", params);
-        }
-
-        String payload = config.setAttributes(httpInterface).toJsonString();
-
-        if (requirePlayerScript()) {
-            CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
-
-            payload = config.withPlaybackSignatureTimestamp(playerScript.signatureTimestamp)
-                    .setAttributes(httpInterface)
-                    .toJsonString();
-        }
-
-        HttpPost request = new HttpPost(PLAYER_URL);
-        request.setEntity(new StringEntity(payload, "UTF-8"));
-
-        JsonBrowser json = loadJsonResponse(httpInterface, request, "player api response");
-        JsonBrowser playabilityJson = json.get("playabilityStatus");
-        JsonBrowser videoDetails = json.get("videoDetails");
-
-        // we should always check playabilityStatus if videoDetails is null because it could contain important
-        // information as to why, which prevents false reports about this not working as intended etc etc.
-        if (validatePlayabilityStatus || videoDetails.isNull()) {
-            // fix: Make this method throw if a status was supplied (typically when we recurse).
-            PlayabilityStatus playabilityStatus = getPlayabilityStatus(playabilityJson, status != null);
-
-            // All other branches should've been caught by getPlayabilityStatus().
-            // An exception will be thrown if we can't handle it.
-            if (playabilityStatus == PlayabilityStatus.NON_EMBEDDABLE) {
-                if (isEmbedded()) {
-                    throw new FriendlyException("Loading information for video failed", Severity.COMMON,
-                        new RuntimeException("Non-embeddable video cannot be loaded by embedded client"));
-                }
-
-                // forcefully set validatePlayabilityStatus to true because the code is at this point for a reason.
-                // we want to make sure the re-check gets an accurate reason for any playability issues.
-                json = loadTrackInfoFromInnertube(source, httpInterface, videoId, playabilityStatus, true);
-                getPlayabilityStatus(json.get("playabilityStatus"), true);
-            }
-        }
-
-        if (videoDetails.isNull()) {
-            throw new FriendlyException("Loading information for video failed", Severity.SUSPICIOUS,
-                new RuntimeException("Missing videoDetails block, JSON: " + json.format()));
-        }
-
-        if (!videoId.equals(videoDetails.get("videoId").text())) {
-            throw new FriendlyException(
-                "The video returned is not what was requested.",
-                Severity.SUSPICIOUS,
-                new RuntimeException("Incorrect video response, JSON: " + json.format())
-            );
-        }
-
-        return json;
+    if (status == null || status != PlayabilityStatus.NON_EMBEDDABLE) {
+        config.withClientField("clientScreen", "EMBED")
+            .withThirdPartyEmbedUrl("https://google.com");
     }
+
+    config.withRootField("videoId", videoId)
+        .withRootField("racyCheckOk", true)
+        .withRootField("contentCheckOk", true);
+
+    String params = getPlayerParams();
+    if (params != null) {
+        config.withRootField("params", params);
+    }
+
+    if (isEmbedded()) {
+        String encryptedHostFlags = fetchEncryptedHostFlags("https://youtube.com/embed/" + videoId);
+        if (encryptedHostFlags != null) {
+            config.withEncryptedHostFlags(encryptedHostFlags);
+        }
+    }
+
+    String payload = config.setAttributes(httpInterface).toJsonString();
+
+    if (requirePlayerScript()) {
+        CachedPlayerScript playerScript = cipherManager.getCachedPlayerScript(httpInterface);
+
+        payload = config.withPlaybackSignatureTimestamp(playerScript.signatureTimestamp)
+            .setAttributes(httpInterface)
+            .toJsonString();
+    }
+
+    HttpPost request = new HttpPost(PLAYER_URL);
+    request.setEntity(new StringEntity(payload, "UTF-8"));
+
+    JsonBrowser json = loadJsonResponse(httpInterface, request, "player api response");
+    JsonBrowser playabilityJson = json.get("playabilityStatus");
+    JsonBrowser videoDetails = json.get("videoDetails");
+
+    if (validatePlayabilityStatus || videoDetails.isNull()) {
+        PlayabilityStatus playabilityStatus = getPlayabilityStatus(playabilityJson, status != null);
+
+        if (playabilityStatus == PlayabilityStatus.NON_EMBEDDABLE) {
+            if (isEmbedded()) {
+                throw new FriendlyException("Loading information for video failed", Severity.COMMON,
+                    new RuntimeException("Non-embeddable video cannot be loaded by embedded client"));
+            }
+
+            json = loadTrackInfoFromInnertube(source, httpInterface, videoId, playabilityStatus, true);
+            getPlayabilityStatus(json.get("playabilityStatus"), true);
+        }
+    }
+
+    if (videoDetails.isNull()) {
+        throw new FriendlyException("Loading information for video failed", Severity.SUSPICIOUS,
+            new RuntimeException("Missing videoDetails block, JSON: " + json.format()));
+    }
+
+    if (!videoId.equals(videoDetails.get("videoId").text())) {
+        throw new FriendlyException(
+            "The video returned is not what was requested.",
+            Severity.SUSPICIOUS,
+            new RuntimeException("Incorrect video response, JSON: " + json.format())
+        );
+    }
+
+    return json;
+}
+
 
     @NotNull
     protected JsonBrowser loadSearchResults(@NotNull HttpInterface httpInterface,
