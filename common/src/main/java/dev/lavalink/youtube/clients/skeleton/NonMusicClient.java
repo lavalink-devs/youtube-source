@@ -14,6 +14,7 @@ import dev.lavalink.youtube.clients.ClientConfig;
 import dev.lavalink.youtube.track.TemporalInfo;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
@@ -175,6 +176,33 @@ protected JsonBrowser loadTrackInfoFromInnertube(@NotNull YoutubeAudioSourceMana
 
     return json;
 }
+
+    /**
+     * Fetches the encryptedHostFlags from the YouTube embed page using HttpGet.
+     *
+     * @param embedUrl The embed URL of the YouTube video (e.g., "https://youtube.com/embed/pzPi-cqo_3U").
+     */
+    public String fetchEncryptedHostFlags(String embedUrl) throws IOException {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet httpGet = new HttpGet(embedUrl);
+
+            httpGet.setHeader("Referer", "https://www.google.com");
+            httpGet.setHeader("User-Agent", "Mozilla/5.0");
+
+            HttpResponse response = httpClient.execute(httpGet);
+
+            String htmlContent = EntityUtils.toString(response.getEntity());
+
+            Pattern pattern = Pattern.compile("\"encryptedHostFlags\":\"([^\"]+)\"");
+            Matcher matcher = pattern.matcher(htmlContent);
+
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+
+            return null;
+        }
+    }
 
 
     @NotNull
