@@ -10,7 +10,6 @@ public class ClientInformation extends Exception {
 
     public static ClientInformation create(Client client) {
         DetailMessageBuilder builder = new DetailMessageBuilder();
-        builder.appendField("yts.version", YoutubeSource.VERSION);
         builder.appendField("client.identifier", client.getIdentifier());
         builder.appendField("client.options", client.getOptions());
         return new ClientInformation(builder.toString());
