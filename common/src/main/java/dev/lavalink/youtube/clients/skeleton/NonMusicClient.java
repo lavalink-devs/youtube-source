@@ -156,10 +156,19 @@ public abstract class NonMusicClient implements Client {
         JsonBrowser playabilityJson = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
 
+        log.debug("Client {} received player API response for video {}: playabilityStatus={}, videoDetails present={}", 
+            getIdentifier(), 
+            videoId,
+            playabilityJson.isNull() ? "null" : playabilityJson.get("status").text(),
+            !videoDetails.isNull());
+
         // we should always check playabilityStatus if videoDetails is null because it could contain important
         // information as to why, which prevents false reports about this not working as intended etc etc.
         if (validatePlayabilityStatus || videoDetails.isNull()) {
             // fix: Make this method throw if a status was supplied (typically when we recurse).
+            String playabilityStatusStr = playabilityJson.isNull() ? "null" : playabilityJson.get("status").text();
+            log.debug("Validating playability status for video {} with client {}: status={}, previousStatus={}", 
+                videoId, getIdentifier(), playabilityStatusStr, status);
             PlayabilityStatus playabilityStatus = getPlayabilityStatus(playabilityJson, status != null);
 
             // All other branches should've been caught by getPlayabilityStatus().
@@ -178,17 +187,24 @@ public abstract class NonMusicClient implements Client {
         }
 
         if (videoDetails.isNull()) {
+            log.warn("Client {} received null videoDetails for video {}. Playability status: {}, Full JSON: {}", 
+                getIdentifier(), videoId, playabilityJson.format(), json.format());
             throw new FriendlyException("Loading information for video failed", Severity.SUSPICIOUS,
                 new RuntimeException("Missing videoDetails block, JSON: " + json.format()));
         }
 
-        if (!videoId.equals(videoDetails.get("videoId").text())) {
+        String returnedVideoId = videoDetails.get("videoId").text();
+        if (!videoId.equals(returnedVideoId)) {
+            log.warn("Client {} returned incorrect video ID. Expected: {}, Got: {}, Full JSON: {}", 
+                getIdentifier(), videoId, returnedVideoId, json.format());
             throw new FriendlyException(
                 "The video returned is not what was requested.",
                 Severity.SUSPICIOUS,
                 new RuntimeException("Incorrect video response, JSON: " + json.format())
             );
         }
+        
+        log.debug("Client {} successfully loaded video details for video {}", getIdentifier(), videoId);
 
         return json;
     }

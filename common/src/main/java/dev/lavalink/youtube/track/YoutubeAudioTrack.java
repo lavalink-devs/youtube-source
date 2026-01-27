@@ -74,36 +74,70 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     try (HttpInterface httpInterface = sourceManager.getInterface()) {
       try {
         Object userData = getUserData();
+        log.debug("Processing track {}, userData type: {}, userData value: {}", 
+            getIdentifier(), 
+            userData != null ? userData.getClass().getName() : "null",
+            userData != null ? userData.toString() : "null");
 
         if (userData != null) {
-          JsonBrowser jsonUserData = JsonBrowser.parse(userData.toString());
+          String userDataString = userData.toString();
+          log.debug("Attempting to parse userData as JSON: {}", userDataString);
+          
+          JsonBrowser jsonUserData = JsonBrowser.parse(userDataString);
 
           if (jsonUserData.get("oauth-token") != null) {
-            httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, jsonUserData.get("oauth-token").text());
+            String oauthToken = jsonUserData.get("oauth-token").text();
+            log.debug("Found oauth-token in userData, setting context attribute");
+            httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, oauthToken);
+          } else {
+            log.debug("No oauth-token found in userData JSON");
           }
         }
       } catch (IOException e) {
         log.debug("Failed to parse token from userData", e);
+      } catch (Exception e) {
+        log.debug("Unexpected error while processing userData: {}", e.getMessage(), e);
       }
 
       List<ClientException> exceptions = new ArrayList<>();
+      log.debug("Starting client iteration for track {}. Available clients: {}", 
+          getIdentifier(), 
+          Arrays.stream(clients)
+              .filter(Client::supportsFormatLoading)
+              .map(Client::getIdentifier)
+              .toArray(String[]::new));
 
       for (Client client : clients) {
         if (!client.supportsFormatLoading()) {
+          log.debug("Skipping client {} as it does not support format loading", client.getIdentifier());
           continue;
         }
 
+        log.debug("Attempting to load track {} with client {}", getIdentifier(), client.getIdentifier());
         httpInterface.getContext().setAttribute(Client.OAUTH_CLIENT_ATTRIBUTE, client.supportsOAuth());
+        log.debug("Client {} OAuth support: {}", client.getIdentifier(), client.supportsOAuth());
 
         try {
           processWithClient(localExecutor, httpInterface, client, 0);
+          log.debug("Successfully loaded track {} with client {}", getIdentifier(), client.getIdentifier());
           return;
         } catch (CannotBeLoaded e) {
+          log.debug("Client {} cannot load track {}: {}", client.getIdentifier(), getIdentifier(), e.getMessage(), e);
           throw e;
         } catch (Exception e) {
+          log.debug("Client {} failed to load track {}: {} (exception type: {})", 
+              client.getIdentifier(), 
+              getIdentifier(), 
+              e.getMessage(), 
+              e.getClass().getName(), 
+              e);
+          
           if (e instanceof ScriptExtractionException) {
             // If we're still early in playback, we can try another client
-            if (localExecutor.getPosition() >= BAD_STREAM_POSITION_THRESHOLD_MS) {
+            long position = localExecutor.getPosition();
+            log.debug("ScriptExtractionException at position {}ms (threshold: {}ms)", 
+                position, BAD_STREAM_POSITION_THRESHOLD_MS);
+            if (position >= BAD_STREAM_POSITION_THRESHOLD_MS) {
               throw e;
             }
           } else if ("Not success status code: 403".equals(e.getMessage()) ||
@@ -111,7 +145,10 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
             // As long as the executor position has not surpassed the threshold for which
             // a stream is considered unrecoverable, we can try to renew the playback URL with
             // another client.
-            if (localExecutor.getPosition() >= BAD_STREAM_POSITION_THRESHOLD_MS) {
+            long position = localExecutor.getPosition();
+            log.debug("HTTP error {} at position {}ms (threshold: {}ms)", 
+                e.getMessage(), position, BAD_STREAM_POSITION_THRESHOLD_MS);
+            if (position >= BAD_STREAM_POSITION_THRESHOLD_MS) {
               throw e;
             }
           }
@@ -120,6 +157,11 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
       }
 
       if (!exceptions.isEmpty()) {
+        log.warn("All clients failed to load track {}. Failed clients: {}", 
+            getIdentifier(),
+            exceptions.stream()
+                .map(e -> String.format("%s (%s)", e.getClient().getIdentifier(), e.getMessage()))
+                .toArray(String[]::new));
         throw new AllClientsFailedException(exceptions);
       }
     } catch (CannotBeLoaded e) {
@@ -131,16 +173,28 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
                                  HttpInterface httpInterface,
                                  Client client,
                                  long streamPosition) throws CannotBeLoaded, Exception {
+    log.debug("Loading best format for track {} with client {}", getIdentifier(), client.getIdentifier());
     FormatWithUrl augmentedFormat = loadBestFormatWithUrl(httpInterface, client);
-    log.debug("Starting track with URL from client {}: {}", client.getIdentifier(), augmentedFormat.signedUrl);
+    log.debug("Starting track {} with URL from client {}: {} (format: {}, contentLength: {})", 
+        getIdentifier(),
+        client.getIdentifier(), 
+        augmentedFormat.signedUrl,
+        augmentedFormat.format.getType(),
+        augmentedFormat.format.getContentLength());
 
     try {
       if (trackInfo.isStream || augmentedFormat.format.getContentLength() == CONTENT_LENGTH_UNKNOWN) {
+        log.debug("Processing track {} as stream (isStream: {}, contentLength: {})", 
+            getIdentifier(), trackInfo.isStream, augmentedFormat.format.getContentLength());
         processStream(localExecutor, httpInterface, augmentedFormat);
       } else {
+        log.debug("Processing track {} as static file (contentLength: {}, streamPosition: {})", 
+            getIdentifier(), augmentedFormat.format.getContentLength(), streamPosition);
         processStatic(localExecutor, httpInterface, augmentedFormat, streamPosition);
       }
     } catch (StreamExpiredException e) {
+      log.debug("Stream expired for track {} at position {}ms, retrying with same client", 
+          getIdentifier(), e.lastStreamPosition);
       processWithClient(localExecutor, httpInterface, client, e.lastStreamPosition);
     }
   }
@@ -152,20 +206,30 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     YoutubePersistentHttpStream stream = null;
 
     try {
+      log.debug("Creating persistent HTTP stream for track {} with URL: {}, contentLength: {}", 
+          getIdentifier(), augmentedFormat.signedUrl, augmentedFormat.format.getContentLength());
       stream = new YoutubePersistentHttpStream(httpInterface, augmentedFormat.signedUrl, augmentedFormat.format.getContentLength());
 
       if (streamPosition > 0) {
+        log.debug("Seeking to position {}ms for track {}", streamPosition, getIdentifier());
         stream.seek(streamPosition);
       }
 
-      if (augmentedFormat.format.getType().getMimeType().endsWith("/webm")) {
+      String mimeType = augmentedFormat.format.getType().getMimeType();
+      log.debug("Processing static track {} with mimeType: {}", getIdentifier(), mimeType);
+      if (mimeType.endsWith("/webm")) {
+        log.debug("Delegating to MatroskaAudioTrack for track {}", getIdentifier());
         processDelegate(new MatroskaAudioTrack(trackInfo, stream), localExecutor);
       } else {
+        log.debug("Delegating to MpegAudioTrack for track {}", getIdentifier());
         processDelegate(new MpegAudioTrack(trackInfo, stream), localExecutor);
       }
     } catch (RuntimeException e) {
+      log.debug("RuntimeException while processing static track {}: {}", getIdentifier(), e.getMessage(), e);
       if ("Not success status code: 403".equals(e.getMessage()) && augmentedFormat.isExpired() && stream != null) {
-        throw new StreamExpiredException(stream.getPosition(), e);
+        long position = stream.getPosition();
+        log.debug("Stream expired for track {} at position {}, throwing StreamExpiredException", getIdentifier(), position);
+        throw new StreamExpiredException(position, e);
       }
 
       throw e;
@@ -180,9 +244,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
                              HttpInterface httpInterface,
                              FormatWithUrl augmentedFormat) throws Exception {
     if (MIME_AUDIO_WEBM.equals(augmentedFormat.format.getType().getMimeType())) {
+      log.warn("Track {} requested WebM stream format which is not supported", getIdentifier());
       throw new FriendlyException("YouTube WebM streams are currently not supported.", Severity.COMMON, null);
     }
 
+    log.debug("Delegating stream processing for track {} to YoutubeMpegStreamAudioTrack with URL: {}", 
+        getIdentifier(), augmentedFormat.signedUrl);
     // TODO: Catch 403 and retry? Can't use position though because it's a livestream.
     processDelegate(new YoutubeMpegStreamAudioTrack(trackInfo, httpInterface, augmentedFormat.signedUrl), localExecutor);
   }
@@ -194,19 +261,37 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
       throw new RuntimeException(client.getIdentifier() + " does not support loading of formats!");
     }
 
+    log.debug("Requesting formats for track {} from client {}", getIdentifier(), client.getIdentifier());
     TrackFormats formats = client.loadFormats(sourceManager, httpInterface, getIdentifier());
 
     if (formats == null) {
+      log.debug("Client {} returned null formats for track {}", client.getIdentifier(), getIdentifier());
       throw new FriendlyException("This video cannot be played", Severity.SUSPICIOUS, null);
     }
 
+    log.debug("Client {} returned {} formats for track {}, player script URL: {}", 
+        client.getIdentifier(), 
+        formats.getFormats().size(),
+        getIdentifier(),
+        formats.getPlayerScriptUrl());
+
     StreamFormat format = formats.getBestFormat();
+    log.debug("Selected best format for track {}: itag={}, mimeType={}, bitrate={}, contentLength={}, url={}", 
+        getIdentifier(),
+        format.getItag(),
+        format.getType().getMimeType(),
+        format.getBitrate(),
+        format.getContentLength(),
+        format.getUrl());
 
     URI resolvedUrl = format.getUrl();
     if (client.requirePlayerScript()) {
+      log.debug("Client {} requires player script, resolving format URL with cipher manager", client.getIdentifier());
       resolvedUrl = sourceManager.getCipherManager()
               .resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), format);
+      log.debug("Resolved format URL after cipher: {}", resolvedUrl);
       resolvedUrl = client.transformPlaybackUri(format.getUrl(), resolvedUrl);
+      log.debug("Transformed playback URI: {}", resolvedUrl);
     }
 
     return new FormatWithUrl(format, resolvedUrl);

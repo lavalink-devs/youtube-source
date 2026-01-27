@@ -191,6 +191,9 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
     }
 
     private void processSegmentStream(SeekableInputStream stream, AudioProcessingContext context, TrackState state) throws InterruptedException, IOException {
+        log.debug("Processing segment stream for track {}, absoluteSequence: {}, relativeSequence: {}, isStream: {}", 
+            trackInfo.identifier, state.absoluteSequence, state.relativeSequence, trackInfo.isStream);
+        
         MpegFileLoader file = new MpegFileLoader(stream);
         file.parseHeaders();
 
@@ -201,18 +204,22 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
 
             if (sequenceInfo != null) {
                 state.absoluteSequence = sequenceInfo.sequence;
+                log.debug("Extracted sequence info: sequence={}, duration={}", sequenceInfo.sequence, sequenceInfo.duration);
             }
         }
 
         if (state.trackConsumer == null) {
+            log.debug("Loading audio track consumer for track {}", trackInfo.identifier);
             state.trackConsumer = loadAudioTrack(file, context);
         }
 
         MpegFileTrackProvider fileReader = file.loadReader(state.trackConsumer);
         if (fileReader == null) {
+            log.warn("Failed to load file reader for track {}, format may be unsupported", trackInfo.identifier);
             throw new FriendlyException("Unknown MP4 format.", SUSPICIOUS, null);
         }
 
+        log.debug("Providing frames for track {}", trackInfo.identifier);
         fileReader.provideFrames();
     }
 

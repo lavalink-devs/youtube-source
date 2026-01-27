@@ -32,22 +32,35 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
     public TrackFormats loadFormats(@NotNull YoutubeAudioSourceManager source,
                                     @NotNull HttpInterface httpInterface,
                                     @NotNull String videoId) throws CannotBeLoaded, IOException {
+        log.debug("Client {} loading formats for video {}", getIdentifier(), videoId);
         JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null, true);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
         CachedPlayerScript playerScript = source.getCipherManager().getCachedPlayerScript(httpInterface);
 
         boolean isLive = videoDetails.get("isLive").asBoolean(false);
+        log.debug("Client {} video {} isLive={}", getIdentifier(), videoId, isLive);
 
         if ("OK".equals(playabilityStatus.get("status").text()) && playabilityStatus.get("reason").safeText().contains("This live event has ended")) {
             // Long videos after ending of stream don't contain contentLength field as they
             // are still being processed by YouTube.
+            log.debug("Client {} detected ended live event for video {}", getIdentifier(), videoId);
             isLive = true;
         }
 
         JsonBrowser streamingData = json.get("streamingData");
+        if (streamingData.isNull()) {
+            log.warn("Client {} received null streamingData for video {}, full JSON: {}", 
+                getIdentifier(), videoId, json.format());
+        }
         JsonBrowser mergedFormats = streamingData.get("formats");
         JsonBrowser adaptiveFormats = streamingData.get("adaptiveFormats");
+        
+        log.debug("Client {} found {} merged formats and {} adaptive formats for video {}", 
+            getIdentifier(),
+            mergedFormats.isNull() ? 0 : mergedFormats.values().size(),
+            adaptiveFormats.isNull() ? 0 : adaptiveFormats.values().size(),
+            videoId);
 
         List<StreamFormat> formats = new ArrayList<>();
         boolean anyFailures = false;
@@ -65,9 +78,12 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
         }
 
         if (formats.isEmpty() && anyFailures) {
-            log.warn("Loading formats either failed to load or were skipped due to missing fields, json: {}", streamingData.format());
+            log.warn("Client {} loading formats either failed to load or were skipped due to missing fields for video {}, json: {}", 
+                getIdentifier(), videoId, streamingData.format());
         }
 
+        log.debug("Client {} successfully extracted {} formats for video {}", 
+            getIdentifier(), formats.size(), videoId);
         return new TrackFormats(formats, playerScript.url);
     }
 
@@ -86,7 +102,9 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
             : Collections.emptyMap();
 
         if (DataFormatTools.isNullOrEmpty(url) && DataFormatTools.isNullOrEmpty(cipherInfo.get("url"))) {
-            log.debug("Client '{}' is missing format URL for itag '{}'. SABR response?", getIdentifier(), formatJson.get("itag").text());
+            String itag = formatJson.get("itag").text();
+            log.debug("Client '{}' is missing format URL for itag '{}'. SABR response? Format JSON: {}", 
+                getIdentifier(), itag, formatJson.format());
             return false;
         }
 

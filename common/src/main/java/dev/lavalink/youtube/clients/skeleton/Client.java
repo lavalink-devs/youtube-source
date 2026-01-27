@@ -46,24 +46,31 @@ public interface Client {
     default PlayabilityStatus getPlayabilityStatus(@NotNull JsonBrowser playabilityStatus,
                                                    boolean throwOnNotOk) throws CannotBeLoaded {
         String status = playabilityStatus.get("status").text();
+        String reason = playabilityStatus.get("reason").safeText();
 
         if (playabilityStatus.isNull() || status == null) {
             throw new RuntimeException("No playability status block.");
         }
 
+        org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Client.class);
+        log.debug("Playability status check: status={}, reason={}, throwOnNotOk={}", status, reason, throwOnNotOk);
+
         switch (status) {
             case "OK":
+                log.debug("Playability status OK");
                 return PlayabilityStatus.OK;
             case "ERROR":
-                String reason = playabilityStatus.get("reason").text();
+                String errorReason = playabilityStatus.get("reason").text();
+                log.debug("Playability status ERROR: {}", errorReason);
 
-//                if (reason.contains("This video is unavailable")) {
-//                    throw new CannotBeLoaded(new FriendlyException(reason, COMMON, null));
+//                if (errorReason.contains("This video is unavailable")) {
+//                    throw new CannotBeLoaded(new FriendlyException(errorReason, COMMON, null));
 //                }
 
-                throw new FriendlyException(reason, COMMON, null);
+                throw new FriendlyException(errorReason, COMMON, null);
             case "UNPLAYABLE":
                 String unplayableReason = getUnplayableReason(playabilityStatus);
+                log.debug("Playability status UNPLAYABLE: {}", unplayableReason);
 
                 if (unplayableReason == null) {
                     // We should have a reason so this is suspicious.
@@ -71,12 +78,14 @@ public interface Client {
                 }
 
                 if (unplayableReason.contains("Playback on other websites has been disabled by the video owner") && !throwOnNotOk) {
+                    log.debug("Video is non-embeddable, returning NON_EMBEDDABLE status");
                     return PlayabilityStatus.NON_EMBEDDABLE;
                 }
 
                 throw new FriendlyException(unplayableReason, COMMON, null);
             case "LOGIN_REQUIRED":
                 String loginReason = playabilityStatus.get("reason").safeText();
+                log.debug("Playability status LOGIN_REQUIRED: {}", loginReason);
 
                 if (loginReason.contains("This video is private")) {
                     throw new CannotBeLoaded(new FriendlyException("This is a private video.", COMMON, null));
