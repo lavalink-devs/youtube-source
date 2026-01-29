@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 public class TvHtml5Embedded extends StreamingNonMusicClient {
+    private static final Logger log = LoggerFactory.getLogger(TvHtml5Embedded.class);
     public static ClientConfig BASE_CONFIG = new ClientConfig()
         .withClientName("TVHTML5_SIMPLY_EMBEDDED_PLAYER")
         .withClientField("clientVersion", "2.0")
