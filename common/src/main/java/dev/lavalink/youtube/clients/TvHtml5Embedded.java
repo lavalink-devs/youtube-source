@@ -31,6 +31,12 @@ public class TvHtml5Embedded extends StreamingNonMusicClient {
         this.options = options;
     }
 
+    protected TvHtml5Embedded(@NotNull ClientOptions options, boolean logWarning) {
+    this.options = options;
+    if (logWarning)
+      log.warn("TvHtml5Embedded is broken with no known fix."); 
+    }
+
     @Override
     @NotNull
     protected ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
