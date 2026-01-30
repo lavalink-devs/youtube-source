@@ -195,6 +195,7 @@ Currently, the following clients are available for use:
 | `ANDROID_VR`      | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix |                                                      |
 | `IOS`             | No           | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix |                                                      |
 | `TV`              | Yes          | Yes   | With OAuth              | Yes + Livestream | None                         | Playback requires sign-in                            |
+| `TVHTML5EMBEDDED` | No          | Yes   | With OAuth              | No | Video, Search, Mix           | Playback no longer works, loading does.                             |
 
 > [!NOTE]
 > Clients that do not return Opus formats will require transcoding.
