@@ -18,7 +18,8 @@ public class ClientProviderV3 implements ClientProvider {
         TV(Tv::new),
         WEB(Web::new),
         WEBEMBEDDED(WebEmbedded::new),
-        MWEB(MWeb::new);
+        MWEB(MWeb::new),
+        TVHTML5_SIMPLY(TvHtml5Simply::new);
 
         private final ClientWithOptions<Client> clientFactory;
 
