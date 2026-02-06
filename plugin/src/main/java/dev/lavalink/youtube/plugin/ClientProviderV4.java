@@ -18,7 +18,8 @@ public class ClientProviderV4 implements ClientProvider {
         TV(Tv::new), // This has no WithThumbnail companion as it's a playback-only client.
         WEB(WebWithThumbnail::new),
         WEBEMBEDDED(WebEmbeddedWithThumbnail::new),
-        MWEB(MWebWithThumbnail::new);
+        MWEB(MWebWithThumbnail::new),
+        TVHTML5_SIMPLY(TvHtml5SimplyWithThumbnail::new);
 
         private final ClientWithOptions<Client> clientFactory;
 
