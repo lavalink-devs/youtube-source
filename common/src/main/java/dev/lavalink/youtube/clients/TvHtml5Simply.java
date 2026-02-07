@@ -1,15 +1,16 @@
 package dev.lavalink.youtube.clients;
 
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity;
+import com.sedmelluq.discord.lavaplayer.tools.*;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
-import com.sedmelluq.discord.lavaplayer.track.AudioItem;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class TvHtml5Simply extends StreamingNonMusicClient {
+    
     public static ClientConfig BASE_CONFIG = new ClientConfig()
             .withClientName("TVHTML5_SIMPLY")
             .withClientField("clientVersion", "1.0")
@@ -45,7 +46,7 @@ public class TvHtml5Simply extends StreamingNonMusicClient {
 
     @Override
     public boolean canHandleRequest(@NotNull String identifier) {
-        return !identifier.contains("list=") && super.canHandleRequest(identifier);
+        return super.canHandleRequest(identifier);
     }
 
     @Override
@@ -60,18 +61,82 @@ public class TvHtml5Simply extends StreamingNonMusicClient {
     }
 
     @Override
-    public AudioItem loadPlaylist(@NotNull YoutubeAudioSourceManager source,
-            @NotNull HttpInterface httpInterface,
-            @NotNull String playlistId,
-            @Nullable String selectedVideoId) {
-        throw new FriendlyException("This client cannot load playlists", Severity.COMMON,
-                new RuntimeException("TVHTML5_SIMPLY cannot be used to load playlists"));
+    @NotNull
+    protected JsonBrowser extractPlaylistVideoList(@NotNull JsonBrowser json) {
+        return json.get("contents")
+                .get("sectionListRenderer")
+                .get("contents")
+                .index(0)
+                .get("playlistVideoListRenderer");
     }
 
     @Override
-    public AudioItem loadMix(@NotNull YoutubeAudioSourceManager source, @NotNull HttpInterface httpInterface,
-            @NotNull String mixId, @Nullable String selectedVideoId) {
-        throw new FriendlyException("This client cannot load mixes", Severity.COMMON,
-                new RuntimeException("TVHTML5_SIMPLY cannot be used to load mixes"));
+    protected String extractPlaylistName(@NotNull JsonBrowser json) {
+        return json.get("header")
+                .get("playlistHeaderRenderer")
+                .get("title")
+                .get("runs")
+                .index(0)
+                .get("text")
+                .text();
+    }
+
+    @Override
+    protected void extractPlaylistTracks(@NotNull JsonBrowser json,
+            @NotNull List<AudioTrack> tracks,
+            @NotNull YoutubeAudioSourceManager source) {
+        if (!json.get("contents").isNull()) {
+            json = json.get("contents");
+        }
+
+        if (json.isNull()) {
+            return;
+        }
+
+        for (JsonBrowser track : json.values()) {
+            JsonBrowser item = track.get("videoRenderer");
+
+            if (item.isNull()) {
+                continue;
+            }
+
+            JsonBrowser authorJson = item.get("shortBylineText");
+            if (authorJson.isNull()) {
+                authorJson = item.get("longBylineText");
+            }
+
+            // author is null -> video is region blocked
+            if (!authorJson.isNull()) {
+                String videoId = item.get("videoId").text();
+
+                if (videoId == null) {
+                    continue;
+                }
+
+                JsonBrowser titleField = item.get("title");
+                String title = DataFormatTools.defaultOnNull(
+                        titleField.get("simpleText").text(),
+                        titleField.get("runs").index(0).get("text").text());
+
+                String author = DataFormatTools.defaultOnNull(
+                        authorJson.get("runs").index(0).get("text").text(),
+                        "Unknown artist");
+
+                long duration = Units.DURATION_MS_UNKNOWN;
+                JsonBrowser lengthJson = item.get("lengthText");
+
+                if (!lengthJson.isNull()) {
+                    String lengthText = DataFormatTools.defaultOnNull(
+                            lengthJson.get("runs").index(0).get("text").text(),
+                            lengthJson.get("simpleText").text());
+
+                    if (lengthText != null) {
+                        duration = DataFormatTools.durationTextToMillis(lengthText);
+                    }
+                }
+
+                tracks.add(buildAudioTrack(source, item, title, author, duration, videoId, false));
+            }
+        }
     }
 }
