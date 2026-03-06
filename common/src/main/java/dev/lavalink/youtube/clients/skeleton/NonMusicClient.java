@@ -74,7 +74,7 @@ public abstract class NonMusicClient implements Client {
             //       from my testing, json is always returned so might not be necessary.
             HttpClientTools.assertJsonContentType(response);
 
-            String json = EntityUtils.toString(response.getEntity());
+            String json = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             log.trace("Response from {} ({}) {}", request.getURI(), context, json);
 
             return JsonBrowser.parse(json);
@@ -209,7 +209,7 @@ public abstract class NonMusicClient implements Client {
             request.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
             HttpResponse response = httpClient.execute(request);
-            String html = EntityUtils.toString(response.getEntity());
+            String html = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
 
             Pattern pattern = Pattern.compile("\"encryptedHostFlags\":\"([^\"]+)\"");
             Matcher matcher = pattern.matcher(html);

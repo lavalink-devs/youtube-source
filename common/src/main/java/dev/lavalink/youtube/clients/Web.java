@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +71,7 @@ public class Web extends StreamingNonMusicClient {
             HttpClientTools.assertSuccessWithContent(response, "client config fetch");
             lastConfigUpdate = System.currentTimeMillis();
 
-            String page = EntityUtils.toString(response.getEntity());
+            String page = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             Matcher m = CONFIG_REGEX.matcher(page);
 
             if (!m.find()) {

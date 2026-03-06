@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,7 +42,7 @@ public interface CipherManager {
             try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com/embed/"))) {
                 HttpClientTools.assertSuccessWithContent(response, "fetch player script (embed)");
 
-                String responseText = EntityUtils.toString(response.getEntity());
+                String responseText = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
                 String scriptUrl = DataFormatTools.extractBetween(responseText, "\"jsUrl\":\"", "\"");
 
                 if (scriptUrl == null) {

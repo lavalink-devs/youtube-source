@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -229,7 +230,7 @@ public class CipherManagerTest {
      */
     private String fetchCurrentPlayerScriptUrl(HttpInterface httpInterface) throws IOException {
         try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com/embed/"))) {
-            String responseText = EntityUtils.toString(response.getEntity());
+            String responseText = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             
             // Extract the jsUrl from the response
             Pattern jsUrlPattern = Pattern.compile("\"jsUrl\":\"([^\"]+)\"");

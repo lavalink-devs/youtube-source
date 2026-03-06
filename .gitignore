@@ -30,6 +30,7 @@ replay_pid*
 */build/*
 build
 .vscode/*
+.cursor/*
 
 application.yml
 playerconfigs/*
