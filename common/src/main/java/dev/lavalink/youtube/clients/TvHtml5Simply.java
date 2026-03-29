@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class TvHtml5Simply extends StreamingNonMusicClient {
-    
+
     public static ClientConfig BASE_CONFIG = new ClientConfig()
             .withClientName("TVHTML5_SIMPLY")
             .withClientField("clientVersion", "1.0")
@@ -46,7 +46,7 @@ public class TvHtml5Simply extends StreamingNonMusicClient {
 
     @Override
     public boolean canHandleRequest(@NotNull String identifier) {
-        return super.canHandleRequest(identifier);
+        return !identifier.contains("list=") && super.canHandleRequest(identifier);
     }
 
     @Override
