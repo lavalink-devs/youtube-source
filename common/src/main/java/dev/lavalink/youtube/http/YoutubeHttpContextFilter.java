@@ -105,7 +105,9 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
         context.removeAttribute(ATTRIBUTE_USER_AGENT_SPECIFIED);
       }
 
-      boolean isRequestFromOauthedClient = context.removeAttribute(Client.OAUTH_CLIENT_ATTRIBUTE) == Boolean.TRUE;
+      // fix: getAttribute is needed over removeAttribute as this renders subsequent requests where oauth is
+      //      required useless, because the attribute has already been removed.
+      boolean isRequestFromOauthedClient = context.getAttribute(Client.OAUTH_CLIENT_ATTRIBUTE) == Boolean.TRUE;
 
       if (isRequestFromOauthedClient && Client.PLAYER_URL.equals(request.getURI().toString())) {
         // Look at the userdata for any provided oauth-token
@@ -116,6 +118,12 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
         } else {
           oauth2Handler.applyToken(request);
         }
+
+        // complements above fix, ensure we consume this attribute when we use it to ensure it doesn't leak
+        // over into requests from non-oauth clients. This might be a dirty fix because this is assuming the
+        // context this attribute is attached, always hits the player endpoint once. May need to revise this
+        // in the future.
+        context.removeAttribute(Client.OAUTH_CLIENT_ATTRIBUTE);
       }
     }
 
