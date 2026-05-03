@@ -12,9 +12,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
-import dev.lavalink.youtube.CannotBeLoaded;
-import dev.lavalink.youtube.AllClientsFailedException;
-import dev.lavalink.youtube.ClientInformation;
 import dev.lavalink.youtube.*;
 import dev.lavalink.youtube.UrlTools.UrlInfo;
 import dev.lavalink.youtube.cipher.ScriptExtractionException;
@@ -78,7 +75,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
         if (userData != null) {
           JsonBrowser jsonUserData = JsonBrowser.parse(userData.toString());
 
-          if (jsonUserData.get("oauth-token") != null) {
+          if (!jsonUserData.get("oauth-token").isNull()) {
             httpInterface.getContext().setAttribute(OAUTH_INJECT_CONTEXT_ATTRIBUTE, jsonUserData.get("oauth-token").text());
           }
         }
