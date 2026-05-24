@@ -224,6 +224,38 @@ public abstract class NonMusicClient implements Client {
         return null;
     }
 
+    /**
+     * Fetches title and author from the public YouTube oEmbed endpoint.
+     * This works for any public video (including login-required content and live streams)
+     * without requiring authentication. Used as a last-resort fallback when the InnerTube
+     * player response omits videoDetails.title / videoDetails.author (e.g. TVHTML5+OAuth).
+     *
+     * @param videoId the YouTube video ID
+     * @return a JsonBrowser containing "title" and "author_name", or null on failure
+     */
+    @Nullable
+    protected JsonBrowser fetchOEmbed(@NotNull String videoId) {
+        String url = "https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D" + videoId + "&format=json";
+
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(url);
+
+            try (CloseableHttpResponse response = httpClient.execute(request)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+
+                if (statusCode != 200) {
+                    log.debug("oEmbed returned status {} for videoId {}", statusCode, videoId);
+                    return null;
+                }
+
+                return JsonBrowser.parse(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            log.debug("oEmbed request failed for videoId {}", videoId, e);
+            return null;
+        }
+    }
+
     @NotNull
     protected JsonBrowser loadSearchResults(@NotNull HttpInterface httpInterface,
                                             @NotNull String searchQuery) {
@@ -433,11 +465,60 @@ public abstract class NonMusicClient implements Client {
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
 
-        String title = videoDetails.get("title").text();
+        // videoDetails.title is a plain string for most clients/content, but TVHTML5 + OAuth
+        // responses for login-required content omit it entirely from videoDetails.
+        // Try the field itself in all known formats, then fall back to both known microformat
+        // renderers. TVHTML5 uses playerMicroformatRenderer; web clients use microformatDataRenderer.
+        JsonBrowser titleNode = videoDetails.get("title");
+        String title = DataFormatTools.defaultOnNull(
+            titleNode.text(),
+            DataFormatTools.defaultOnNull(
+                titleNode.get("simpleText").text(),
+                titleNode.get("runs").index(0).get("text").text()
+            )
+        );
+
+        if (title == null) {
+            // TV-client responses (TVHTML5) use playerMicroformatRenderer.title.simpleText
+            title = json.get("microformat").get("playerMicroformatRenderer").get("title").get("simpleText").text();
+        }
+        if (title == null) {
+            // Web-client responses use microformatDataRenderer.title (plain string)
+            title = json.get("microformat").get("microformatDataRenderer").get("title").text();
+        }
+        // author: same pattern — plain string in videoDetails for most clients;
+        // TVHTML5 exposes it as playerMicroformatRenderer.ownerChannelName.
         String author = videoDetails.get("author").text();
 
         if (author == null) {
-            log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
+            author = json.get("microformat").get("playerMicroformatRenderer").get("ownerChannelName").text();
+        }
+        if (author == null) {
+            author = json.get("microformat").get("microformatDataRenderer").get("pageOwnerDetails").get("name").text();
+        }
+
+        // If title or author is still missing (e.g. TVHTML5+OAuth omits them for login-required
+        // content), fall back to the public oEmbed endpoint which works for any public video.
+        if (title == null || author == null) {
+            JsonBrowser oEmbed = fetchOEmbed(videoId);
+            if (oEmbed != null) {
+                if (title == null) {
+                    title = oEmbed.get("title").text();
+                }
+                if (author == null) {
+                    author = oEmbed.get("author_name").text();
+                }
+            }
+        }
+
+        if (title == null) {
+            log.warn("Could not extract title for client {}, videoId {}. microformat: {}",
+                getIdentifier(), videoId, json.get("microformat").format());
+            title = "Unknown title";
+        }
+        if (author == null) {
+            log.warn("Could not extract author for client {}, videoId {}. microformat: {}",
+                getIdentifier(), videoId, json.get("microformat").format());
             author = "Unknown artist";
         }
 
