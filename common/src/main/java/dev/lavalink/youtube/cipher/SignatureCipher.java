@@ -21,6 +21,19 @@ public class SignatureCipher {
     public final String nFunction;
     public final String rawScript;
 
+    public final String bName;
+    public final int cTArg1;
+    public final int cTArg2;
+    public final int bArg3;
+    public final int bArg4;
+    public final String MZName;
+    public final int nsigArg1;
+    public final int nsigArg2;
+    public final boolean isModern;
+
+    private transient volatile ScriptEngine cachedEngine;
+    private transient final Object engineLock = new Object();
+
     public SignatureCipher(@NotNull String timestamp,
                            @NotNull String globalVars,
                            @NotNull String sigActions,
@@ -33,6 +46,65 @@ public class SignatureCipher {
         this.sigFunction = sigFunction;
         this.nFunction = nFunction;
         this.rawScript = rawScript;
+        this.bName = null;
+        this.cTArg1 = 0;
+        this.cTArg2 = 0;
+        this.bArg3 = 0;
+        this.bArg4 = 0;
+        this.MZName = null;
+        this.nsigArg1 = 0;
+        this.nsigArg2 = 0;
+        this.isModern = false;
+    }
+
+    public SignatureCipher(@NotNull String timestamp,
+                           @NotNull String sigFunction, // cTName
+                           @NotNull String bName,
+                           int cTArg1,
+                           int cTArg2,
+                           int bArg3,
+                           int bArg4,
+                           @NotNull String MZName,
+                           int nsigArg1,
+                           int nsigArg2,
+                           @NotNull String rawScript) {
+        this.timestamp = timestamp;
+        this.globalVars = "";
+        this.sigActions = "";
+        this.sigFunction = sigFunction;
+        this.nFunction = "";
+        this.rawScript = rawScript;
+        this.bName = bName;
+        this.cTArg1 = cTArg1;
+        this.cTArg2 = cTArg2;
+        this.bArg3 = bArg3;
+        this.bArg4 = bArg4;
+        this.MZName = MZName;
+        this.nsigArg1 = nsigArg1;
+        this.nsigArg2 = nsigArg2;
+        this.isModern = true;
+    }
+
+    private ScriptEngine getOrCreateEngine() throws ScriptException {
+        if (cachedEngine == null) {
+            synchronized (engineLock) {
+                if (cachedEngine == null) {
+                    ScriptEngine engine = new org.mozilla.javascript.engine.RhinoScriptEngineFactory().getScriptEngine();
+                    engine.eval("var _yt_player = {};");
+                    engine.eval("var location = { href: 'https://www.youtube.com', hostname: 'www.youtube.com', protocol: 'https:', pathname: '/', search: '', hash: '', assign: function() {}, replace: function() {} };");
+                    engine.eval("var document = { visibilityState: 'visible', addEventListener: function() {}, removeEventListener: function() {}, createElement: function() { return { style: {}, addEventListener: function() {} }; }, documentElement: { style: {} }, location: location, body: { appendChild: function() {}, removeChild: function() {} } };");
+                    engine.eval("var navigator = { userAgent: 'Mozilla/5.0' };");
+                    engine.eval("var window = this; var self = this; var parent = this; var top = this;");
+                    engine.eval("var XMLHttpRequest = function() { this.open = function() {}; this.send = function() {}; this.setRequestHeader = function() {}; };");
+                    engine.eval("var setTimeout = function() {}; var clearTimeout = function() {}; var setInterval = function() {}; var clearInterval = function() {};");
+                    engine.eval(rawScript);
+                    engine.eval("function decrypt_sig(sig) { return _yt_player." + sigFunction + "(" + cTArg1 + ", " + cTArg2 + ", _yt_player." + bName + "(" + bArg3 + ", " + bArg4 + ", sig)); }");
+                    engine.eval("function decrypt_nsig(nsig) { return _yt_player." + MZName + "(" + nsigArg1 + ", " + nsigArg2 + ", nsig); }");
+                    cachedEngine = engine;
+                }
+            }
+        }
+        return cachedEngine;
     }
 
     /**
@@ -41,11 +113,17 @@ public class SignatureCipher {
      */
     public String apply(@NotNull String text,
                         @NotNull ScriptEngine scriptEngine) throws ScriptException, NoSuchMethodException {
-        String transformed;
-
-        scriptEngine.eval(globalVars + ";" + sigActions + ";decrypt_sig=" + sigFunction);
-        transformed = (String) ((Invocable) scriptEngine).invokeFunction("decrypt_sig", text);
-        return transformed;
+        if (isModern) {
+            ScriptEngine engine = getOrCreateEngine();
+            synchronized (engine) {
+                return (String) ((Invocable) engine).invokeFunction("decrypt_sig", text);
+            }
+        } else {
+            synchronized (scriptEngine) {
+                scriptEngine.eval(globalVars + ";" + sigActions + ";decrypt_sig=" + sigFunction);
+                return (String) ((Invocable) scriptEngine).invokeFunction("decrypt_sig", text);
+            }
+        }
     }
 
 //  /**
@@ -85,12 +163,17 @@ public class SignatureCipher {
      */
     public String transform(@NotNull String text, @NotNull ScriptEngine scriptEngine)
         throws ScriptException, NoSuchMethodException {
-        String transformed;
-
-        scriptEngine.eval(globalVars + ";decrypt_nsig=" + nFunction);
-        transformed = (String) ((Invocable) scriptEngine).invokeFunction("decrypt_nsig", text);
-
-        return transformed;
+        if (isModern) {
+            ScriptEngine engine = getOrCreateEngine();
+            synchronized (engine) {
+                return (String) ((Invocable) engine).invokeFunction("decrypt_nsig", text);
+            }
+        } else {
+            synchronized (scriptEngine) {
+                scriptEngine.eval(globalVars + ";decrypt_nsig=" + nFunction);
+                return (String) ((Invocable) scriptEngine).invokeFunction("decrypt_nsig", text);
+            }
+        }
     }
 
 //  /**

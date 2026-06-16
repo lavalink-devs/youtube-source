@@ -89,6 +89,10 @@ public class LocalSignatureCipherManager implements CipherManager {
             "\\s*return\\s*\\2\\[" + VARIABLE_PART + "\\[\\d+\\]\\]\\(" + VARIABLE_PART + "\\[\\d+\\]\\)};",
         Pattern.DOTALL);
 
+    private static final Pattern MODERN_DECIPHER_CALL_PATTERN = Pattern.compile(
+        "([a-zA-Z0-9_\\$]+)\\((\\d+),(\\d+),([a-zA-Z0-9_\\$]+)\\((\\d+),(\\d+),[a-zA-Z0-9_\\$]+\\.s\\)\\)"
+    );
+
     private final ConcurrentMap<String, SignatureCipher> cipherCache;
     private final Set<String> dumpedScriptUrls;
     private final ScriptEngine scriptEngine;
@@ -283,6 +287,12 @@ public class LocalSignatureCipherManager implements CipherManager {
     private SignatureCipher extractFromScript(@NotNull String script, @NotNull String sourceUrl) {
         String timestamp = getScriptTimestamp(null, script, sourceUrl);
 
+        try {
+            return extractModernPlayer(script, timestamp, sourceUrl);
+        } catch (Exception e) {
+            log.debug("Modern player extraction failed, falling back to legacy: {}", e.getMessage());
+        }
+
         Matcher globalVarsMatcher = GLOBAL_VARS_PATTERN.matcher(script);
 
         if (!globalVarsMatcher.find()) {
@@ -317,6 +327,206 @@ public class LocalSignatureCipherManager implements CipherManager {
         nFunction = nFunction.replaceAll("if\\s*\\(typeof\\s*[^\\s()]+\\s*===?.*?\\)return " + nfParameterName + "\\s*;?", "");
 
         return new SignatureCipher(timestamp, globalVars, sigActions, sigFunction, nFunction, script);
+    }
+
+    private SignatureCipher extractModernPlayer(@NotNull String script, @NotNull String timestamp, @NotNull String sourceUrl) {
+        Matcher decipherCallMatcher = MODERN_DECIPHER_CALL_PATTERN.matcher(script);
+        if (!decipherCallMatcher.find()) {
+            throw new RuntimeException("Modern decipher call site not found");
+        }
+        String cTName = decipherCallMatcher.group(1);
+        int cTArg1 = Integer.parseInt(decipherCallMatcher.group(2));
+        int cTArg2 = Integer.parseInt(decipherCallMatcher.group(3));
+        String bName = decipherCallMatcher.group(4);
+        int bArg3 = Integer.parseInt(decipherCallMatcher.group(5));
+        int bArg4 = Integer.parseInt(decipherCallMatcher.group(6));
+
+        // Locate try-catch block start in script
+        int tryStart = script.indexOf("try{try{");
+        if (tryStart == -1) {
+            tryStart = script.indexOf("try { try {");
+        }
+        if (tryStart == -1) {
+            throw new RuntimeException("Failed to locate try-catch block start in script");
+        }
+
+        // Find wrapper function name using backward search from tryStart
+        int funcIdx = script.lastIndexOf("=function(", tryStart);
+        if (funcIdx == -1) {
+            throw new RuntimeException("Failed to find wrapper function definition start");
+        }
+        int nameStart = script.lastIndexOf("\n", funcIdx);
+        if (nameStart == -1) {
+            nameStart = 0;
+        }
+        String wrapperDef = script.substring(nameStart, funcIdx);
+        Matcher wrapperNameMatcher = Pattern.compile("\\b([a-zA-Z0-9_\\$]+)\\s*$").matcher(wrapperDef);
+        if (!wrapperNameMatcher.find()) {
+            throw new RuntimeException("Failed to parse wrapper function name");
+        }
+        String wrapperName = wrapperNameMatcher.group(1);
+
+        // Extract wrapper function bounds
+        int wrapperFuncStart = script.indexOf(wrapperName + "=function(");
+        if (wrapperFuncStart == -1) {
+            throw new RuntimeException("Failed to find wrapper function definition start index");
+        }
+        int wrapperFuncEnd = script.indexOf("};", wrapperFuncStart);
+        if (wrapperFuncEnd == -1) {
+            wrapperFuncEnd = wrapperFuncStart + 8000;
+        } else {
+            wrapperFuncEnd += 2;
+        }
+        String wrapperFuncBody = script.substring(wrapperFuncStart, Math.min(script.length(), wrapperFuncEnd));
+
+        // Find helper function name inside wrapper function
+        Pattern tryPatternNested = Pattern.compile("try\\s*\\{\\s*try\\s*\\{\\s*(?:var|let|const)?\\s*[a-zA-Z0-9_\\$]+[=\\s]+([a-zA-Z0-9_\\$]+)\\(");
+        Matcher tryMatcher = tryPatternNested.matcher(wrapperFuncBody);
+        String firstFuncName;
+        if (tryMatcher.find()) {
+            firstFuncName = tryMatcher.group(1);
+        } else {
+            Pattern tryPatternSimple = Pattern.compile("try\\s*\\{\\s*(?:var|let|const)?\\s*[a-zA-Z0-9_\\$]+[=\\s]+([a-zA-Z0-9_\\$]+)\\(");
+            tryMatcher = tryPatternSimple.matcher(wrapperFuncBody);
+            if (tryMatcher.find()) {
+                firstFuncName = tryMatcher.group(1);
+            } else {
+                throw new RuntimeException("Failed to find helper function inside wrapper function");
+            }
+        }
+
+        // Find all calls to wrapper function
+        Pattern callerPattern = Pattern.compile(Pattern.quote(wrapperName) + "\\(([a-zA-Z0-9_\\$]+)\\^(\\d+),\\1\\^(\\d+),");
+        Matcher callerMatcher = callerPattern.matcher(script);
+
+        int constMZ1 = 0;
+        int constMZ2 = 0;
+        int constRecur1 = 0;
+        int constRecur2 = 0;
+        String gCName = null;
+
+        while (callerMatcher.find()) {
+            int pos = callerMatcher.start();
+            int c1 = Integer.parseInt(callerMatcher.group(2));
+            int c2 = Integer.parseInt(callerMatcher.group(3));
+            if (pos >= wrapperFuncStart && pos <= wrapperFuncEnd) {
+                constRecur1 = c1;
+                constRecur2 = c2;
+            } else {
+                int enclFuncIdx = script.lastIndexOf("=function(", pos);
+                if (enclFuncIdx != -1) {
+                    int enclNameStart = script.lastIndexOf("\n", enclFuncIdx);
+                    if (enclNameStart == -1) {
+                        enclNameStart = 0;
+                    }
+                    String enclDef = script.substring(enclNameStart, enclFuncIdx);
+                    Matcher enclMatcher = Pattern.compile("\\b([a-zA-Z0-9_\\$]+)\\s*$").matcher(enclDef);
+                    if (enclMatcher.find()) {
+                        String enclName = enclMatcher.group(1);
+                        if (!enclName.equals(firstFuncName)) {
+                            gCName = enclName;
+                            constMZ1 = c1;
+                            constMZ2 = c2;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Extract nsig trigger call
+        int nsigV = 0;
+        int nsigW = 0;
+        int firstFuncStart = script.indexOf(firstFuncName + "=function(");
+        String firstFuncBody = "";
+        if (firstFuncStart != -1) {
+            firstFuncBody = script.substring(firstFuncStart, Math.min(script.length(), firstFuncStart + 4000));
+        }
+        Pattern nsigPattern = Pattern.compile(Pattern.quote(bName) + "\\((\\d+),(\\d+),");
+        Matcher trigMatcher = nsigPattern.matcher(firstFuncBody);
+        if (trigMatcher.find()) {
+            nsigV = Integer.parseInt(trigMatcher.group(1));
+            nsigW = Integer.parseInt(trigMatcher.group(2));
+        } else {
+            int decipherPos = decipherCallMatcher.start();
+            int windowStart = Math.max(0, decipherPos - 1000);
+            int windowEnd = Math.min(script.length(), decipherPos + 1000);
+            String windowText = script.substring(windowStart, windowEnd);
+            Matcher windowMatcher = nsigPattern.matcher(windowText);
+            while (windowMatcher.find()) {
+                int vVal = Integer.parseInt(windowMatcher.group(1));
+                int wVal = Integer.parseInt(windowMatcher.group(2));
+                if (vVal != bArg3 || wVal != bArg4) {
+                    nsigV = vVal;
+                    nsigW = wVal;
+                    break;
+                }
+            }
+        }
+
+        // Extract legacy constants (const_wC and const_gC)
+        Pattern wCDefPattern = Pattern.compile("([a-zA-Z0-9_\\$]+)=function\\(([a-zA-Z0-9_\\$]+),[a-zA-Z0-9_\\$]+,[a-zA-Z0-9_\\$]+,[a-zA-Z0-9_\\$]+\\)\\{var\\s+[a-zA-Z0-9_\\$]+=[a-zA-Z0-9_\\$]+\\^[a-zA-Z0-9_\\$]+;if\\(\\(\\2-\\d+\\^\\d+\\)<\\2");
+        Matcher wCMatcher = wCDefPattern.matcher(script);
+        int constWC = 0;
+        int constGC = 0;
+        if (wCMatcher.find()) {
+            String wCName = wCMatcher.group(1);
+            int bDefStart = script.indexOf(bName + "=function(");
+            if (bDefStart != -1) {
+                String bBody = script.substring(bDefStart, Math.min(script.length(), bDefStart + 4000));
+                Matcher constWCMatcher = Pattern.compile(Pattern.quote(wCName) + "\\((?:2|\\d+),[a-zA-Z0-9_\\$]+\\^(\\d+),").matcher(bBody);
+                if (constWCMatcher.find()) {
+                    constWC = Integer.parseInt(constWCMatcher.group(1));
+                }
+            }
+            if (gCName != null) {
+                int wCDefStart = script.indexOf(wCName + "=function(");
+                if (wCDefStart != -1) {
+                    String wCBody = script.substring(wCDefStart, Math.min(script.length(), wCDefStart + 4000));
+                    Matcher constGCMatcher = Pattern.compile(Pattern.quote(gCName) + "\\((?:2|\\d+),[a-zA-Z0-9_\\$]+\\^(\\d+),").matcher(wCBody);
+                    if (constGCMatcher.find()) {
+                        constGC = Integer.parseInt(constGCMatcher.group(1));
+                    }
+                }
+            }
+        }
+
+        int nsigArg1;
+        int nsigArg2;
+
+        if (constRecur1 > 0) {
+            // Candidate B (Recursive/Embed)
+            int bIi = constMZ1 ^ constMZ2;
+            nsigArg1 = bIi ^ constRecur1;
+            nsigArg2 = bIi ^ constRecur2;
+        } else {
+            // Candidate A (Legacy/ES6)
+            int bVal = nsigW ^ nsigV;
+            int H = bVal ^ constWC ^ constGC;
+            nsigArg1 = H ^ constMZ1;
+            nsigArg2 = H ^ constMZ2;
+        }
+
+        log.debug("Extracted modern player parameters for signature/nsig deciphering: " +
+            "cTName={}, cTArg1={}, cTArg2={}, bName={}, bArg3={}, bArg4={}, MZName={}, nsigArg1={}, nsigArg2={}",
+            cTName, cTArg1, cTArg2, bName, bArg3, bArg4, wrapperName, nsigArg1, nsigArg2);
+
+        // Construct injected base.js with export statements
+        String injection = "\n_yt_player." + cTName + "=" + cTName + ";\n_yt_player." + bName + "=" + bName + ";\n_yt_player." + wrapperName + "=" + wrapperName + ";\n})(_yt_player);";
+        String modifiedScript = script.replaceFirst("\\}\\)\\(_yt_player\\);\\s*$", Matcher.quoteReplacement(injection));
+
+        return new SignatureCipher(
+            timestamp,
+            cTName,
+            bName,
+            cTArg1,
+            cTArg2,
+            bArg3,
+            bArg4,
+            wrapperName,
+            nsigArg1,
+            nsigArg2,
+            modifiedScript
+        );
     }
 
     private void scriptExtractionFailed(String script, String sourceUrl, ExtractionFailureType failureType) {

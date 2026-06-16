@@ -57,7 +57,6 @@ public class CipherManagerTest {
      * Test our current implementation with the latest YouTube script
      */
     @Test
-    @Disabled("New YT Scripts are crazy")
     public void testCurrentYoutubeScript() throws IOException {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpInterface httpInterface = new HttpInterface(httpClient, new HttpClientContext(), true, noOpFilter);
@@ -182,7 +181,6 @@ public class CipherManagerTest {
      * Test script caching by making two requests to the same script URL
      */
     @Test
-    @Disabled("New YT Scripts are crazy")
     public void testScriptCaching() throws IOException {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpInterface httpInterface = new HttpInterface(httpClient, new HttpClientContext(), true, noOpFilter);
