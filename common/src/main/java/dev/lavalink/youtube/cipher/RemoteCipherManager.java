@@ -112,7 +112,13 @@ public class RemoteCipherManager implements CipherManager {
                 log.debug("Received response from remote cipher service: {}", responseBody);
 
                 JsonBrowser json = JsonBrowser.parse(responseBody);
-                return json.get("sts").text();
+                String sts = json.get("sts").text();
+
+                if (DataFormatTools.isNullOrEmpty(sts)) {
+                    throw new IOException("Remote cipher service did not return a signature timestamp (sts).");
+                }
+
+                return sts;
             }
         }
     }
