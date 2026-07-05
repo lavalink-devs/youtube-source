@@ -34,7 +34,6 @@ public class ClientException extends RuntimeException {
 
     // Recursively iterate down the causes to our stored exceptions
     private void writeException(@NotNull PrintWriter printer, @NotNull Throwable throwable, int maxDepth) {
-        printer.print(throwable.getMessage());
         StackTraceElement[] stackTrace = throwable.getStackTrace();
 
         for (int i = 0; i < Math.min(5, stackTrace.length); i++) {

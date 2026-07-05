@@ -12,19 +12,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class Tv extends StreamingNonMusicClient {
+public class TvDowngraded extends StreamingNonMusicClient {
     public static ClientConfig BASE_CONFIG = new ClientConfig()
         .withClientName("TVHTML5")
-        .withUserAgent("Mozilla/5.0 (ChromiumStylePlatform) Cobalt/25.lts.30.1034943-gold (unlike Gecko), Unknown_TV_Unknown_0/Unknown (Unknown, Unknown)")
-        .withClientField("clientVersion", "7.20260114.12.00");
+        .withUserAgent("Mozilla/5.0 (ChromiumStylePlatform) Cobalt/Version")
+        .withClientField("clientVersion", "5.20260114");
 
     protected ClientOptions options;
 
-    public Tv() {
+    public TvDowngraded() {
         this(ClientOptions.DEFAULT);
     }
 
-    public Tv(@NotNull ClientOptions options) {
+    public TvDowngraded(@NotNull ClientOptions options) {
         this.options = options;
     }
 
