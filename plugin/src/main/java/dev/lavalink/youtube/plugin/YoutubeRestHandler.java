@@ -44,7 +44,8 @@ public class YoutubeRestHandler {
         YoutubeAudioSourceManager source = playerManager.source(YoutubeAudioSourceManager.class);
 
         if (source == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The YouTube source manager is not registered.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST.value(),
+                "The YouTube source manager is not registered.", null);
         }
 
         return source;
@@ -58,7 +59,8 @@ public class YoutubeRestHandler {
         Throwable lastException = null;
 
         if (Arrays.stream(source.getClients()).noneMatch(Client::supportsFormatLoading)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "None of the registered clients supports format loading.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST.value(),
+                "None of the registered clients supports format loading.", null);
         }
 
         boolean foundFormats = false;
@@ -85,7 +87,8 @@ public class YoutubeRestHandler {
             try {
                 formats = client.loadFormats(source, httpInterface, videoId);
             } catch (CannotBeLoaded cbl) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This video cannot be loaded. Reason: " + cbl.getCause().getMessage());
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST.value(),
+                    "This video cannot be loaded. Reason: " + cbl.getCause().getMessage(), null);
             }  catch (Throwable t) {
                 log.debug("Client \"{}\" threw a non-fatal exception, storing and proceeding...", client.getIdentifier());
                 t.addSuppressed(ClientInformation.create(client));
@@ -166,14 +169,17 @@ public class YoutubeRestHandler {
         IOUtils.closeQuietly(httpInterface);
 
         if (foundFormats) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No formats found with the requested itag.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST.value(),
+                "No formats found with the requested itag.", null);
         }
 
         if (lastException != null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "This video cannot be loaded", lastException);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "This video cannot be loaded", lastException);
         }
 
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Could not find formats for the requested videoId.");
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST.value(),
+            "Could not find formats for the requested videoId.", null);
     }
 
     @GetMapping("/youtube")
