@@ -131,8 +131,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     FormatWithUrl augmentedFormat = loadBestFormatWithUrl(httpInterface, client);
     log.debug("Starting track with URL from client {}: {}", client.getIdentifier(), augmentedFormat.signedUrl);
 
+    String query = augmentedFormat.signedUrl.getRawQuery();
+    boolean isLegacyFormat = query != null && query.contains("itag=18");
+    boolean isStream = trackInfo.isStream || (!isLegacyFormat && augmentedFormat.format.getContentLength() == CONTENT_LENGTH_UNKNOWN);
+
     try {
-      if (trackInfo.isStream || augmentedFormat.format.getContentLength() == CONTENT_LENGTH_UNKNOWN) {
+      if (isStream) {
         processStream(localExecutor, httpInterface, augmentedFormat);
       } else {
         processStatic(localExecutor, httpInterface, augmentedFormat, streamPosition);
