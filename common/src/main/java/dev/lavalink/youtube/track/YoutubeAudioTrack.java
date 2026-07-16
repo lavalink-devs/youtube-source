@@ -18,6 +18,9 @@ import dev.lavalink.youtube.cipher.ScriptExtractionException;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
+import org.apache.http.Header;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -132,10 +135,26 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     log.debug("Starting track with URL from client {}: {}", client.getIdentifier(), augmentedFormat.signedUrl);
 
     try {
-      if (trackInfo.isStream || augmentedFormat.format.getContentLength() == CONTENT_LENGTH_UNKNOWN) {
+      long contentLength = augmentedFormat.format.getContentLength();
+
+      if (!trackInfo.isStream && contentLength == CONTENT_LENGTH_UNKNOWN) {
+        // Some player responses (notably the itag 18 fallback returned when a client only
+        // exposes SABR-gated adaptive formats) omit contentLength even though the stream is
+        // a normal progressive file. Without a length it is treated as an OTF/segment stream
+        // and fails to decode. Probe the URL; if the CDN reports a concrete length, play it
+        // contiguously instead. Genuine OTF streams report no total and stay on the segment path.
+        long probedContentLength = probeContentLength(httpInterface, augmentedFormat.signedUrl);
+
+        if (probedContentLength != CONTENT_LENGTH_UNKNOWN) {
+          log.debug("Resolved missing content length for client {} via probe: {}", client.getIdentifier(), probedContentLength);
+          contentLength = probedContentLength;
+        }
+      }
+
+      if (trackInfo.isStream || contentLength == CONTENT_LENGTH_UNKNOWN) {
         processStream(localExecutor, httpInterface, augmentedFormat);
       } else {
-        processStatic(localExecutor, httpInterface, augmentedFormat, streamPosition);
+        processStatic(localExecutor, httpInterface, augmentedFormat, streamPosition, contentLength);
       }
     } catch (StreamExpiredException e) {
       processWithClient(localExecutor, httpInterface, client, e.lastStreamPosition);
@@ -145,11 +164,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
   private void processStatic(LocalAudioTrackExecutor localExecutor,
                              HttpInterface httpInterface,
                              FormatWithUrl augmentedFormat,
-                             long streamPosition) throws Exception {
+                             long streamPosition,
+                             long contentLength) throws Exception {
     YoutubePersistentHttpStream stream = null;
 
     try {
-      stream = new YoutubePersistentHttpStream(httpInterface, augmentedFormat.signedUrl, augmentedFormat.format.getContentLength());
+      stream = new YoutubePersistentHttpStream(httpInterface, augmentedFormat.signedUrl, contentLength);
 
       if (streamPosition > 0) {
         stream.seek(streamPosition);
@@ -182,6 +202,57 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     // TODO: Catch 403 and retry? Can't use position though because it's a livestream.
     processDelegate(new YoutubeMpegStreamAudioTrack(trackInfo, httpInterface, augmentedFormat.signedUrl), localExecutor);
+  }
+
+  /**
+   * Probes a stream URL with a zero-length ranged request to discover its total content length
+   * when the player response omitted one. Returns CONTENT_LENGTH_UNKNOWN if it cannot be
+   * determined, in which case the caller falls back to segment streaming.
+   */
+  private long probeContentLength(HttpInterface httpInterface, URI url) {
+    HttpGet request = new HttpGet(url);
+    request.setHeader("Range", "bytes=0-0");
+
+    try (CloseableHttpResponse response = httpInterface.execute(request)) {
+      int statusCode = response.getStatusLine().getStatusCode();
+
+      if (statusCode != 200 && statusCode != 206) {
+        return CONTENT_LENGTH_UNKNOWN;
+      }
+
+      Header contentRange = response.getFirstHeader("Content-Range");
+
+      if (contentRange != null) {
+        String value = contentRange.getValue();
+        int slashIndex = value.lastIndexOf('/');
+
+        if (slashIndex != -1) {
+          String total = value.substring(slashIndex + 1).trim();
+
+          if (!total.isEmpty() && !"*".equals(total)) {
+            long length = Long.parseLong(total);
+
+            if (length > 0) {
+              return length;
+            }
+          }
+        }
+      }
+
+      Header contentLengthHeader = response.getFirstHeader("Content-Length");
+
+      if (statusCode == 200 && contentLengthHeader != null) {
+        long length = Long.parseLong(contentLengthHeader.getValue().trim());
+
+        if (length > 0) {
+          return length;
+        }
+      }
+    } catch (Exception e) {
+      log.debug("Failed to probe content length for {}", url, e);
+    }
+
+    return CONTENT_LENGTH_UNKNOWN;
   }
 
   @NotNull
