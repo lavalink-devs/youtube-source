@@ -224,6 +224,39 @@ public abstract class NonMusicClient implements Client {
         return null;
     }
 
+    /**
+     * Fetches title and author from the public YouTube oEmbed endpoint.
+     * This works for any public video (including login-required content and live streams)
+     * without requiring authentication. Used as a last-resort fallback when the InnerTube
+     * player response omits videoDetails.title / videoDetails.author (e.g. TVHTML5+OAuth).
+     *
+     * @param httpInterface the HTTP interface to use for the request
+     * @param videoId the YouTube video ID
+     * @return a JsonBrowser containing "title" and "author_name", or null on failure
+     */
+    @Nullable
+    protected JsonBrowser fetchOEmbed(@NotNull HttpInterface httpInterface, @NotNull String videoId) {
+        String url = "https://www.youtube.com/oembed?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D" + videoId + "&format=json";
+
+        try {
+            HttpGet request = new HttpGet(url);
+
+            try (CloseableHttpResponse response = httpInterface.execute(request)) {
+                int statusCode = response.getStatusLine().getStatusCode();
+
+                if (statusCode != 200) {
+                    log.debug("oEmbed returned status {} for videoId {}", statusCode, videoId);
+                    return null;
+                }
+
+                return JsonBrowser.parse(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            log.debug("oEmbed request failed for videoId {}", videoId, e);
+            return null;
+        }
+    }
+
     @NotNull
     protected JsonBrowser loadSearchResults(@NotNull HttpInterface httpInterface,
                                             @NotNull String searchQuery) {
@@ -421,6 +454,56 @@ public abstract class NonMusicClient implements Client {
         this.playlistPageCount = playlistPageCount;
     }
 
+    /**
+     * Extracts the video title from an InnerTube player response.
+     * Tries videoDetails.title in all known formats (plain string, simpleText node, runs node),
+     * then falls back to both known microformat renderers.
+     *
+     * @param json the root InnerTube player response
+     * @return the title string, or null if not found in any known location
+     */
+    @Nullable
+    private static String extractTitle(@NotNull JsonBrowser json) {
+        JsonBrowser titleNode = json.get("videoDetails").get("title");
+        String title = DataFormatTools.defaultOnNull(
+            titleNode.text(),
+            DataFormatTools.defaultOnNull(
+                titleNode.get("simpleText").text(),
+                titleNode.get("runs").index(0).get("text").text()
+            )
+        );
+
+        if (title == null) {
+            title = json.get("microformat").get("playerMicroformatRenderer").get("title").get("simpleText").text();
+        }
+        if (title == null) {
+            title = json.get("microformat").get("microformatDataRenderer").get("title").text();
+        }
+
+        return title;
+    }
+
+    /**
+     * Extracts the channel/author name from an InnerTube player response.
+     * Tries videoDetails.author, then falls back to both known microformat renderers.
+     *
+     * @param json the root InnerTube player response
+     * @return the author string, or null if not found in any known location
+     */
+    @Nullable
+    private static String extractAuthor(@NotNull JsonBrowser json) {
+        String author = json.get("videoDetails").get("author").text();
+
+        if (author == null) {
+            author = json.get("microformat").get("playerMicroformatRenderer").get("ownerChannelName").text();
+        }
+        if (author == null) {
+            author = json.get("microformat").get("microformatDataRenderer").get("pageOwnerDetails").get("name").text();
+        }
+
+        return author;
+    }
+
     @Override
     public AudioItem loadVideo(@NotNull YoutubeAudioSourceManager source,
                                @NotNull HttpInterface httpInterface,
@@ -433,11 +516,28 @@ public abstract class NonMusicClient implements Client {
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
 
-        String title = videoDetails.get("title").text();
-        String author = videoDetails.get("author").text();
+        String title = extractTitle(json);
+        String author = extractAuthor(json);
 
+        // If title or author is still missing (e.g. TVHTML5+OAuth omits them for login-required
+        // content), fall back to the public oEmbed endpoint which works for any public video.
+        if (title == null || author == null) {
+            JsonBrowser oEmbed = fetchOEmbed(httpInterface, videoId);
+
+            if (oEmbed != null) {
+                if (title == null) title = oEmbed.get("title").text();
+                if (author == null) author = oEmbed.get("author_name").text();
+            }
+        }
+
+        if (title == null) {
+            log.warn("Could not extract title for client {}, videoId {}. microformat: {}",
+                getIdentifier(), videoId, json.get("microformat").format());
+            title = "Unknown title";
+        }
         if (author == null) {
-            log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
+            log.warn("Could not extract author for client {}, videoId {}. microformat: {}",
+                getIdentifier(), videoId, json.get("microformat").format());
             author = "Unknown artist";
         }
 
