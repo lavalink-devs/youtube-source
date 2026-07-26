@@ -7,6 +7,7 @@ import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class TvHtml5Simply extends StreamingNonMusicClient {
@@ -14,7 +15,7 @@ public class TvHtml5Simply extends StreamingNonMusicClient {
     public static ClientConfig BASE_CONFIG = new ClientConfig()
             .withClientName("TVHTML5_SIMPLY")
             .withClientField("clientVersion", "1.0")
-            .withRootField("attestationRequest", java.util.Map.of("omitBotguardData", true));
+            .withRootField("attestationRequest", new HashMap<String, Object>() {{ put("omitBotguardData", true); }});
 
     protected ClientOptions options;
 
