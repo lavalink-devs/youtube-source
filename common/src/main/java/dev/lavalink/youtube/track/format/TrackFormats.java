@@ -1,6 +1,7 @@
 package dev.lavalink.youtube.track.format;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.StringJoiner;
@@ -10,11 +11,22 @@ import static com.sedmelluq.discord.lavaplayer.container.Formats.MIME_AUDIO_WEBM
 public class TrackFormats {
     private final List<StreamFormat> formats;
     private final String playerScriptUrl;
+    private final String serverAbrStreamingUrl;
+    private final String videoPlaybackUstreamerConfig;
 
     public TrackFormats(@NotNull List<StreamFormat> formats,
                         @NotNull String playerScriptUrl) {
+        this(formats, playerScriptUrl, null, null);
+    }
+
+    public TrackFormats(@NotNull List<StreamFormat> formats,
+                        @NotNull String playerScriptUrl,
+                        @Nullable String serverAbrStreamingUrl,
+                        @Nullable String videoPlaybackUstreamerConfig) {
         this.formats = formats;
         this.playerScriptUrl = playerScriptUrl;
+        this.serverAbrStreamingUrl = serverAbrStreamingUrl;
+        this.videoPlaybackUstreamerConfig = videoPlaybackUstreamerConfig;
     }
 
     @NotNull
@@ -25,6 +37,22 @@ public class TrackFormats {
     @NotNull
     public String getPlayerScriptUrl() {
         return playerScriptUrl;
+    }
+
+    /**
+     * @return The server ABR streaming URL used for SABR playback, or {@code null} if unavailable.
+     */
+    @Nullable
+    public String getServerAbrStreamingUrl() {
+        return serverAbrStreamingUrl;
+    }
+
+    /**
+     * @return The base64 videoPlaybackUstreamerConfig required for SABR requests, or {@code null}.
+     */
+    @Nullable
+    public String getVideoPlaybackUstreamerConfig() {
+        return videoPlaybackUstreamerConfig;
     }
 
     @NotNull

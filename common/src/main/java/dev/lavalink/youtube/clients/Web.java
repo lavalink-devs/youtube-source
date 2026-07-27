@@ -247,6 +247,12 @@ public class Web extends StreamingNonMusicClient {
     }
 
     @Override
+    @Nullable
+    public String getPoToken() {
+        return poToken;
+    }
+
+    @Override
     @NotNull
     public ClientOptions getOptions() {
         return this.options;
