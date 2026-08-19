@@ -18,6 +18,9 @@ import dev.lavalink.youtube.cipher.ScriptExtractionException;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
+import org.apache.http.Header;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -135,11 +138,21 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     boolean isLegacyFormat = query != null && query.contains("itag=18");
     boolean isStream = trackInfo.isStream || (!isLegacyFormat && augmentedFormat.format.getContentLength() == CONTENT_LENGTH_UNKNOWN);
 
+    long contentLength = augmentedFormat.format.getContentLength();
+
+    // itag 18 carries no contentLength, and the stream requests ranges by query parameter, so the
+    // response is a plain 200 whose Content-Length describes the chunk. Without a real total the
+    // reader stops at the first range boundary. A zero-length ranged request returns Content-Range,
+    // which does carry it; if that fails we keep CONTENT_LENGTH_UNKNOWN and behave as before.
+    if (!trackInfo.isStream && contentLength == CONTENT_LENGTH_UNKNOWN) {
+      contentLength = probeContentLength(httpInterface, augmentedFormat.signedUrl);
+    }
+
     try {
       if (isStream) {
         processStream(localExecutor, httpInterface, augmentedFormat);
       } else {
-        processStatic(localExecutor, httpInterface, augmentedFormat, streamPosition);
+        processStatic(localExecutor, httpInterface, augmentedFormat, streamPosition, contentLength);
       }
     } catch (StreamExpiredException e) {
       processWithClient(localExecutor, httpInterface, client, e.lastStreamPosition);
@@ -149,11 +162,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
   private void processStatic(LocalAudioTrackExecutor localExecutor,
                              HttpInterface httpInterface,
                              FormatWithUrl augmentedFormat,
-                             long streamPosition) throws Exception {
+                             long streamPosition,
+                             long contentLength) throws Exception {
     YoutubePersistentHttpStream stream = null;
 
     try {
-      stream = new YoutubePersistentHttpStream(httpInterface, augmentedFormat.signedUrl, augmentedFormat.format.getContentLength());
+      stream = new YoutubePersistentHttpStream(httpInterface, augmentedFormat.signedUrl, contentLength);
 
       if (streamPosition > 0) {
         stream.seek(streamPosition);
@@ -186,6 +200,28 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     // TODO: Catch 403 and retry? Can't use position though because it's a livestream.
     processDelegate(new YoutubeMpegStreamAudioTrack(trackInfo, httpInterface, augmentedFormat.signedUrl), localExecutor);
+  }
+
+  private long probeContentLength(HttpInterface httpInterface, URI url) {
+    HttpGet request = new HttpGet(url);
+    request.setHeader("Range", "bytes=0-0");
+
+    try (CloseableHttpResponse response = httpInterface.execute(request)) {
+      Header contentRange = response.getFirstHeader("Content-Range");
+      int totalIndex = contentRange != null ? contentRange.getValue().lastIndexOf('/') : -1;
+
+      if (totalIndex != -1) {
+        String total = contentRange.getValue().substring(totalIndex + 1).trim();
+
+        if (!total.isEmpty() && !"*".equals(total)) {
+          return Long.parseLong(total);
+        }
+      }
+    } catch (Exception e) {
+      log.debug("Failed to probe content length for {}", url, e);
+    }
+
+    return CONTENT_LENGTH_UNKNOWN;
   }
 
   @NotNull
