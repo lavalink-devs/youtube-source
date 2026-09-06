@@ -150,7 +150,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     try {
       if (isStream) {
-        processStream(localExecutor, httpInterface, augmentedFormat);
+        processStream(localExecutor, httpInterface, client, augmentedFormat);
       } else {
         processStatic(localExecutor, httpInterface, augmentedFormat, streamPosition, contentLength);
       }
@@ -193,13 +193,25 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
   private void processStream(LocalAudioTrackExecutor localExecutor,
                              HttpInterface httpInterface,
+                             Client client,
                              FormatWithUrl augmentedFormat) throws Exception {
     if (MIME_AUDIO_WEBM.equals(augmentedFormat.format.getType().getMimeType())) {
       throw new FriendlyException("YouTube WebM streams are currently not supported.", Severity.COMMON, null);
     }
 
-    // TODO: Catch 403 and retry? Can't use position though because it's a livestream.
-    processDelegate(new YoutubeMpegStreamAudioTrack(trackInfo, httpInterface, augmentedFormat.signedUrl), localExecutor);
+    // A live stream URL stops being accepted well before its signed expiry, so reload the format with the same
+    // client to get a fresh one. This uses its own HTTP interface because the streaming one carries a short
+    // segment timeout and has its OAuth attribute reset by segment requests.
+    YoutubeMpegStreamAudioTrack.UrlRenewer renewer = () -> {
+      try (HttpInterface renewInterface = sourceManager.getInterface()) {
+        renewInterface.getContext().setAttribute(Client.OAUTH_CLIENT_ATTRIBUTE, client.supportsOAuth());
+        return loadBestFormatWithUrl(renewInterface, client).signedUrl;
+      } catch (CannotBeLoaded e) {
+        throw new RuntimeException(e.getCause());
+      }
+    };
+
+    processDelegate(new YoutubeMpegStreamAudioTrack(trackInfo, httpInterface, augmentedFormat.signedUrl, renewer), localExecutor);
   }
 
   private long probeContentLength(HttpInterface httpInterface, URI url) {

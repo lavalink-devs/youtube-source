@@ -44,6 +44,7 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
 
     private final HttpInterface httpInterface;
     private final TrackState state;
+    private final UrlRenewer urlRenewer;
 
     /**
      * @param trackInfo Track info
@@ -53,10 +54,24 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
     public YoutubeMpegStreamAudioTrack(AudioTrackInfo trackInfo,
                                        HttpInterface httpInterface,
                                        URI signedUrl) {
+        this(trackInfo, httpInterface, signedUrl, null);
+    }
+
+    /**
+     * @param trackInfo Track info
+     * @param httpInterface HTTP interface to use for loading segments
+     * @param signedUrl URI of the base stream with signature resolved
+     * @param urlRenewer Supplies a fresh signed URL when one is rejected, or null to disable renewal
+     */
+    public YoutubeMpegStreamAudioTrack(AudioTrackInfo trackInfo,
+                                       HttpInterface httpInterface,
+                                       URI signedUrl,
+                                       UrlRenewer urlRenewer) {
         super(trackInfo, null);
 
         this.httpInterface = httpInterface;
         this.state = new TrackState(signedUrl);
+        this.urlRenewer = urlRenewer;
 
         // YouTube does not return a segment until it is ready, this might trigger a connect timeout otherwise.
         httpInterface.getContext().setRequestConfig(streamingRequestConfig);
@@ -165,12 +180,29 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
     private boolean processNextSegment(
         LocalAudioTrackExecutor localExecutor
     ) throws InterruptedException {
+        return processNextSegment(localExecutor, true);
+    }
+
+    private boolean processNextSegment(
+        LocalAudioTrackExecutor localExecutor,
+        boolean allowRenewal
+    ) throws InterruptedException {
         URI segmentUrl = getNextSegmentUrl(state);
 
         log.debug("Segment URL: {}", segmentUrl.toString());
 
         try (YoutubePersistentHttpStream stream = new YoutubePersistentHttpStream(httpInterface, segmentUrl, CONTENT_LENGTH_UNKNOWN)) {
-            if (stream.checkStatusCode() == HttpStatus.SC_NO_CONTENT || stream.getContentLength() == 0) {
+            int statusCode = stream.checkStatusCode();
+
+            // A live stream URL is rejected with 403 and an empty body around 30 seconds after it was issued, well
+            // before its signed expiry. That is not the end of the broadcast, so renew the URL and retry the same
+            // sequence number instead of letting the empty response finish the track.
+            if (statusCode == HttpStatus.SC_FORBIDDEN && allowRenewal && renewStreamUrl()) {
+                log.debug("Segment request was rejected, retrying with a renewed stream URL.");
+                return processNextSegment(localExecutor, false);
+            }
+
+            if (statusCode == HttpStatus.SC_NO_CONTENT || stream.getContentLength() == 0) {
                 return false;
             }
 
@@ -188,6 +220,21 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
         }
 
         return true;
+    }
+
+    private boolean renewStreamUrl() {
+        if (urlRenewer == null) {
+            return false;
+        }
+
+        try {
+            state.initialUrl = urlRenewer.renew();
+            state.redirectUrl = null;
+            return true;
+        } catch (Exception e) {
+            log.warn("Failed to renew the YouTube live stream URL.", e);
+            return false;
+        }
     }
 
     private void processSegmentStream(SeekableInputStream stream, AudioProcessingContext context, TrackState state) throws InterruptedException, IOException {
@@ -257,11 +304,16 @@ public class YoutubeMpegStreamAudioTrack extends MpegAudioTrack {
         private boolean finished;
         private boolean seeking;
         private URI redirectUrl;
-        private final URI initialUrl;
+        private URI initialUrl;
 
         public TrackState(URI initialUrl) {
             this.initialUrl = initialUrl;
         }
+    }
+
+    @FunctionalInterface
+    public interface UrlRenewer {
+        URI renew() throws Exception;
     }
 
     private static class SequenceInfo {
