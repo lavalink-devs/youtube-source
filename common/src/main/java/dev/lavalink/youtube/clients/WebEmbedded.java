@@ -37,11 +37,6 @@ public class WebEmbedded extends Web {
     }
 
     @Override
-    public boolean supportsSabrPlayback() {
-        return true;
-    }
-
-    @Override
     public void preparePlayback(@NotNull YoutubeAudioSourceManager source,
                                 @NotNull HttpInterface httpInterface,
                                 @NotNull String videoId) throws java.io.IOException {

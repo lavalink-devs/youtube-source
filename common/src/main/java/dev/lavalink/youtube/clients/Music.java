@@ -58,6 +58,11 @@ public class Music extends MusicClient {
     }
 
     @Override
+    public boolean supportsSabrPlayback() {
+        return true;
+    }
+
+    @Override
     @NotNull
     public URI transformPlaybackUri(@NotNull URI originalUri,
                                     @NotNull URI resolvedPlaybackUri,

@@ -41,6 +41,11 @@ public class MWeb extends StreamingNonMusicClient {
     }
 
     @Override
+    public boolean supportsSabrPlayback() {
+        return true;
+    }
+
+    @Override
     public boolean canHandleRequest(@NotNull String identifier) {
         return !identifier.startsWith(YoutubeAudioSourceManager.MUSIC_SEARCH_PREFIX);
     }
