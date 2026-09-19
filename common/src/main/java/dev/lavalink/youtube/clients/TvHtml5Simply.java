@@ -2,10 +2,12 @@ package dev.lavalink.youtube.clients;
 
 import com.sedmelluq.discord.lavaplayer.tools.*;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +50,18 @@ public class TvHtml5Simply extends StreamingNonMusicClient {
     @Override
     public boolean canHandleRequest(@NotNull String identifier) {
         return !identifier.contains("list=") && super.canHandleRequest(identifier);
+    }
+
+    @Override
+    public AudioItem loadPlaylist(@NotNull YoutubeAudioSourceManager source,
+                                  @NotNull HttpInterface httpInterface,
+                                  @NotNull String playlistId,
+                                  @Nullable String selectedVideoId) {
+        // YouTube only returns the first page (20 videos) with no continuation
+        // token for this client, so a playlist loaded here would always come
+        // back truncated. Decline and let the next client load the full list.
+        throw new FriendlyException("This client cannot load playlists", FriendlyException.Severity.COMMON,
+            new RuntimeException("TVHTML5_SIMPLY cannot be used to load playlists"));
     }
 
     @Override
