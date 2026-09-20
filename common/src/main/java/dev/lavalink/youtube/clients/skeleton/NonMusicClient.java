@@ -301,6 +301,37 @@ public abstract class NonMusicClient implements Client {
         }
     }
 
+    /**
+     * Loads a playlist through the {@code next} endpoint instead of {@code browse}.
+     *
+     * <p>Some TV clients only receive the first page of a playlist from {@code browse} with no
+     * continuation token, so paging can never return the rest. The same clients get the full
+     * playback queue back as {@code playlistPanelRenderer} items from a single {@code next}
+     * request, which is how the TV app itself loads playlists. Parse the result with
+     * {@link #extractMixPlaylistData(JsonBrowser)} and {@link #extractAudioTrack(JsonBrowser,
+     * YoutubeAudioSourceManager)} — the panel items have the same shape as mix entries.
+     *
+     * @param httpInterface The interface to use for HTTP requests.
+     * @param playlistId The ID of the playlist.
+     * @return The raw JSON data as received from YouTube.
+     */
+    @NotNull
+    protected JsonBrowser loadPlaylistViaNext(@NotNull HttpInterface httpInterface,
+                                              @NotNull String playlistId) {
+        ClientConfig clientConfig = getBaseClientConfig(httpInterface)
+            .withRootField("playlistId", playlistId)
+            .setAttributes(httpInterface);
+
+        HttpPost request = new HttpPost(NEXT_URL);
+        request.setEntity(new StringEntity(clientConfig.toJsonString(), "UTF-8"));
+
+        try {
+            return loadJsonResponse(httpInterface, request, "playlist response");
+        } catch (IOException e) {
+            throw ExceptionTools.toRuntimeException(e);
+        }
+    }
+
     @Nullable
     protected String extractPlaylistError(@NotNull JsonBrowser json) {
         JsonBrowser alerts = json.get("alerts");

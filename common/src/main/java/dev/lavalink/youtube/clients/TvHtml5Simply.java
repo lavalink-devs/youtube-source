@@ -8,12 +8,9 @@ import com.sedmelluq.discord.lavaplayer.track.BasicAudioPlaylist;
 import dev.lavalink.youtube.OptionDisabledException;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -70,10 +67,6 @@ public class TvHtml5Simply extends StreamingNonMusicClient {
             throw new OptionDisabledException("Playlist loading is disabled for this client");
         }
 
-        // The browse endpoint only returns the first page (20 videos) with no
-        // continuation token for this client, so playlists are loaded through
-        // the next endpoint instead, which returns the full playback queue in
-        // a single playlistPanelRenderer response.
         JsonBrowser json = loadPlaylistViaNext(httpInterface, playlistId);
         JsonBrowser playlist = extractMixPlaylistData(json);
 
@@ -90,23 +83,6 @@ public class TvHtml5Simply extends StreamingNonMusicClient {
         }
 
         return new BasicAudioPlaylist(title, tracks, findSelectedTrack(tracks, selectedVideoId), false);
-    }
-
-    @NotNull
-    protected JsonBrowser loadPlaylistViaNext(@NotNull HttpInterface httpInterface,
-                                              @NotNull String playlistId) {
-        ClientConfig clientConfig = getBaseClientConfig(httpInterface)
-            .withRootField("playlistId", playlistId)
-            .setAttributes(httpInterface);
-
-        HttpPost request = new HttpPost(NEXT_URL);
-        request.setEntity(new StringEntity(clientConfig.toJsonString(), "UTF-8"));
-
-        try {
-            return loadJsonResponse(httpInterface, request, "playlist response");
-        } catch (IOException e) {
-            throw ExceptionTools.toRuntimeException(e);
-        }
     }
 
     @Override
