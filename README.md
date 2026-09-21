@@ -271,8 +271,8 @@ play a track like:
 
 ## Using a remote webpo generator
 
-This service mints content bound PoToken for `WEB`, `MWEB`, and `MUSIC`,
-and visitor bound PoToken for `TVHTML5_SIMPLY`. It generates the PoToken (Proof of Origin Token) by solving the `Botguard Attestation` challenge, in several ways.
+This service mints a content-bound PoToken for `WEB`, `MWEB`, and `MUSIC`,
+and a visitor data-bound PoToken for `TVHTML5_SIMPLY`. It generates the PoToken (Proof of Origin Token) by solving the `Botguard Attestation` challenge, in several ways.
 Use [webpo-generator](https://github.com/ashton045/webpo-generator), a nodejs REST API to mint the tokens to their respective innertube client's playback.
 
 ### Lavaplayer
