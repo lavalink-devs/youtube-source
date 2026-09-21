@@ -7,10 +7,10 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.RemotePoToken;
 import dev.lavalink.youtube.clients.skeleton.StreamingNonMusicClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,8 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import org.apache.http.client.utils.URIBuilder;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,11 +39,11 @@ public class Web extends StreamingNonMusicClient {
             .withClientField("clientVersion", "2.20250403.01.00")
             .withUserField("lockedSafetyMode", false);
 
-    public static String poToken;
-
     protected volatile long lastConfigUpdate = -1;
 
     protected ClientOptions options;
+    protected volatile String requestPoToken;
+    protected volatile String requestVisitorData;
 
     public Web() {
         this(ClientOptions.DEFAULT);
@@ -50,20 +51,6 @@ public class Web extends StreamingNonMusicClient {
 
     public Web(@NotNull ClientOptions options) {
         this.options = options;
-    }
-
-    public static void setPoTokenAndVisitorData(String poToken, String visitorData) {
-        Web.poToken = poToken;
-
-        if (poToken == null || visitorData == null) {
-            BASE_CONFIG.getRoot().remove("serviceIntegrityDimensions");
-            BASE_CONFIG.withVisitorData(null);
-            return;
-        }
-
-        Map<String, Object> sid = BASE_CONFIG.putOnceAndJoin(BASE_CONFIG.getRoot(), "serviceIntegrityDimensions");
-        sid.put("poToken", poToken);
-        BASE_CONFIG.withVisitorData(visitorData);
     }
 
     protected void fetchClientConfig(@NotNull HttpInterface httpInterface) {
@@ -134,12 +121,33 @@ public class Web extends StreamingNonMusicClient {
             }
         }
 
-        return BASE_CONFIG.copy();
+        ClientConfig config = BASE_CONFIG.copy();
+        if (requestVisitorData != null) {
+            config.withVisitorData(requestVisitorData);
+        }
+        if (requestPoToken != null) {
+            config.putOnceAndJoin(config.getRoot(), "serviceIntegrityDimensions").put("poToken", requestPoToken);
+        }
+        return config;
+    }
+
+    @Override
+    public boolean supportsSabrPlayback() {
+        return true;
+    }
+
+    @Override
+    public void preparePlayback(@NotNull YoutubeAudioSourceManager source, @NotNull HttpInterface httpInterface,
+                                @NotNull String videoId) throws IOException {
+        RemotePoToken.Result result = source.generatePoToken(httpInterface, videoId);
+        if (result != null) requestPoToken = result.getPoToken();
     }
 
     @Override
     @NotNull
-    public URI transformPlaybackUri(@NotNull URI originalUri, @NotNull URI resolvedPlaybackUri) {
+    public URI transformPlaybackUri(@NotNull URI originalUri,
+                                    @NotNull URI resolvedPlaybackUri,
+                                    @Nullable String poToken) {
         if (poToken == null) {
             return resolvedPlaybackUri;
         }
@@ -184,24 +192,49 @@ public class Web extends StreamingNonMusicClient {
 
     @Override
     protected String extractPlaylistName(@NotNull JsonBrowser json) {
-        return json.get("metadata").get("playlistMetadataRenderer").get("title").text();
+        String title = json.get("metadata").get("playlistMetadataRenderer").get("title").text();
+        if (!DataFormatTools.isNullOrEmpty(title)) {
+            return title;
+        }
+
+        JsonBrowser pageHeader = json.get("header").get("pageHeaderRenderer");
+        title = pageHeader.get("pageTitle").text();
+        if (!DataFormatTools.isNullOrEmpty(title)) {
+            return title;
+        }
+
+        title = pageHeader.get("content").get("pageHeaderViewModel").get("title")
+                .get("dynamicTextViewModel").get("text").get("content").text();
+        if (!DataFormatTools.isNullOrEmpty(title)) {
+            return title;
+        }
+
+        return super.extractPlaylistName(json);
     }
 
+    @Override
     @NotNull
     protected JsonBrowser extractPlaylistVideoList(@NotNull JsonBrowser json) {
-        return json.get("contents")
+        JsonBrowser sectionList = json.get("contents")
                 .get("twoColumnBrowseResultsRenderer")
                 .get("tabs")
                 .index(0)
                 .get("tabRenderer")
                 .get("content")
                 .get("sectionListRenderer")
-                .get("contents")
-                .index(0)
+                .get("contents");
+
+        JsonBrowser playlistVideoList = sectionList.index(0)
                 .get("itemSectionRenderer")
                 .get("contents")
                 .index(0)
                 .get("playlistVideoListRenderer");
+
+        if (!playlistVideoList.isNull()) {
+            return playlistVideoList;
+        }
+
+        return sectionList;
     }
 
     @Override
@@ -216,17 +249,29 @@ public class Web extends StreamingNonMusicClient {
 
         return videoList.values()
                 .stream()
-                .filter(item -> !item.get("continuationItemRenderer").isNull())
+                .filter(item -> !item.get("continuationItemRenderer").isNull() || !item.get("continuationItemViewModel").isNull())
                 .findFirst()
                 .map(item -> {
-                    JsonBrowser continuationEndpoint = item.get("continuationItemRenderer").get("continuationEndpoint");
-                    String token = continuationEndpoint.get("continuationCommand").get("token").text();
-                    if (!DataFormatTools.isNullOrEmpty(token)) {
-                        return token;
+                    JsonBrowser continuationItem = item.get("continuationItemRenderer");
+
+                    if (!continuationItem.isNull()) {
+                        JsonBrowser continuationEndpoint = continuationItem.get("continuationEndpoint");
+                        String token = continuationEndpoint.get("continuationCommand").get("token").text();
+
+                        if (!DataFormatTools.isNullOrEmpty(token)) {
+                            return token;
+                        }
+
+                        return continuationEndpoint.get("commandExecutorCommand").get("commands").index(1)
+                                .get("continuationCommand").get("token").text();
                     }
 
-                    return continuationEndpoint.get("commandExecutorCommand").get("commands").index(1)
-                            .get("continuationCommand").get("token").text();
+                    return item.get("continuationItemViewModel")
+                            .get("continuationCommand")
+                            .get("innertubeCommand")
+                            .get("continuationCommand")
+                            .get("token")
+                            .text();
                 })
                 .orElse(null);
     }
@@ -241,6 +286,46 @@ public class Web extends StreamingNonMusicClient {
     }
 
     @Override
+    protected void extractPlaylistTracks(@NotNull JsonBrowser json,
+                                         @NotNull List<AudioTrack> tracks,
+                                         @NotNull YoutubeAudioSourceManager source) {
+        if (!json.get("contents").isNull()) {
+            json = json.get("contents");
+        }
+
+        if (json.isNull()) {
+            return;
+        }
+
+        for (JsonBrowser track : json.values()) {
+            JsonBrowser item = track.get("playlistVideoRenderer");
+
+            if (!item.isNull()) {
+                super.extractPlaylistTracks(track, tracks, source);
+                continue;
+            }
+
+            JsonBrowser lockup = track.get("lockupViewModel");
+
+            if (!lockup.isNull()) {
+                AudioTrack audioTrack = extractLockupTrack(lockup, source);
+
+                if (audioTrack != null) {
+                    tracks.add(audioTrack);
+                }
+
+                continue;
+            }
+
+            JsonBrowser section = track.get("itemSectionRenderer");
+
+            if (!section.isNull()) {
+                extractPlaylistTracks(section.get("contents"), tracks, source);
+            }
+        }
+    }
+
+    @Override
     @NotNull
     public String getPlayerParams() {
         return WEB_PLAYER_PARAMS;
@@ -249,7 +334,7 @@ public class Web extends StreamingNonMusicClient {
     @Override
     @Nullable
     public String getPoToken() {
-        return poToken;
+        return requestPoToken;
     }
 
     @Override

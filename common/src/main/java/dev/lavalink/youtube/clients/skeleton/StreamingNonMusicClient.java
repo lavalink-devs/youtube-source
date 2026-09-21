@@ -43,6 +43,7 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
     public TrackFormats loadFormats(@NotNull YoutubeAudioSourceManager source,
                                     @NotNull HttpInterface httpInterface,
                                     @NotNull String videoId) throws CannotBeLoaded, IOException {
+        preparePlayback(source, httpInterface, videoId);
         JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null, true);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");
@@ -68,21 +69,41 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
             .text();
 
         // SABR playback is only possible when both the streaming URL and ustreamer config are present.
-        boolean sabrAvailable = !DataFormatTools.isNullOrEmpty(serverAbrStreamingUrl)
+        boolean sabrFieldsAvailable = !DataFormatTools.isNullOrEmpty(serverAbrStreamingUrl)
             && !DataFormatTools.isNullOrEmpty(ustreamerConfig);
+        boolean sabrAvailable = supportsSabrPlayback() && sabrFieldsAvailable;
+        boolean preferSabr = sabrAvailable && preferSabrPlayback();
 
         List<StreamFormat> formats = new ArrayList<>();
         boolean anyFailures = false;
 
         for (JsonBrowser merged : mergedFormats.values()) {
-            if (!extractFormat(merged, formats, isLive, sabrAvailable)) {
+            if (!extractFormat(merged, formats, isLive, preferSabr)) {
                 anyFailures = true;
             }
         }
 
         for (JsonBrowser adaptive : adaptiveFormats.values()) {
-            if (!extractFormat(adaptive, formats, isLive, sabrAvailable)) {
+            if (!extractFormat(adaptive, formats, isLive, preferSabr)) {
                 anyFailures = true;
+            }
+        }
+
+        if (formats.isEmpty() && sabrAvailable && !preferSabr) {
+            log.debug("Client '{}' has no direct formats; falling back to SABR.", getIdentifier());
+            formats.clear();
+            anyFailures = false;
+
+            for (JsonBrowser merged : mergedFormats.values()) {
+                if (!extractFormat(merged, formats, isLive, true)) {
+                    anyFailures = true;
+                }
+            }
+
+            for (JsonBrowser adaptive : adaptiveFormats.values()) {
+                if (!extractFormat(adaptive, formats, isLive, true)) {
+                    anyFailures = true;
+                }
             }
         }
 
@@ -90,7 +111,11 @@ public abstract class StreamingNonMusicClient extends NonMusicClient {
             log.warn("Loading formats either failed to load or were skipped due to missing fields, json: {}", streamingData.format());
         }
 
-        return new TrackFormats(formats, playerScript.url, serverAbrStreamingUrl, ustreamerConfig);
+        return new TrackFormats(formats, playerScript.url, serverAbrStreamingUrl, ustreamerConfig, getPoToken());
+    }
+
+    protected boolean preferSabrPlayback() {
+        return true;
     }
 
     protected boolean extractFormat(JsonBrowser formatJson,

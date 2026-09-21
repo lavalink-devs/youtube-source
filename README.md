@@ -16,8 +16,8 @@ Which clients are used is entirely configurable.
   - Information about the clients provided by `youtube-source`, as well as their advantages/disadvantages.
 - [Using OAuth tokens](#using-oauth-tokens)
   - Information on using OAuth tokens with `youtube-source`.
-- [Using a poToken](#using-a-potoken)
-  - Information on using a `poToken` with `youtube-source`.
+- [Using a remote webpo generator](#using-a-remote-webpo-generator)
+  - Information on using a remote service to generate `poToken` values.
 - [Using a remote cipher server](#using-a-remote-cipher-server)
   - Information on using a remote cipher server with `youtube-source`.
 - [REST Routes (`plugin` only)](#rest-routes-plugin-only)
@@ -184,18 +184,18 @@ plugins:
 ## Available Clients
 Currently, the following clients are available for use:
 
-| Identifier        | Opus Formats | OAuth | Age-restriction Support | Playback Support | Metadata Support              | Additional Notes                                     |
-|-------------------|--------------|-------|-------------------------|------------------|-------------------------------|------------------------------------------------------|
-| `MUSIC`           | No           | No    | No                      | No               | Search                        | YouTube music search support via `ytmsearch:` prefix |
-| `WEB`             | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix  |                                                      |
-| `MWEB`            | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix  |                                                      |
-| `WEBEMBEDDED`     | Yes          | No    | Limited                 | Yes + Livestream | Video                         |                                                      |
-| `ANDROID`         | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix  | Heavily restricted, frequently dysfunctional         |
-| `ANDROID_MUSIC`   | Yes          | No    | No                      | Yes              | Video, Search, Mix            |                                                      |
-| `ANDROID_VR`      | Yes          | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix  |                                                      |
-| `IOS`             | No           | No    | No                      | Yes + Livestream | Video, Search, Playlist, Mix  |                                                      |
-| `TV`              | Yes          | Yes   | With OAuth              | Yes + Livestream | None                          | Playback requires sign-in                            |
-| `TVHTML5_SIMPLY`  | Yes          | No    | No                      | Yes + Livestream | Video, Search, Mix            |                                                      |
+| Identifier        | Opus Formats | OAuth/Pot | Age-restriction Support | Playback Support | Metadata Support              | Additional Notes                                     |
+|-------------------|--------------|-----------|-------------------------|------------------|-------------------------------|------------------------------------------------------|
+| `MUSIC`           | No           | Pot       | No                      | Yes              | Search                        | YouTube music search support via `ytmsearch:` prefix |
+| `WEB`             | Yes          | Pot       | No                      | Yes + Livestream | Video, Search, Playlist, Mix  |                                                      |
+| `MWEB`            | Yes          | Pot       | Yes                     | Yes + Livestream | Video, Search, Playlist, Mix  |                                                      |
+| `WEBEMBEDDED`     | Yes          | Pot       | Limited                 | Yes + Livestream | Video                         |                                                      |
+| `ANDROID`         | Yes          | No        | No                      | Yes + Livestream | Video, Search, Playlist, Mix  | Heavily restricted, frequently dysfunctional         |
+| `ANDROID_MUSIC`   | Yes          | No        | No                      | Yes              | Video, Search, Mix            |                                                      |
+| `ANDROID_VR`      | Yes          | No        | No                      | Yes + Livestream | Video, Search, Playlist, Mix  |                                                      |
+| `IOS`             | No           | No        | No                      | Yes + Livestream | Video, Search, Playlist, Mix  |                                                      |
+| `TV`              | Yes          | Yes       | With OAuth              | Yes + Livestream | None                          | Playback requires sign-in                            |
+| `TVHTML5_SIMPLY`  | Yes          | Pot       | No                      | Yes + Livestream | Video, Search, Mix            |                                                      |
 
 > [!NOTE]
 > Clients that do not return Opus formats will require transcoding.
@@ -269,37 +269,26 @@ play a track like:
 }
 ```
 
-## Using a `poToken`
-A `poToken`, also known as a "Proof of Origin Token" is a way to identify what requests originate from.
-In YouTube's case, this is sent as a JavaScript challenge that browsers must evaluate, and send back the resolved
-string. Typically, this challenge would remain unsolved for bots as more often than not, they don't simulate an entire
-browser environment, instead only evaluating the minimum amount of JS required to do its job. Therefore, it's a reasonable
-assumption that if the challenge is not fulfilled, the request origin is a bot.
+## Using a remote webpo generator
 
-To obtain a `poToken`, you can use https://github.com/iv-org/youtube-trusted-session-generator, by running the Python script
-or the docker image. Both methods will print a `poToken` after a successful run, which you can supply to `youtube-source`
-to try and work around having automated requests blocked.
-
-
-> [!NOTE]
-> A `poToken` is not a silver bullet, and currently it only applies to requests made via the `WEB` & `WEBEMBEDDED` client.
-> You do not need to specify a `poToken` if using OAuth, and vice versa.
-
-Specifying the token is as simple as doing:
+This service mints a content-bound PoToken for `WEB`, `MWEB`, and `MUSIC`,
+and a visitor data-bound PoToken for `TVHTML5_SIMPLY`. It generates the PoToken (Proof of Origin Token) by solving the `Botguard Attestation` challenge, in several ways.
+Use [webpo-generator](https://github.com/ashton045/webpo-generator), a nodejs REST API to mint the tokens to their respective innertube client's playback.
 
 ### Lavaplayer
 ```java
-// Web is dev.lavalink.youtube.clients.Web
-Web.setPoTokenAndVisitorData("your po_token", "your visitor_data");
+YoutubeSourceOptions options = new YoutubeSourceOptions()
+    .setRemotePoToken("http://localhost:8080", "can_you_pass_it");
+YoutubeAudioSourceManager sourceManager = new YoutubeAudioSourceManager(options, ...);
 ```
 
 ### Lavalink
 ```yaml
 plugins:
   youtube:
-    pot:
-      token: "paste your po_token here"
-      visitorData: "paste your visitor_data here"
+    remotePot:
+      url: "http://localhost:8080"
+      pass: "can_you_pass_it" # optional
 ```
 
 ## Using a remote cipher server
@@ -336,15 +325,12 @@ Body:
 
 > [!NOTE]
 > You do not need to provide everything as it is shown.
-> For example, you can specify just `refreshToken` and `skipInitialization`, or just `poToken` and `visitorData`.
-> You do **not** need to use `poToken` with OAuth and vice versa.
+> For example, you can specify just `refreshToken` and `skipInitialization`.
 
 ```json
 {
   "refreshToken": "your new refresh token",
-  "skipInitialization": true,
-  "poToken": "your po_token",
-  "visitorData": "your visitor_data"
+  "skipInitialization": true
 }
 ```
 

@@ -152,6 +152,13 @@ public interface Client {
         return resolvedPlaybackUri;
     }
 
+    @NotNull
+    default URI transformPlaybackUri(@NotNull URI originalUri,
+                                     @NotNull URI resolvedPlaybackUri,
+                                     @Nullable String poToken) {
+        return transformPlaybackUri(originalUri, resolvedPlaybackUri);
+    }
+
     /**
      * Builds an audio track with the given parameters.
      * Hint: You can use {@link YoutubeAudioSourceManager#buildAudioTrack(AudioTrackInfo)} to
@@ -237,11 +244,20 @@ public interface Client {
     }
 
     /**
-     * @return The poToken to include within SABR streaming requests, or {@code null}.
+     * @return true only when this client expects SABR formats.
      */
+    default boolean supportsSabrPlayback() {
+        return false;
+    }
+
     @Nullable
     default String getPoToken() {
         return null;
+    }
+
+    default void preparePlayback(@NotNull YoutubeAudioSourceManager source,
+                                 @NotNull HttpInterface httpInterface,
+                                 @NotNull String videoId) throws IOException {
     }
 
     void setPlaylistPageCount(int count);

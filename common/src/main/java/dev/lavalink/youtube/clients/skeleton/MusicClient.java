@@ -9,7 +9,6 @@ import com.sedmelluq.discord.lavaplayer.track.*;
 import dev.lavalink.youtube.OptionDisabledException;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.ClientConfig;
-import dev.lavalink.youtube.track.format.TrackFormats;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -25,7 +24,7 @@ import java.util.List;
 /**
  * The base class for a client that can be used with music.youtube.com.
  */
-public abstract class MusicClient implements Client {
+public abstract class MusicClient extends StreamingNonMusicClient {
     private static final Logger log = LoggerFactory.getLogger(MusicClient.class);
 
     @NotNull
@@ -133,7 +132,7 @@ public abstract class MusicClient implements Client {
 
     @Override
     public boolean supportsFormatLoading() {
-        return false;
+        return getOptions().getPlayback();
     }
 
     @Override
@@ -154,13 +153,6 @@ public abstract class MusicClient implements Client {
         }
 
         return new BasicAudioPlaylist("Search music results for: " + searchQuery, tracks, null, true);
-    }
-
-    @Override
-    public TrackFormats loadFormats(@NotNull YoutubeAudioSourceManager source,
-                                    @NotNull HttpInterface httpInterface,
-                                    @NotNull String videoId) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
