@@ -8,7 +8,6 @@ import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv4Block;
 import com.sedmelluq.lava.extensions.youtuberotator.tools.ip.Ipv6Block;
 import dev.arbjerg.lavalink.api.AudioPlayerManagerConfiguration;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
-import dev.lavalink.youtube.YoutubeSource;
 import dev.lavalink.youtube.YoutubeSourceOptions;
 import dev.lavalink.youtube.clients.ClientOptions;
 import dev.lavalink.youtube.clients.skeleton.Client;
@@ -165,24 +164,17 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
                 clients = clientProvider.getClients(youtubeConfig.getClients(), this::getOptionsForClient);
             }
 
-            Pot pot = youtubeConfig.getPot();
             YoutubeRemoteCipherConfig cipherConfig = youtubeConfig.getRemoteCipher();
-
-            if (pot != null) {
-                String token = pot.getToken();
-                String visitorData = pot.getVisitorData();
-
-                if (token != null && visitorData != null) {
-                    log.debug("Applying poToken and visitorData to WEB & WEBEMBEDDED client (token: {}, vd: {})", token, visitorData);
-                    YoutubeSource.setPoTokenAndVisitorData(token, visitorData);
-                } else if (token != null || visitorData != null) {
-                    log.warn("Both \"youtube.pot.token\" and \"youtube.pot.visitorData\" must be specified and valid for pot to apply.");
-                }
-            }
+            YoutubeRemotePoTokenConfig poTokenConfig = youtubeConfig.getRemotePot();
 
             if (cipherConfig != null && cipherConfig.getUrl() != null) {
-                log.info("Using remote cipher server with URL \"{}\"", cipherConfig.getUrl());
+                log.info("Using remote cipher server with url \"{}\"", cipherConfig.getUrl());
                 sourceOptions.setRemoteCipher(cipherConfig.getUrl(), cipherConfig.getPassword(), cipherConfig.getUserAgent());
+            }
+
+            if (poTokenConfig != null && poTokenConfig.getUrl() != null) {
+                log.info("Using remote poToken service with url \"{}\"", poTokenConfig.getUrl());
+                sourceOptions.setRemotePoToken(poTokenConfig.getUrl(), poTokenConfig.getPass());
             }
         }
 
@@ -223,4 +215,5 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
         audioPlayerManager.registerSourceManager(source);
         return audioPlayerManager;
     }
+
 }

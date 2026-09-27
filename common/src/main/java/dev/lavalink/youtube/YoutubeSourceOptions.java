@@ -9,6 +9,8 @@ public class YoutubeSourceOptions {
     private String remoteCipherUrl;
     private String remoteCipherPassword;
     private String remoteCipherUserAgent;
+    private String remotePoTokenUrl;
+    private String remotePoTokenPassword;
 
     public boolean isAllowSearch() {
         return allowSearch;
@@ -55,6 +57,22 @@ public class YoutubeSourceOptions {
     @Nullable
     public String getRemoteCipherUserAgent() {
         return remoteCipherUserAgent;
+    }
+
+    public YoutubeSourceOptions setRemotePoToken(@Nullable String url, @Nullable String password) {
+        this.remotePoTokenUrl = url;
+        this.remotePoTokenPassword = password;
+        return this;
+    }
+
+    @Nullable
+    public String getRemotePoTokenUrl() {
+        return remotePoTokenUrl;
+    }
+
+    @Nullable
+    public String getRemotePoTokenPassword() {
+        return remotePoTokenPassword;
     }
 
 

@@ -45,6 +45,7 @@ public abstract class NonMusicClient implements Client {
 
     protected static String WEB_PLAYER_PARAMS = "2AMB";
     protected static String MOBILE_PLAYER_PARAMS = "CgIIAdgDAQ%3D%3D";
+    protected static final String DEFAULT_EMBED_URL = "https://google.com";
 
     protected int playlistPageCount = 6;
 
@@ -116,9 +117,15 @@ public abstract class NonMusicClient implements Client {
 
         // Skip embed workaround for OAuth-supporting clients to avoid EMBEDDER_IDENTITY_DENIED errors.
         // OAuth authentication should be sufficient without pretending to be an embedded player.
-        if (!supportsOAuth() && (status == null || status != PlayabilityStatus.NON_EMBEDDABLE)) {
+        if (isEmbedded() || (!supportsOAuth() && (status == null || status != PlayabilityStatus.NON_EMBEDDABLE))) {
             config.withClientField("clientScreen", "EMBED")
-                .withThirdPartyEmbedUrl("https://google.com");
+                .withThirdPartyEmbedUrl(DEFAULT_EMBED_URL);
+
+            // For embedded clients, fetch and include encryptedHostFlags to avoid playback restrictions.
+            String encryptedHostFlags = fetchEncryptedHostFlags(videoId, config.getVisitorData());
+            if (encryptedHostFlags != null) {
+                config.withEncryptedHostFlags(encryptedHostFlags);
+            }
         }
 
         config.withRootField("videoId", videoId)
@@ -129,14 +136,6 @@ public abstract class NonMusicClient implements Client {
 
         if (params != null) {
             config.withRootField("params", params);
-        }
-
-        // For embedded clients, fetch and include encryptedHostFlags to avoid playback restrictions.
-        if (isEmbedded()) {
-            String encryptedHostFlags = fetchEncryptedHostFlags(videoId);
-            if (encryptedHostFlags != null) {
-                config.withEncryptedHostFlags(encryptedHostFlags);
-            }
         }
 
         String payload = config.setAttributes(httpInterface).toJsonString();
@@ -194,19 +193,39 @@ public abstract class NonMusicClient implements Client {
     }
 
     /**
+     * @param videoId The video ID to fetch the embed page for.
+     * @return The encryptedHostFlags value, or null if not found.
+     * @see #fetchEncryptedHostFlags(String, String)
+     */
+    @Nullable
+    protected String fetchEncryptedHostFlags(@NotNull String videoId) {
+        return fetchEncryptedHostFlags(videoId, null);
+    }
+
+    /**
      * Fetches the encryptedHostFlags from the YouTube embed page.
      * This is required for embedded clients to avoid playback restrictions.
      *
      * @param videoId The video ID to fetch the embed page for.
+     * @param visitorData The visitor data that the player request identifies with,
+     *                    or {@code null} to load the page as an anonymous visitor.
      * @return The encryptedHostFlags value, or null if not found.
      */
     @Nullable
-    protected String fetchEncryptedHostFlags(@NotNull String videoId) {
-        String embedUrl = "https://www.youtube.com/embed/" + videoId;
+    protected String fetchEncryptedHostFlags(@NotNull String videoId, @Nullable String visitorData) {
+        // ?html5=1 query parameter explicitly tells yt to provide the full HTML5 embedded player
+        // to avoid lightweight AMP embed variants in some cases like poor connection or similar.
+        String embedUrl = "https://www.youtube.com/embed/" + videoId + "?html5=1";
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(embedUrl);
             request.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            // The embed URL sent in the player request must have the same origin as this referer
+            request.setHeader("Referer", DEFAULT_EMBED_URL);
+
+            if (visitorData != null) {
+                request.setHeader("X-Goog-Visitor-Id", visitorData);
+            }
 
             HttpResponse response = httpClient.execute(request);
             String html = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
@@ -409,6 +428,148 @@ public abstract class NonMusicClient implements Client {
         long duration = DataFormatTools.durationTextToMillis(durationText);
         return buildAudioTrack(source, json, title, author, duration, videoId, false);
     }
+
+    @Nullable
+    protected AudioTrack extractLockupTrack(@NotNull JsonBrowser json,
+                                            @NotNull YoutubeAudioSourceManager source) {
+        String videoId = json.get("contentId").text();
+
+        if (DataFormatTools.isNullOrEmpty(videoId)) {
+            videoId = json.get("rendererContext")
+                .get("commandContext")
+                .get("onTap")
+                .get("innertubeCommand")
+                .get("watchEndpoint")
+                .get("videoId")
+                .text();
+        }
+
+        if (DataFormatTools.isNullOrEmpty(videoId)) {
+            return null;
+        }
+
+        JsonBrowser metadata = json.get("metadata").get("lockupMetadataViewModel");
+        String title = metadata.get("title").get("content").text();
+
+        if (DataFormatTools.isNullOrEmpty(title)) {
+            return null;
+        }
+
+        String author = metadata.get("metadata")
+            .get("contentMetadataViewModel")
+            .get("metadataRows")
+            .index(0)
+            .get("metadataParts")
+            .index(0)
+            .get("text")
+            .get("content")
+            .text();
+
+        if (DataFormatTools.isNullOrEmpty(author)) {
+            author = "Unknown artist";
+        }
+
+        long duration = Units.DURATION_MS_UNKNOWN;
+        JsonBrowser overlays = json.get("contentImage").get("thumbnailViewModel").get("overlays");
+
+        if (!overlays.isNull()) {
+            for (JsonBrowser overlay : overlays.values()) {
+                JsonBrowser badges = overlay.get("thumbnailBottomOverlayViewModel").get("badges");
+
+                if (!badges.isNull()) {
+                    for (JsonBrowser badge : badges.values()) {
+                        String text = badge.get("thumbnailBadgeViewModel").get("text").text();
+
+                        if (!DataFormatTools.isNullOrEmpty(text)) {
+                            long dur = DataFormatTools.durationTextToMillis(text);
+
+                            if (dur > 0) {
+                                duration = dur;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (duration != Units.DURATION_MS_UNKNOWN) {
+                    break;
+                }
+            }
+        }
+
+        return buildAudioTrack(source, json, title, author, duration, videoId, false);
+    }
+
+    @Nullable
+    protected AudioTrack extractElementTrack(@NotNull JsonBrowser json,
+                                             @NotNull YoutubeAudioSourceManager source) {
+        JsonBrowser vwc = json.get("newElement")
+            .get("type")
+            .get("componentType")
+            .get("model")
+            .get("videoWithContextModel")
+            .get("videoWithContextData");
+
+        if (vwc.isNull()) {
+            return null;
+        }
+
+        String videoId = vwc.get("onTap")
+            .get("innertubeCommand")
+            .get("watchEndpoint")
+            .get("videoId")
+            .text();
+
+        if (DataFormatTools.isNullOrEmpty(videoId)) {
+            videoId = vwc.get("onTap")
+                .get("innertubeCommand")
+                .get("coWatchWatchEndpointWrapperCommand")
+                .get("watchEndpoint")
+                .get("watchEndpoint")
+                .get("videoId")
+                .text();
+        }
+
+        if (DataFormatTools.isNullOrEmpty(videoId)) {
+            String url = vwc.get("videoData").get("dragAndDropUrl").text();
+
+            if (!DataFormatTools.isNullOrEmpty(url) && url.contains("v=")) {
+                videoId = url.substring(url.indexOf("v=") + 2);
+                int amp = videoId.indexOf('&');
+                if (amp != -1) videoId = videoId.substring(0, amp);
+            }
+        }
+
+        if (DataFormatTools.isNullOrEmpty(videoId)) {
+            return null;
+        }
+
+        JsonBrowser metadata = vwc.get("videoData").get("lockupMetadata").get("lockupMetadataViewModel");
+        String title = metadata.get("title").get("content").text();
+
+        if (DataFormatTools.isNullOrEmpty(title)) {
+            return null;
+        }
+
+        String author = metadata.get("metadata")
+            .get("contentMetadataViewModel")
+            .get("metadataRows")
+            .index(0)
+            .get("metadataParts")
+            .index(0)
+            .get("text")
+            .get("content")
+            .text();
+
+        if (DataFormatTools.isNullOrEmpty(author)) {
+            author = "Unknown artist";
+        }
+
+        String durationText = vwc.get("videoData").get("thumbnail").get("timestampText").text();
+        long duration = DataFormatTools.durationTextToMillis(durationText);
+
+        return buildAudioTrack(source, vwc, title, author, duration, videoId, false);
+    }
     //</editor-fold>
 
     @Override
@@ -429,6 +590,7 @@ public abstract class NonMusicClient implements Client {
             throw new OptionDisabledException("Video loading is disabled for this client");
         }
 
+        preparePlayback(source, httpInterface, videoId);
         JsonBrowser json = loadTrackInfoFromInnertube(source, httpInterface, videoId, null, false);
         JsonBrowser playabilityStatus = json.get("playabilityStatus");
         JsonBrowser videoDetails = json.get("videoDetails");

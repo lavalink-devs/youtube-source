@@ -13,6 +13,7 @@ public class TrackFormats {
     private final String playerScriptUrl;
     private final String serverAbrStreamingUrl;
     private final String videoPlaybackUstreamerConfig;
+    private final String poToken;
 
     public TrackFormats(@NotNull List<StreamFormat> formats,
                         @NotNull String playerScriptUrl) {
@@ -23,10 +24,19 @@ public class TrackFormats {
                         @NotNull String playerScriptUrl,
                         @Nullable String serverAbrStreamingUrl,
                         @Nullable String videoPlaybackUstreamerConfig) {
+        this(formats, playerScriptUrl, serverAbrStreamingUrl, videoPlaybackUstreamerConfig, null);
+    }
+
+    public TrackFormats(@NotNull List<StreamFormat> formats,
+                        @NotNull String playerScriptUrl,
+                        @Nullable String serverAbrStreamingUrl,
+                        @Nullable String videoPlaybackUstreamerConfig,
+                        @Nullable String poToken) {
         this.formats = formats;
         this.playerScriptUrl = playerScriptUrl;
         this.serverAbrStreamingUrl = serverAbrStreamingUrl;
         this.videoPlaybackUstreamerConfig = videoPlaybackUstreamerConfig;
+        this.poToken = poToken;
     }
 
     @NotNull
@@ -53,6 +63,22 @@ public class TrackFormats {
     @Nullable
     public String getVideoPlaybackUstreamerConfig() {
         return videoPlaybackUstreamerConfig;
+    }
+
+    @Nullable
+    public String getPoToken() {
+        return poToken;
+    }
+
+    @Nullable
+    public StreamFormat getFormatByItag(int itag) {
+        for (StreamFormat format : formats) {
+            if (format.getItag() == itag && !format.isSabr()) {
+                return format;
+            }
+        }
+
+        return null;
     }
 
     @NotNull

@@ -31,6 +31,10 @@ subprojects {
     apply<JavaPlugin>()
     apply<MavenPublishPlugin>()
 
+    tasks.withType<JavaCompile>().configureEach {
+        options.encoding = "UTF-8"
+    }
+
     configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8

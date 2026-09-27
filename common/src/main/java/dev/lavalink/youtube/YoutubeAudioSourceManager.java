@@ -80,6 +80,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     protected YoutubeOauth2Handler oauth2Handler;
     protected YoutubeHttpContextFilter contextFilter;
     protected CipherManager cipherManager;
+    protected RemotePoToken remotePoToken;
 
     public YoutubeAudioSourceManager() {
         this(true);
@@ -160,11 +161,33 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         } else {
             this.cipherManager = new LocalSignatureCipherManager();
         }
+        if (!DataFormatTools.isNullOrEmpty(options.getRemotePoTokenUrl())) {
+            this.remotePoToken = new RemotePoToken(options.getRemotePoTokenUrl(), options.getRemotePoTokenPassword());
+        }
     }
 
     @Override
     public String getSourceName() {
         return "youtube";
+    }
+
+    @Nullable
+    public RemotePoToken.Result generatePoToken(@NotNull HttpInterface httpInterface, @Nullable String contentBinding) throws IOException {
+        if (remotePoToken == null) {
+            return null;
+        }
+
+        try {
+            return remotePoToken.generate(httpInterface, contentBinding);
+        } catch (Exception e) {
+            log.warn("Failed to generate PoToken from remote server: {}. Continuing without PoToken.", e.getMessage());
+            return null;
+        }
+    }
+
+    @Nullable
+    public String getVisitorData() {
+        return contextFilter.getVisitorData();
     }
 
     public void setPlaylistPageCount(int count) {
@@ -235,11 +258,11 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 }
 
                 boolean shouldLogOauthWarning = client.supportsOAuth() && !loggedOauthClientNoAccountWarning &&
-                    !oauth2Handler.hasAccessToken() && client.getOptions().getPlayback();
+                    !oauth2Handler.hasAccessToken() && remotePoToken == null && client.getOptions().getPlayback();
 
                 if (shouldLogOauthWarning) {
                     loggedOauthClientNoAccountWarning = true;
-                    log.warn("!!! You are using an OAuth-enabled client without a valid OAuth token! This client may not play videos!");
+                    log.warn("!!! No valid oauth token or remote PoToken server configured! This client may fail or fall back to legacy format (itag 18)!");
                 }
 
                 log.debug("Attempting to load {} with client \"{}\"", reference.identifier, client.getIdentifier());

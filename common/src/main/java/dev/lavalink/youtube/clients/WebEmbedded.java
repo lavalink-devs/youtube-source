@@ -5,39 +5,29 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.RemotePoToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.net.URISyntaxException;
-import java.util.Map;
-import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.net.URI;
 
 public class WebEmbedded extends Web {
     private static final Logger log = LoggerFactory.getLogger(WebEmbedded.class);
 
     public static ClientConfig BASE_CONFIG = new ClientConfig()
         .withClientName("WEB_EMBEDDED_PLAYER")
-        .withClientField("clientVersion", "1.20250401.01.00")
+        .withClientField("clientVersion", "2.20260908.01.00")
+        .withUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .withUserField("lockedSafetyMode", false);
+
+    protected volatile String visitorData;
 
     public WebEmbedded() {
         super(ClientOptions.DEFAULT);
     }
 
-    public static void setPoTokenAndVisitorData(String poToken, String visitorData) {
-        WebEmbedded.poToken = poToken;
-
-        if (poToken == null || visitorData == null) {
-            BASE_CONFIG.getRoot().remove("serviceIntegrityDimensions");
-            BASE_CONFIG.withVisitorData(null);
-            return;
-        }
-
-        Map<String, Object> sid = BASE_CONFIG.putOnceAndJoin(BASE_CONFIG.getRoot(), "serviceIntegrityDimensions");
-        sid.put("poToken", poToken);
-        BASE_CONFIG.withVisitorData(visitorData);
+    public WebEmbedded(@NotNull ClientOptions options) {
+        super(options);
     }
 
     @Override
@@ -46,32 +36,30 @@ public class WebEmbedded extends Web {
     }
 
     @Override
-    @NotNull
-    public URI transformPlaybackUri(@NotNull URI originalUri, @NotNull URI resolvedPlaybackUri) {
-        if (poToken == null) {
-            return resolvedPlaybackUri;
+    public void preparePlayback(@NotNull YoutubeAudioSourceManager source,
+                                @NotNull HttpInterface httpInterface,
+                                @NotNull String videoId) throws java.io.IOException {
+        visitorData = source.getVisitorData();
+        RemotePoToken.Result result = visitorData == null ? null : source.generatePoToken(httpInterface, visitorData);
+        if (result == null) {
+            poToken = null;
+        } else {
+            poToken = result.getPoToken();
+            visitorData = result.getContentBinding();
         }
-
-        log.debug("Applying 'pot' parameter on playback URI: {}", resolvedPlaybackUri);
-        URIBuilder builder = new URIBuilder(resolvedPlaybackUri);
-        builder.addParameter("pot", poToken);
-
-        try {
-            return builder.build();
-        } catch (URISyntaxException e) {
-            log.debug("Failed to apply 'pot' parameter.", e);
-            return resolvedPlaybackUri;
-        }
-    }
-
-    public WebEmbedded(@NotNull ClientOptions options) {
-        super(options);
     }
 
     @Override
     @NotNull
     public ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
-        return BASE_CONFIG.copy();
+        ClientConfig config = BASE_CONFIG.copy();
+        if (visitorData != null) {
+            config.withVisitorData(visitorData);
+        }
+        if (poToken != null) {
+            config.putOnceAndJoin(config.getRoot(), "serviceIntegrityDimensions").put("poToken", poToken);
+        }
+        return config;
     }
     @Override
     @NotNull

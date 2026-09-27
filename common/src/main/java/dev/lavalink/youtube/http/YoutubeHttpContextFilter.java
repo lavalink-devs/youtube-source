@@ -37,6 +37,11 @@ public class YoutubeHttpContextFilter extends BaseYoutubeHttpContextFilter {
     this.tokenTracker = tokenTracker;
   }
 
+  @Nullable
+  public String getVisitorData() {
+    return tokenTracker.getVisitorId();
+  }
+
   public void setOauth2Handler(@NotNull YoutubeOauth2Handler oauth2Handler) {
     this.oauth2Handler = oauth2Handler;
   }

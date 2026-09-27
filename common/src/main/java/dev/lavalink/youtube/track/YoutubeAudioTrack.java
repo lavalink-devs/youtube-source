@@ -21,6 +21,9 @@ import dev.lavalink.youtube.sabr.SabrClientInfo;
 import dev.lavalink.youtube.sabr.SabrStream;
 import dev.lavalink.youtube.track.format.StreamFormat;
 import dev.lavalink.youtube.track.format.TrackFormats;
+import org.apache.http.Header;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -29,11 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.sedmelluq.discord.lavaplayer.container.Formats.MIME_AUDIO_WEBM;
 import static com.sedmelluq.discord.lavaplayer.tools.DataFormatTools.decodeUrlEncodedItems;
@@ -62,6 +61,29 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     super(trackInfo);
     this.sourceManager = sourceManager;
   }
+
+  private long probeContentLength(HttpInterface httpInterface, URI url) {
+    HttpGet request = new HttpGet(url);
+    request.setHeader("Range", "bytes=0-0");
+
+    try (CloseableHttpResponse response = httpInterface.execute(request)) {
+      Header contentRange = response.getFirstHeader("Content-Range");
+      int totalIndex = contentRange != null ? contentRange.getValue().lastIndexOf('/') : -1;
+
+      if (totalIndex != -1) {
+        String total = contentRange.getValue().substring(totalIndex + 1).trim();
+
+        if (!total.isEmpty() && !"*".equals(total)) {
+          return Long.parseLong(total);
+        }
+      }
+    } catch (Exception e) {
+      log.debug("Failed to probe content length for {}", url, e);
+    }
+
+    return CONTENT_LENGTH_UNKNOWN;
+  }
+
 
   @Override
   public void process(LocalAudioTrackExecutor localExecutor) throws Exception {
@@ -102,6 +124,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
         } catch (CannotBeLoaded e) {
           throw e;
         } catch (Exception e) {
+          log.debug("Client \"{}\" failed during playback storing and proceeding", client.getIdentifier(), e);
           if (e instanceof ScriptExtractionException) {
             // If we're still early in playback, we can try another client
             if (localExecutor.getPosition() >= BAD_STREAM_POSITION_THRESHOLD_MS) {
@@ -140,6 +163,10 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     StreamFormat format = formats.getBestFormat();
 
+    if (format == null) {
+      throw new FriendlyException("No supported format found", Severity.SUSPICIOUS, null);
+    }
+
     if (format.isSabr()) {
       processSabr(localExecutor, httpInterface, client, formats, format);
       return;
@@ -152,11 +179,21 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     boolean isLegacyFormat = query != null && query.contains("itag=18");
     boolean isStream = trackInfo.isStream || (!isLegacyFormat && augmentedFormat.format.getContentLength() == CONTENT_LENGTH_UNKNOWN);
 
+    long contentLength = augmentedFormat.format.getContentLength();
+
+    // itag 18 carries no contentLength, and the stream requests ranges by query parameter, so the
+    // response is a plain 200 whose Content-Length describes the chunk. Without a real total the
+    // reader stops at the first range boundary. A zero-length ranged request returns Content-Range,
+    // which does carry it; if that fails we keep CONTENT_LENGTH_UNKNOWN and behave as before.
+    if (!trackInfo.isStream && contentLength == CONTENT_LENGTH_UNKNOWN) {
+      contentLength = probeContentLength(httpInterface, augmentedFormat.signedUrl);
+    }
+
     try {
       if (isStream) {
         processStream(localExecutor, httpInterface, augmentedFormat);
       } else {
-        processStatic(localExecutor, httpInterface, augmentedFormat, streamPosition);
+        processStatic(localExecutor, httpInterface, augmentedFormat, streamPosition, contentLength);
       }
     } catch (StreamExpiredException e) {
       processWithClient(localExecutor, httpInterface, client, e.lastStreamPosition);
@@ -180,7 +217,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
 
     URI resolvedUrl = resolveSabrUrl(httpInterface, client, formats, format, serverAbrStreamingUrl);
     byte[] ustreamerBytes = decodeBase64(ustreamerConfig);
-    byte[] poTokenBytes = client.getPoToken() != null ? decodeBase64(client.getPoToken()) : null;
+    byte[] poTokenBytes = formats.getPoToken() != null ? decodeBase64(formats.getPoToken()) : null;
     FormatId formatId = new FormatId(format.getItag(), format.getLastModified(), format.getXtags());
 
     log.debug("Starting SABR track from client {} (itag {}): {}", client.getIdentifier(), format.getItag(), resolvedUrl);
@@ -205,7 +242,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
       return new URI(serverAbrStreamingUrl);
     }
 
-    UrlInfo urlInfo = UrlTools.getUrlInfo(serverAbrStreamingUrl, true);
+    UrlTools.UrlInfo urlInfo = UrlTools.getUrlInfo(serverAbrStreamingUrl, true);
     String nParameter = urlInfo.parameters.get("n");
 
     if (nParameter == null) {
@@ -239,11 +276,12 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
   private void processStatic(LocalAudioTrackExecutor localExecutor,
                              HttpInterface httpInterface,
                              FormatWithUrl augmentedFormat,
-                             long streamPosition) throws Exception {
+                             long streamPosition,
+                             long contentLength) throws Exception {
     YoutubePersistentHttpStream stream = null;
 
     try {
-      stream = new YoutubePersistentHttpStream(httpInterface, augmentedFormat.signedUrl, augmentedFormat.format.getContentLength());
+      stream = new YoutubePersistentHttpStream(httpInterface, augmentedFormat.signedUrl, contentLength);
 
       if (streamPosition > 0) {
         stream.seek(streamPosition);
@@ -291,7 +329,7 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
     if (client.requirePlayerScript()) {
       resolvedUrl = sourceManager.getCipherManager()
               .resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), format);
-      resolvedUrl = client.transformPlaybackUri(format.getUrl(), resolvedUrl);
+      resolvedUrl = client.transformPlaybackUri(format.getUrl(), resolvedUrl, formats.getPoToken());
     }
 
     return new FormatWithUrl(format, resolvedUrl);

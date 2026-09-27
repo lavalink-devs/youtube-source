@@ -11,11 +11,13 @@ import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.ClientOptions;
 import dev.lavalink.youtube.sabr.SabrClientInfo;
 import dev.lavalink.youtube.track.format.TrackFormats;
+import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -153,6 +155,27 @@ public interface Client {
     }
 
     /**
+     * The overloaded method of transformPlaybackUri() provides a new param 'poToken'
+     * @param poToken gets the proof-of-origin token and appends to the url.
+     */
+    @NotNull
+    default URI transformPlaybackUri(@NotNull URI originalUri,
+                                     @NotNull URI resolvedPlaybackUri,
+                                     @Nullable String poToken) {
+        if (poToken == null) {
+            return transformPlaybackUri(originalUri, resolvedPlaybackUri);
+        }
+
+        try {
+            return new URIBuilder(resolvedPlaybackUri)
+                .addParameter("pot", poToken)
+                .build();
+        } catch (URISyntaxException e) {
+            return resolvedPlaybackUri;
+        }
+    }
+
+    /**
      * Builds an audio track with the given parameters.
      * Hint: You can use {@link YoutubeAudioSourceManager#buildAudioTrack(AudioTrackInfo)} to
      * build a track with the given AudioTrackInfo.
@@ -237,11 +260,20 @@ public interface Client {
     }
 
     /**
-     * @return The poToken to include within SABR streaming requests, or {@code null}.
+     * @return true only when this client expects SABR formats.
      */
+    default boolean supportsSabrPlayback() {
+        return false;
+    }
+
     @Nullable
     default String getPoToken() {
         return null;
+    }
+
+    default void preparePlayback(@NotNull YoutubeAudioSourceManager source,
+                                 @NotNull HttpInterface httpInterface,
+                                 @NotNull String videoId) throws IOException {
     }
 
     void setPlaylistPageCount(int count);
