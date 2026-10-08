@@ -189,7 +189,7 @@ public class Web extends StreamingNonMusicClient {
 
     @NotNull
     protected JsonBrowser extractPlaylistVideoList(@NotNull JsonBrowser json) {
-        return json.get("contents")
+        JsonBrowser contents = json.get("contents")
                 .get("twoColumnBrowseResultsRenderer")
                 .get("tabs")
                 .index(0)
@@ -199,9 +199,14 @@ public class Web extends StreamingNonMusicClient {
                 .get("contents")
                 .index(0)
                 .get("itemSectionRenderer")
-                .get("contents")
-                .index(0)
-                .get("playlistVideoListRenderer");
+                .get("contents");
+
+        JsonBrowser playlistVideoList = contents.index(0).get("playlistVideoListRenderer");
+        if (!playlistVideoList.isNull()) {
+            return playlistVideoList;
+        }
+
+        return contents;
     }
 
     @Override
