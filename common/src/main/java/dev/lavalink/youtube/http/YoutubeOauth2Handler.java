@@ -13,13 +13,19 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class YoutubeOauth2Handler {
     private static final Logger log = LoggerFactory.getLogger(YoutubeOauth2Handler.class);
@@ -34,30 +40,120 @@ public class YoutubeOauth2Handler {
     private static final String OAUTH_FETCH_CONTEXT_ATTRIBUTE = "yt-oauth";
     public static final String OAUTH_INJECT_CONTEXT_ATTRIBUTE = "yt-oauth-token";
 
+    public static class OAuthSession {
+        private final String initialRefreshToken;
+        private volatile String currentRefreshToken;
+        private volatile String tokenType;
+        private volatile String accessToken;
+        private volatile long tokenExpires;
+        private volatile int failureCount;
+
+        public OAuthSession(@NotNull String refreshToken) {
+            this.initialRefreshToken = refreshToken;
+            this.currentRefreshToken = refreshToken;
+            this.tokenExpires = 0;
+            this.failureCount = 0;
+        }
+
+        public String getInitialRefreshToken() {
+            return initialRefreshToken;
+        }
+
+        public String getCurrentRefreshToken() {
+            return currentRefreshToken;
+        }
+
+        public String getTokenType() {
+            return tokenType;
+        }
+
+        public String getAccessToken() {
+            return accessToken;
+        }
+
+        public long getTokenExpires() {
+            return tokenExpires;
+        }
+
+        public boolean shouldRefresh() {
+            return !DataFormatTools.isNullOrEmpty(currentRefreshToken) &&
+                    (DataFormatTools.isNullOrEmpty(accessToken) || System.currentTimeMillis() >= tokenExpires);
+        }
+
+        public boolean isValid() {
+            return accessToken != null && tokenType != null && System.currentTimeMillis() < tokenExpires;
+        }
+
+        public void updateTokens(JsonBrowser json) {
+            JsonBrowser newRefreshToken = json.get("refresh_token");
+            long tokenLifespan = json.get("expires_in").asLong(300);
+            this.tokenType = json.get("token_type").text();
+            this.accessToken = json.get("access_token").text();
+            if (!newRefreshToken.isNull() && !DataFormatTools.isNullOrEmpty(newRefreshToken.text())) {
+                this.currentRefreshToken = newRefreshToken.text();
+            }
+            this.tokenExpires = System.currentTimeMillis() + (tokenLifespan * 1000) - 60000;
+            this.failureCount = 0;
+        }
+
+        public void recordFailure() {
+            this.failureCount++;
+            this.tokenExpires = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(15);
+        }
+
+        public int getFailureCount() {
+            return failureCount;
+        }
+    }
+
     private final HttpInterfaceManager httpInterfaceManager;
 
     private boolean enabled;
-    private String refreshToken;
-
-    private String tokenType;
-    private String accessToken;
-    private long tokenExpires;
+    private final List<OAuthSession> sessions = new CopyOnWriteArrayList<>();
+    private final AtomicInteger sessionIndex = new AtomicInteger(0);
 
     public YoutubeOauth2Handler(HttpInterfaceManager httpInterfaceManager) {
         this.httpInterfaceManager = httpInterfaceManager;
     }
 
     public void setRefreshToken(@Nullable String refreshToken, boolean skipInitialization) {
-        this.refreshToken = refreshToken;
-        this.tokenExpires = System.currentTimeMillis();
-        this.accessToken = null;
+        setRefreshTokens(refreshToken != null ? Collections.singletonList(refreshToken) : Collections.emptyList(), skipInitialization);
+    }
 
-        if (!DataFormatTools.isNullOrEmpty(refreshToken)) {
-            refreshAccessToken(true);
+    public void setRefreshTokens(@NotNull List<String> refreshTokens, boolean skipInitialization) {
+        sessions.clear();
+        sessionIndex.set(0);
 
-            // if refreshAccessToken() fails, enabled will never be flipped, so we don't use
-            // oauth tokens erroneously.
-            enabled = true;
+        List<String> validTokens = new ArrayList<>();
+        if (refreshTokens != null) {
+            for (String t : refreshTokens) {
+                if (!DataFormatTools.isNullOrEmpty(t)) {
+                    validTokens.add(t.trim());
+                }
+            }
+        }
+
+        if (!validTokens.isEmpty()) {
+            for (String token : validTokens) {
+                OAuthSession session = new OAuthSession(token);
+                try {
+                    JsonBrowser json = createNewAccessToken(session.getCurrentRefreshToken());
+                    session.updateTokens(json);
+                    sessions.add(session);
+                    String masked = token.length() > 6 ? token.substring(token.length() - 6) : token;
+                    log.info("Initialized OAuth session for token ending in ...{}", masked);
+                } catch (Exception e) {
+                    String masked = token.length() > 6 ? token.substring(token.length() - 6) : token;
+                    log.error("Failed to initialize OAuth session for token ending in ...{}: {}", masked, e.getMessage());
+                }
+            }
+
+            if (!sessions.isEmpty()) {
+                enabled = true;
+                log.info("YouTube OAuth multi-account pool active with {} account session(s)", sessions.size());
+            } else {
+                log.error("All provided OAuth refresh tokens failed to initialize!");
+            }
             return;
         }
 
@@ -67,16 +163,32 @@ public class YoutubeOauth2Handler {
     }
 
     public boolean hasAccessToken() {
-        return accessToken != null;
+        return sessions.stream().anyMatch(OAuthSession::isValid);
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public boolean shouldRefreshAccessToken() {
-        return enabled && !DataFormatTools.isNullOrEmpty(refreshToken) && (DataFormatTools.isNullOrEmpty(accessToken) || System.currentTimeMillis() >= tokenExpires);
+        return enabled && sessions.stream().anyMatch(OAuthSession::shouldRefresh);
     }
 
     @Nullable
     public String getRefreshToken() {
-        return refreshToken;
+        return sessions.isEmpty() ? null : sessions.get(0).getCurrentRefreshToken();
+    }
+
+    public List<String> getRefreshTokens() {
+        List<String> tokens = new ArrayList<>();
+        for (OAuthSession s : sessions) {
+            tokens.add(s.getCurrentRefreshToken());
+        }
+        return tokens;
+    }
+
+    public List<OAuthSession> getSessions() {
+        return Collections.unmodifiableList(sessions);
     }
 
     public boolean isOauthFetchContext(HttpClientContext context) {
@@ -205,8 +317,10 @@ public class YoutubeOauth2Handler {
                         return;
                     }
 
-                    updateTokens(response);
-                    log.info("OAUTH INTEGRATION: Token retrieved successfully. Store your refresh token as this can be reused. ({})", refreshToken);
+                    OAuthSession session = new OAuthSession(response.get("refresh_token").text());
+                    session.updateTokens(response);
+                    sessions.add(session);
+                    log.info("OAUTH INTEGRATION: Token retrieved successfully. Store your refresh token as this can be reused. ({})", session.getCurrentRefreshToken());
                     enabled = true;
                     return;
                 } catch (InterruptedException | RuntimeException e) {
@@ -219,7 +333,7 @@ public class YoutubeOauth2Handler {
     }
 
     /**
-     * Refreshes an access token using a supplied refresh token.
+     * Refreshes an access token using supplied refresh token(s).
      *
      * @param force Whether to forcefully renew the access token, even if it doesn't necessarily
      *              need to be refreshed yet.
@@ -227,29 +341,31 @@ public class YoutubeOauth2Handler {
     public void refreshAccessToken(boolean force) {
         log.debug("Refreshing access token (force: {})", force);
 
-        if (DataFormatTools.isNullOrEmpty(refreshToken)) {
+        if (sessions.isEmpty()) {
             throw new IllegalStateException("Cannot fetch access token without a refresh token!");
         }
 
-        if (!shouldRefreshAccessToken() && !force) {
-            log.debug("Access token does not need to be refreshed yet.");
-            return;
-        }
-
-        synchronized (this) {
-            if (DataFormatTools.isNullOrEmpty(refreshToken)) {
-                throw new IllegalStateException("Cannot fetch access token without a refresh token!");
+        for (OAuthSession session : sessions) {
+            if (session.shouldRefresh() || force) {
+                synchronized (session) {
+                    if (session.shouldRefresh() || force) {
+                        try {
+                            JsonBrowser json = createNewAccessToken(session.getCurrentRefreshToken());
+                            session.updateTokens(json);
+                            log.info("YouTube access token refreshed successfully for token ending in ...{}",
+                                    session.getCurrentRefreshToken().length() > 6 ?
+                                            session.getCurrentRefreshToken().substring(session.getCurrentRefreshToken().length() - 6) :
+                                            session.getCurrentRefreshToken());
+                        } catch (Throwable t) {
+                            session.recordFailure();
+                            log.warn("Failed to refresh OAuth session for token ending in ...{}: {}",
+                                    session.getCurrentRefreshToken().length() > 6 ?
+                                            session.getCurrentRefreshToken().substring(session.getCurrentRefreshToken().length() - 6) :
+                                            session.getCurrentRefreshToken(), t.getMessage());
+                        }
+                    }
+                }
             }
-
-            if (!shouldRefreshAccessToken() && !force) {
-                log.debug("Access token does not need to be refreshed yet.");
-                return;
-            }
-
-            JsonBrowser json = createNewAccessToken(refreshToken);
-            updateTokens(json);
-            log.info("YouTube access token refreshed successfully");
-            log.debug("YouTube access token is {} and refresh token is {}. Access token expires in {} seconds.", accessToken, refreshToken, json.get("expires_in").asLong(300));
         }
     }
 
@@ -291,51 +407,48 @@ public class YoutubeOauth2Handler {
         }
     }
 
-    private void updateTokens(JsonBrowser json) {
-        JsonBrowser newRefreshToken = json.get("refresh_token");
-
-        long tokenLifespan = json.get("expires_in").asLong(300);
-        tokenType = json.get("token_type").text();
-        accessToken = json.get("access_token").text();
-        refreshToken = newRefreshToken.isNull() ? refreshToken : newRefreshToken.text();
-        tokenExpires = System.currentTimeMillis() + (tokenLifespan * 1000) - 60000;
-
-        log.debug("OAuth access token is {} and refresh token is {}. Access token expires in {} seconds.", accessToken, refreshToken, tokenLifespan);
-    }
-
     public void applyToken(HttpUriRequest request) {
-        if (!enabled || DataFormatTools.isNullOrEmpty(refreshToken)) {
+        if (!enabled || sessions.isEmpty()) {
             return;
         }
 
-        if (shouldRefreshAccessToken()) {
-            log.debug("Access token has expired, refreshing...");
+        int totalSessions = sessions.size();
+        for (int i = 0; i < totalSessions; i++) {
+            int idx = Math.abs(sessionIndex.getAndIncrement() % totalSessions);
+            OAuthSession session = sessions.get(idx);
 
-            try {
-                refreshAccessToken(false);
-            } catch (Throwable t) {
-                if (++fetchErrorLogCount <= 3) {
-                    // log fetch errors up to 3 consecutive times to avoid spamming logs. in theory requests can still be made
-                    // without an access token, but they are less likely to succeed. regardless, we shouldn't bloat a
-                    // user's logs just in case YT changed something and broke oauth integration.
-                    log.error("Refreshing YouTube access token failed", t);
-                } else {
-                    log.debug("Refreshing YouTube access token failed", t);
+            if (session.shouldRefresh()) {
+                synchronized (session) {
+                    if (session.shouldRefresh()) {
+                        log.debug("Access token for OAuth session index {} has expired, refreshing...", idx);
+                        try {
+                            JsonBrowser json = createNewAccessToken(session.getCurrentRefreshToken());
+                            session.updateTokens(json);
+                        } catch (Throwable t) {
+                            session.recordFailure();
+                            if (++fetchErrorLogCount <= 3) {
+                                log.error("Refreshing YouTube access token for session index {} failed", idx, t);
+                            } else {
+                                log.debug("Refreshing YouTube access token for session index {} failed", idx, t);
+                            }
+                            continue; // Try next session in pool
+                        }
+                        fetchErrorLogCount = 0;
+                    }
                 }
-
-                // retry in 15 seconds to avoid spamming YouTube with requests.
-                tokenExpires = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(15);
-                return;
             }
 
-            fetchErrorLogCount = 0;
+            if (session.isValid()) {
+                String masked = session.getCurrentRefreshToken().length() > 6 ?
+                        session.getCurrentRefreshToken().substring(session.getCurrentRefreshToken().length() - 6) :
+                        session.getCurrentRefreshToken();
+                log.debug("Using OAuth session index {} authorization header (token ending in ...{})", idx, masked);
+                request.setHeader("Authorization", String.format("%s %s", session.getTokenType(), session.getAccessToken()));
+                return;
+            }
         }
 
-        // check again to ensure updating worked as expected.
-        if (accessToken != null && tokenType != null && System.currentTimeMillis() < tokenExpires) {
-            log.debug("Using oauth authorization header with value \"{} {}\"", tokenType, accessToken);
-            request.setHeader("Authorization", String.format("%s %s", tokenType, accessToken));
-        }
+        log.warn("No valid OAuth sessions available in the pool to authorize request");
     }
 
     public void applyToken(HttpUriRequest request, String token) {

@@ -1,16 +1,25 @@
 package dev.lavalink.youtube.clients;
 
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
+import dev.lavalink.youtube.RemotePoToken;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import dev.lavalink.youtube.clients.skeleton.MusicClient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import org.apache.http.client.utils.URIBuilder;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class Music extends MusicClient {
     public static ClientConfig BASE_CONFIG = new ClientConfig()
         .withClientName("WEB_REMIX")
-        .withClientField("clientVersion", "1.20240724.00.00");
+        .withClientField("clientVersion", "1.20261016.01.00");
 
     protected ClientOptions options;
-
+    private volatile String poToken;
     public Music() {
         this(ClientOptions.DEFAULT);
     }
@@ -22,17 +31,46 @@ public class Music extends MusicClient {
     @Override
     @NotNull
     public ClientConfig getBaseClientConfig(@NotNull HttpInterface httpInterface) {
-        return BASE_CONFIG.copy();
+        ClientConfig config = BASE_CONFIG.copy();
+        if (poToken != null) {
+            config.putOnceAndJoin(config.getRoot(), "serviceIntegrityDimensions").put("poToken", poToken);
+        }
+        return config;
+    }
+
+    @Override
+    public boolean supportsFormatLoading() {
+        return getOptions().getPlayback();
+    }
+
+    @Override
+    public void preparePlayback(@NotNull YoutubeAudioSourceManager source,
+                                @NotNull HttpInterface httpInterface,
+                                @NotNull String videoId) throws IOException {
+        RemotePoToken.Result result = source.generatePoToken(httpInterface, videoId);
+        poToken = result == null ? null : result.getPoToken();
+    }
+
+    @Override
+    @Nullable
+    public String getPoToken() {
+        return poToken;
+    }
+
+    @Override
+    protected boolean preferSabrPlayback() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsSabrPlayback() {
+        return true;
     }
 
     @Override
     @NotNull
     public String getPlayerParams() {
-        // This client is not used for format loading so, we don't have
-        // any player parameters attached to it.
-        // TODO?: This client *can* do playback, so maybe look into allowing
-        //        this client to be used in playback rotation.
-        throw new UnsupportedOperationException();
+        return WEB_PLAYER_PARAMS;
     }
 
     @Override

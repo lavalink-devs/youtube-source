@@ -155,6 +155,18 @@ public class ClientConfig {
         return this;
     }
 
+    @Nullable
+    public Object getClientField(@NotNull String key) {
+        Map<String, Object> context = (Map<String, Object>) root.get("context");
+
+        if (context == null) {
+            return null;
+        }
+
+        Map<String, Object> client = (Map<String, Object>) context.get("client");
+        return client == null ? null : client.get(key);
+    }
+
     public ClientConfig withUserField(@NotNull String key,
                                       @Nullable Object value) {
         Map<String, Object> context = putOnceAndJoin(root, "context");

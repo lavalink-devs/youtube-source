@@ -17,9 +17,13 @@ public class ClientProviderV3 implements ClientProvider {
         MUSIC(Music::new),
         TV(Tv::new),
         WEB(Web::new),
+        WEB_SAFARI(WebSafari::new),
         WEBEMBEDDED(WebEmbedded::new),
         MWEB(MWeb::new),
-        TVHTML5_SIMPLY(TvHtml5Simply::new);
+        TVHTML5_SIMPLY(TvHtml5Simply::new),
+        TV_TCL(TvTcl::new),
+        TV_SAMSUNG(TvSamsung::new),
+        VISIONOS(VisionOs::new);
 
         private final ClientWithOptions<Client> clientFactory;
 

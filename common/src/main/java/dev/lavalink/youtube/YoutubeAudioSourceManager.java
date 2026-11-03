@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,7 +55,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     public static final String MUSIC_SEARCH_PREFIX = "ytmsearch:";
 
     public static final Client[] DEFAULT_CLIENTS = new Client[] {
-        new Music(), new AndroidVr(), new Web(), new WebEmbedded()
+        new TvHtml5Simply(), new Music(), new Web(), new WebEmbedded(), new AndroidVr()
     };
 
     private static boolean loggedOauthClientNoAccountWarning = false;
@@ -80,6 +81,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     protected YoutubeOauth2Handler oauth2Handler;
     protected YoutubeHttpContextFilter contextFilter;
     protected CipherManager cipherManager;
+    protected RemotePoToken remotePoToken;
 
     public YoutubeAudioSourceManager() {
         this(true);
@@ -160,11 +162,33 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         } else {
             this.cipherManager = new LocalSignatureCipherManager();
         }
+        if (!DataFormatTools.isNullOrEmpty(options.getRemotePoTokenUrl())) {
+            this.remotePoToken = new RemotePoToken(options.getRemotePoTokenUrl(), options.getRemotePoTokenPassword());
+        }
     }
 
     @Override
     public String getSourceName() {
         return "youtube";
+    }
+
+    @Nullable
+    public RemotePoToken.Result generatePoToken(@NotNull HttpInterface httpInterface, @Nullable String contentBinding) throws IOException {
+        if (remotePoToken == null) {
+            return null;
+        }
+
+        try {
+            return remotePoToken.generate(httpInterface, contentBinding);
+        } catch (Exception e) {
+            log.warn("Failed to generate PoToken from remote server: {}. Continuing without PoToken.", e.getMessage());
+            return null;
+        }
+    }
+
+    @Nullable
+    public String getVisitorData() {
+        return contextFilter.getVisitorData();
     }
 
     public void setPlaylistPageCount(int count) {
@@ -178,13 +202,13 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
      * {@code null} is valid and will kickstart the oauth process.
      * Providing a refresh token will likely skip having to authenticate your account prior to making requests,
      * as long as the provided token is still valid.
-     * @param refreshToken The token to use for generating access tokens. Can be null.
+     * @param refreshTokens The tokens to use for generating access tokens. Can be null.
      * @param skipInitialization Whether linking of an account should be skipped, if you intend to provide a
      *                           refresh token later. This only applies on null/empty/invalid refresh tokens.
      *                           Valid refresh tokens will not be presented with an initialization prompt.
      */
-    public void useOauth2(@Nullable String refreshToken, boolean skipInitialization) {
-        oauth2Handler.setRefreshToken(refreshToken, skipInitialization);
+    public void useOauth2(@Nullable List<String> refreshTokens, boolean skipInitialization) {
+        oauth2Handler.setRefreshTokens(refreshTokens != null ? refreshTokens : Collections.emptyList(), skipInitialization);
 
         if (Arrays.stream(clients).noneMatch(Client::supportsOAuth)) {
             log.warn("OAuth has been enabled without registering any OAuth-compatible clients. " +
@@ -193,9 +217,18 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
         }
     }
 
+    public void useOauth2(@Nullable String refreshToken, boolean skipInitialization) {
+        useOauth2(refreshToken != null ? Collections.singletonList(refreshToken) : Collections.emptyList(), skipInitialization);
+    }
+
     @Nullable
     public String getOauth2RefreshToken() {
         return oauth2Handler.getRefreshToken();
+    }
+
+    @Nullable
+    public List<String> getOauth2RefreshTokens() {
+        return oauth2Handler.getRefreshTokens();
     }
 
     @Override
@@ -235,11 +268,11 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 }
 
                 boolean shouldLogOauthWarning = client.supportsOAuth() && !loggedOauthClientNoAccountWarning &&
-                    !oauth2Handler.hasAccessToken() && client.getOptions().getPlayback();
+                    !oauth2Handler.hasAccessToken() && remotePoToken == null && client.getOptions().getPlayback();
 
                 if (shouldLogOauthWarning) {
                     loggedOauthClientNoAccountWarning = true;
-                    log.warn("!!! You are using an OAuth-enabled client without a valid OAuth token! This client may not play videos!");
+                    log.warn("!!! No valid oauth token or remote PoToken server configured! This client may fail or fall back to legacy format (itag 18)!");
                 }
 
                 log.debug("Attempting to load {} with client \"{}\"", reference.identifier, client.getIdentifier());

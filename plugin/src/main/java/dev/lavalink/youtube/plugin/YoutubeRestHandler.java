@@ -7,8 +7,6 @@ import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import dev.lavalink.youtube.CannotBeLoaded;
 import dev.lavalink.youtube.ClientInformation;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
-import dev.lavalink.youtube.clients.Web;
-import dev.lavalink.youtube.clients.WebEmbedded;
 import dev.lavalink.youtube.clients.skeleton.Client;
 import dev.lavalink.youtube.plugin.rest.MinimalConfigRequest;
 import dev.lavalink.youtube.plugin.rest.MinimalConfigResponse;
@@ -121,7 +119,7 @@ public class YoutubeRestHandler {
             URI transformed = selectedFormat.getUrl();
             if (client.requirePlayerScript()) {
                 URI resolved = source.getCipherManager().resolveFormatUrl(httpInterface, formats.getPlayerScriptUrl(), selectedFormat);
-                transformed = client.transformPlaybackUri(selectedFormat.getUrl(), resolved);
+                transformed = client.transformPlaybackUri(selectedFormat.getUrl(), resolved, formats.getPoToken());
             }
 
             YoutubePersistentHttpStream httpStream = new YoutubePersistentHttpStream(httpInterface, transformed, selectedFormat.getContentLength());
@@ -205,13 +203,5 @@ public class YoutubeRestHandler {
             log.debug("Updated YouTube OAuth2 refresh token to \"{}\"", config.getRefreshToken());
         }
 
-        String poToken = config.getPoToken();
-        String visitorData = config.getVisitorData();
-
-        if (poToken == null || visitorData == null || (!poToken.isEmpty() && !visitorData.isEmpty())) {
-            WebEmbedded.setPoTokenAndVisitorData(poToken, visitorData);
-            Web.setPoTokenAndVisitorData(poToken, visitorData);
-            log.debug("Updated poToken to \"{}\" and visitorData to \"{}\"", poToken, visitorData);
-        }
     }
 }

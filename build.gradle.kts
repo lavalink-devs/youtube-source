@@ -22,6 +22,8 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven(url = "https://maven.mja.moe/releases")
+        maven(url = "https://maven.mja.moe/snapshots")
         maven(url = "https://maven.lavalink.dev/releases")
         maven(url = "https://jitpack.io")
     }
@@ -30,6 +32,10 @@ allprojects {
 subprojects {
     apply<JavaPlugin>()
     apply<MavenPublishPlugin>()
+
+    tasks.withType<JavaCompile>().configureEach {
+        options.encoding = "UTF-8"
+    }
 
     configure<JavaPluginExtension> {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -41,8 +47,8 @@ subprojects {
         val mavenPassword = findProperty("MAVEN_PASSWORD") as String?
         if (!mavenUsername.isNullOrEmpty() && !mavenPassword.isNullOrEmpty()) {
             repositories {
-                val snapshots = "https://maven.lavalink.dev/snapshots"
-                val releases = "https://maven.lavalink.dev/releases"
+                val snapshots = "https://maven.mja.moe/snapshots"
+                val releases = "https://maven.mja.moe/releases"
 
                 maven(if (release) releases else snapshots) {
                     credentials {
@@ -52,7 +58,7 @@ subprojects {
                 }
             }
         } else {
-            logger.lifecycle("Not publishing to maven.lavalink.dev because credentials are not set")
+            logger.lifecycle("Not publishing to maven.mja.moe because credentials are not set")
         }
     }
 }

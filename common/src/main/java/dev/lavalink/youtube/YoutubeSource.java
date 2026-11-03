@@ -1,7 +1,5 @@
 package dev.lavalink.youtube;
 
-import dev.lavalink.youtube.clients.Web;
-import dev.lavalink.youtube.clients.WebEmbedded;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,9 +36,8 @@ public class YoutubeSource {
      * @param visitorData The visitorData to use. This must be paired to the specified poToken.
      *                    You may specify {@code null} to unset.
      */
+    @Deprecated
     public static void setPoTokenAndVisitorData(String poToken, String visitorData) {
-        log.debug("Applying pot: {} vd: {} to WEB, WEBEMBEDDED", poToken, visitorData);
-        Web.setPoTokenAndVisitorData(poToken, visitorData);
-        WebEmbedded.setPoTokenAndVisitorData(poToken, visitorData);
+        log.warn("YoutubeSource.setPoTokenAndVisitorData is deprecated and has no effect. Configure remote poToken minting instead.");
     }
 }

@@ -1,6 +1,7 @@
 package dev.lavalink.youtube.track.format;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.StringJoiner;
@@ -10,11 +11,48 @@ import static com.sedmelluq.discord.lavaplayer.container.Formats.MIME_AUDIO_WEBM
 public class TrackFormats {
     private final List<StreamFormat> formats;
     private final String playerScriptUrl;
+    private final String serverAbrStreamingUrl;
+    private final String videoPlaybackUstreamerConfig;
+    private final String poToken;
+    private final dev.lavalink.youtube.sabr.FormatId discardVideoFormat;
 
     public TrackFormats(@NotNull List<StreamFormat> formats,
                         @NotNull String playerScriptUrl) {
+        this(formats, playerScriptUrl, null, null);
+    }
+
+    public TrackFormats(@NotNull List<StreamFormat> formats,
+                        @NotNull String playerScriptUrl,
+                        @Nullable String serverAbrStreamingUrl,
+                        @Nullable String videoPlaybackUstreamerConfig) {
+        this(formats, playerScriptUrl, serverAbrStreamingUrl, videoPlaybackUstreamerConfig, null, null);
+    }
+
+    public TrackFormats(@NotNull List<StreamFormat> formats,
+                        @NotNull String playerScriptUrl,
+                        @Nullable String serverAbrStreamingUrl,
+                        @Nullable String videoPlaybackUstreamerConfig,
+                        @Nullable String poToken) {
+        this(formats, playerScriptUrl, serverAbrStreamingUrl, videoPlaybackUstreamerConfig, poToken, null);
+    }
+
+    public TrackFormats(@NotNull List<StreamFormat> formats,
+                        @NotNull String playerScriptUrl,
+                        @Nullable String serverAbrStreamingUrl,
+                        @Nullable String videoPlaybackUstreamerConfig,
+                        @Nullable String poToken,
+                        @Nullable dev.lavalink.youtube.sabr.FormatId discardVideoFormat) {
         this.formats = formats;
         this.playerScriptUrl = playerScriptUrl;
+        this.serverAbrStreamingUrl = serverAbrStreamingUrl;
+        this.videoPlaybackUstreamerConfig = videoPlaybackUstreamerConfig;
+        this.poToken = poToken;
+        this.discardVideoFormat = discardVideoFormat;
+    }
+
+    @Nullable
+    public dev.lavalink.youtube.sabr.FormatId getDiscardVideoFormat() {
+        return this.discardVideoFormat;
     }
 
     @NotNull
@@ -25,6 +63,38 @@ public class TrackFormats {
     @NotNull
     public String getPlayerScriptUrl() {
         return playerScriptUrl;
+    }
+
+    /**
+     * @return The server ABR streaming URL used for SABR playback, or {@code null} if unavailable.
+     */
+    @Nullable
+    public String getServerAbrStreamingUrl() {
+        return serverAbrStreamingUrl;
+    }
+
+    /**
+     * @return The base64 videoPlaybackUstreamerConfig required for SABR requests, or {@code null}.
+     */
+    @Nullable
+    public String getVideoPlaybackUstreamerConfig() {
+        return videoPlaybackUstreamerConfig;
+    }
+
+    @Nullable
+    public String getPoToken() {
+        return poToken;
+    }
+
+    @Nullable
+    public StreamFormat getFormatByItag(int itag) {
+        for (StreamFormat format : formats) {
+            if (format.getItag() == itag && !format.isSabr()) {
+                return format;
+            }
+        }
+
+        return null;
     }
 
     @NotNull
@@ -57,7 +127,16 @@ public class TrackFormats {
             return false;
         } else if (other == null) {
             return true;
-        } else if (MIME_AUDIO_WEBM.equals(info.mimeType) && format.getAudioChannels() > 2) {
+        }
+
+        // Format without URL is SABR
+        if (format.isSabr() && !other.isSabr()) {
+            return false;
+        } else if (!format.isSabr() && other.isSabr()) {
+            return true;
+        }
+
+        if (MIME_AUDIO_WEBM.equals(info.mimeType) && format.getAudioChannels() > 2) {
             // Opus with more than 2 audio channels is unsupported by LavaPlayer currently.
             return false;
         } else if (info.ordinal() != other.getInfo().ordinal()) {
