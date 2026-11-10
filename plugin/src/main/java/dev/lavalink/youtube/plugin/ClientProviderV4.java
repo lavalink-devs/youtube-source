@@ -19,6 +19,7 @@ public class ClientProviderV4 implements ClientProvider {
         WEB(WebWithThumbnail::new),
         WEBEMBEDDED(WebEmbeddedWithThumbnail::new),
         MWEB(MWebWithThumbnail::new),
+        TVHTML5EMBEDDED(TvHtml5Embedded::new),
         TVHTML5_SIMPLY(TvHtml5SimplyWithThumbnail::new);
 
         private final ClientWithOptions<Client> clientFactory;
