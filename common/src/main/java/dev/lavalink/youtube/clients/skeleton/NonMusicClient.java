@@ -457,7 +457,9 @@ public abstract class NonMusicClient implements Client {
         List<AudioTrack> tracks = extractSearchResults(source, json);
 
         if (tracks.isEmpty()) {
-            return AudioReference.NO_TRACK;
+            // This isn't a CannotBeLoaded exception as if the response JSON changes, another
+            // client that receives the expected response format may still be able to load it.
+            throw new FriendlyException("Could not find tracks from search response.", SUSPICIOUS, new RuntimeException("JSON: " + json.format()));
         }
 
         return new BasicAudioPlaylist("Search results for: " + searchQuery, tracks, null, true);

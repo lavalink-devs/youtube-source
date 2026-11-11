@@ -2,6 +2,7 @@ package dev.lavalink.youtube.clients.skeleton;
 
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
@@ -21,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity.SUSPICIOUS;
 
 /**
  * The base class for a client that can be used with music.youtube.com.
@@ -150,7 +153,9 @@ public abstract class MusicClient implements Client {
         List<AudioTrack> tracks = extractSearchResultTracks(source, trackJson);
 
         if (tracks.isEmpty()) {
-            return AudioReference.NO_TRACK;
+            // This isn't a CannotBeLoaded exception as if the response JSON changes, another
+            // client that receives the expected response format may still be able to load it.
+            throw new FriendlyException("Could not find tracks from search response.", SUSPICIOUS, new RuntimeException("JSON: " + json.format()));
         }
 
         return new BasicAudioPlaylist("Search music results for: " + searchQuery, tracks, null, true);
