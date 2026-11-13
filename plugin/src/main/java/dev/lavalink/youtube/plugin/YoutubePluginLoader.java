@@ -80,11 +80,23 @@ public class YoutubePluginLoader implements AudioPlayerManagerConfiguration {
     private ClientOptions getOptionsForClient(String clientName) {
         Map<String, ClientOptions> clientOptions = youtubeConfig != null ? youtubeConfig.getClientOptions() : null;
 
-        if (clientOptions == null || !clientOptions.containsKey(clientName)) {
+        if (clientOptions == null || clientOptions.isEmpty()) {
             return ClientOptions.DEFAULT;
         }
 
-        return clientOptions.get(clientName);
+        if (clientOptions.containsKey(clientName)) {
+            return clientOptions.get(clientName);
+        }
+
+        String normalizedName = clientName.replace("_", "");
+        for (Map.Entry<String, ClientOptions> entry : clientOptions.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(clientName) ||
+                entry.getKey().replace("_", "").equalsIgnoreCase(normalizedName)) {
+                return entry.getValue();
+            }
+        }
+
+        return ClientOptions.DEFAULT;
     }
 
     private IpBlock getIpBlock(String cidr) {

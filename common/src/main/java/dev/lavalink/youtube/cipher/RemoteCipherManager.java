@@ -97,11 +97,14 @@ public class RemoteCipherManager implements CipherManager {
         synchronized (this) {
             HttpPost request = new HttpPost(getRemoteEndpoint("get_sts"));
 
-            log.debug("Getting timestamp for script: {}", sourceUrl);
+            String fullUrl = sourceUrl.startsWith("http") ? sourceUrl : "https://www.youtube.com" + sourceUrl;
+            fullUrl = fullUrl.replaceAll("/[a-z]{2}_[A-Z]{2}/", "/en_US/");
+
+            log.debug("Getting timestamp for script: {}", fullUrl);
 
             String requestBody = JsonWriter.string()
                 .object()
-                .value("player_url", sourceUrl)
+                .value("player_url", fullUrl)
                 .end()
                 .done();
             request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
@@ -132,13 +135,16 @@ public class RemoteCipherManager implements CipherManager {
                            String signature,
                            String nParam,
                            String sigKey) throws IOException {
+        String fullUrl = playerScript.startsWith("http") ? playerScript : "https://www.youtube.com" + playerScript;
+        fullUrl = fullUrl.replaceAll("/[a-z]{2}_[A-Z]{2}/", "/en_US/");
+
         HttpPost request = new HttpPost(getRemoteEndpoint("resolve_url"));
-        log.debug("Resolving stream url {} with player script {}", baseUrl, playerScript);
+        log.debug("Resolving stream url {} with player script {}", baseUrl, fullUrl);
 
         JsonStringWriter writer = JsonWriter.string()
             .object()
             .value("stream_url", baseUrl.toString())
-            .value("player_url", playerScript);
+            .value("player_url", fullUrl);
 
         if (signature != null) {
             writer.value("encrypted_signature", signature);
@@ -146,9 +152,7 @@ public class RemoteCipherManager implements CipherManager {
         if (nParam != null) {
             writer.value("n_param", nParam);
         }
-        if (sigKey != null) {
-            writer.value("signature_key", sigKey);
-        }
+        writer.value("signature_key", sigKey != null ? sigKey : "sig");
 
         String requestBody = writer.end().done();
         request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));

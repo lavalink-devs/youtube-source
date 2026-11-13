@@ -99,7 +99,8 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
           processWithClient(localExecutor, httpInterface, client, 0);
           return;
         } catch (CannotBeLoaded e) {
-          throw e;
+          log.debug("Client {} cannot load track with CannotBeLoaded: {}", client.getIdentifier(), e.getMessage());
+          exceptions.add(new ClientException(e.getMessage() != null ? e.getMessage() : "Cannot be loaded", client, e));
         } catch (Exception e) {
           if (e instanceof ScriptExtractionException) {
             // If we're still early in playback, we can try another client
@@ -115,15 +116,13 @@ public class YoutubeAudioTrack extends DelegatedAudioTrack {
               throw e;
             }
           }
-          exceptions.add(new ClientException(e.getMessage(), client, e));
+          exceptions.add(new ClientException(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName(), client, e));
         }
       }
 
       if (!exceptions.isEmpty()) {
         throw new AllClientsFailedException(exceptions);
       }
-    } catch (CannotBeLoaded e) {
-      throw ExceptionTools.wrapUnfriendlyExceptions("This video is unavailable", Severity.SUSPICIOUS, e.getCause());
     }
   }
 

@@ -27,23 +27,24 @@ public class ClientException extends RuntimeException {
         StringWriter writer = new StringWriter();
         try (PrintWriter printer = new PrintWriter(writer)) {
             printer.print(this.getMessage());
-            writeException(printer, this.getCause(), 3);
+            writeException(printer, this.getCause(), 1);
         }
         return writer.toString();
     }
 
-    // Recursively iterate down the causes to our stored exceptions
+    // Safely write top stack trace elements to remain informative but concise
     private void writeException(@NotNull PrintWriter printer, @NotNull Throwable throwable, int maxDepth) {
+        if (throwable == null) return;
         StackTraceElement[] stackTrace = throwable.getStackTrace();
 
-        for (int i = 0; i < Math.min(5, stackTrace.length); i++) {
+        for (int i = 0; i < Math.min(2, stackTrace.length); i++) {
             printer.println();
             printer.format("\tat %s", stackTrace[i]);
         }
 
         if (throwable.getCause() != null && maxDepth > 0) {
             printer.println();
-            printer.print("Caused by: ");
+            printer.print("Caused by: " + throwable.getCause().getMessage());
             writeException(printer, throwable.getCause(), maxDepth - 1);
         }
     }

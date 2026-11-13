@@ -39,26 +39,75 @@ public interface CipherManager {
 
     default CachedPlayerScript getPlayerScript(@NotNull HttpInterface httpInterface) {
         synchronized (this) {
-            String scriptUrl;
-            try (CloseableHttpResponse response = httpInterface.execute(new HttpGet("https://www.youtube.com/embed/"))) {
-                HttpClientTools.assertSuccessWithContent(response, "fetch player script (embed)");
+            String scriptUrl = null;
+            String lastResponseText = null;
 
-                String responseText = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                scriptUrl = DataFormatTools.extractBetween(responseText, "\"jsUrl\":\"", "\"");
-
-                if (scriptUrl == null) {
-                    throw new ExceptionWithResponseBody("no jsUrl found", responseText);
+            // 1. Try embed page
+            HttpGet embedRequest = new HttpGet("https://www.youtube.com/embed/");
+            embedRequest.setHeader("Referer", "https://www.google.com");
+            embedRequest.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36");
+            try (CloseableHttpResponse response = httpInterface.execute(embedRequest)) {
+                if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
+                    lastResponseText = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                    scriptUrl = extractJsUrl(lastResponseText);
                 }
-            } catch (IOException e) {
-                throw ExceptionTools.toRuntimeException(e);
+            } catch (Exception ignored) {
             }
 
+            // 2. Fallback to tv_config
+            if (scriptUrl == null) {
+                HttpGet tvRequest = new HttpGet("https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl");
+                tvRequest.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36");
+                try (CloseableHttpResponse response = httpInterface.execute(tvRequest)) {
+                    if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
+                        lastResponseText = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                        scriptUrl = extractJsUrl(lastResponseText);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+
+            // 3. Fallback to watch page
+            if (scriptUrl == null) {
+                HttpGet watchRequest = new HttpGet("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+                watchRequest.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36");
+                try (CloseableHttpResponse response = httpInterface.execute(watchRequest)) {
+                    if (response.getStatusLine().getStatusCode() == 200 && response.getEntity() != null) {
+                        lastResponseText = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                        scriptUrl = extractJsUrl(lastResponseText);
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+
+            if (scriptUrl == null) {
+                throw new ExceptionWithResponseBody("no jsUrl found in embed or fallback endpoints", lastResponseText != null ? lastResponseText : "empty");
+            }
+
+            String fullUrl = scriptUrl.startsWith("http") ? scriptUrl : "https://www.youtube.com" + scriptUrl;
+            fullUrl = fullUrl.replaceAll("/[a-z]{2}_[A-Z]{2}/", "/en_US/");
+
             try {
-                return new CachedPlayerScript(scriptUrl, getTimestamp(httpInterface, scriptUrl));
+                return new CachedPlayerScript(fullUrl, getTimestamp(httpInterface, fullUrl));
             } catch (IOException e) {
                 throw ExceptionTools.toRuntimeException(e);
             }
         }
+    }
+
+    static String extractJsUrl(String content) {
+        if (content == null) {
+            return null;
+        }
+        String jsUrl = DataFormatTools.extractBetween(content, "\"jsUrl\":\"", "\"");
+        if (jsUrl != null) {
+            return jsUrl;
+        }
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(/s/player/[^\"]+\\.js)").matcher(content);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 
     class CachedPlayerScript {
@@ -66,8 +115,9 @@ public interface CipherManager {
         public final String signatureTimestamp;
         public final long expireTimestampMs;
 
-        protected CachedPlayerScript(@NotNull String url, @NotNull String signatureTimestamp) {
-            this.url = url;
+        public CachedPlayerScript(@NotNull String url, @NotNull String signatureTimestamp) {
+            String fullUrl = url.startsWith("http") ? url : "https://www.youtube.com" + url;
+            this.url = fullUrl.replaceAll("/[a-z]{2}_[A-Z]{2}/", "/en_US/");
             this.signatureTimestamp = signatureTimestamp;
             this.expireTimestampMs = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1);
         }

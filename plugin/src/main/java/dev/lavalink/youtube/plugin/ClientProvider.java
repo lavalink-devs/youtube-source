@@ -37,10 +37,20 @@ public interface ClientProvider {
                                   String name,
                                   OptionsProvider provider) {
         return Arrays.stream(enumValues)
-            .filter(it -> it.getName().equals(name))
+            .filter(it -> it.getName().equalsIgnoreCase(name) ||
+                          it.getName().replace("_", "").equalsIgnoreCase(name.replace("_", "")))
             .findFirst()
             .map(ref -> {
-                ClientOptions options = provider.getOptionsForClient(name);
+                ClientOptions options = provider.getOptionsForClient(ref.getName());
+                if (options == null || options == ClientOptions.DEFAULT) {
+                    ClientOptions fallback = provider.getOptionsForClient(name);
+                    if (fallback != null) {
+                        options = fallback;
+                    }
+                }
+                if (options == null) {
+                    options = ClientOptions.DEFAULT;
+                }
 
                 log.debug("Initialising client {} with options {}", ref.getName(), options);
                 return ref.getClient(options);

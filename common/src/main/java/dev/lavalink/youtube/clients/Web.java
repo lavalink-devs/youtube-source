@@ -160,15 +160,26 @@ public class Web extends StreamingNonMusicClient {
     @NotNull
     protected List<AudioTrack> extractSearchResults(@NotNull YoutubeAudioSourceManager source,
             @NotNull JsonBrowser json) {
-        return json.get("contents")
+        JsonBrowser contents = json.get("contents")
                 .get("twoColumnSearchResultsRenderer")
                 .get("primaryContents")
                 .get("sectionListRenderer")
-                .get("contents")
-                .values() // .index(0)
+                .get("contents");
+
+        if (contents.isNull()) {
+            contents = json.get("contents").get("sectionListRenderer").get("contents");
+        }
+
+        return contents
+                .values()
                 .stream()
-                .flatMap(item -> item.get("itemSectionRenderer").get("contents").values().stream()) // actual results
-                .map(item -> extractAudioTrack(item.get("videoRenderer"), source))
+                .flatMap(item -> item.get("itemSectionRenderer").get("contents").values().stream())
+                .map(item -> {
+                    JsonBrowser video = !item.get("videoRenderer").isNull()
+                            ? item.get("videoRenderer")
+                            : item.get("compactVideoRenderer");
+                    return extractAudioTrack(video, source);
+                })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }

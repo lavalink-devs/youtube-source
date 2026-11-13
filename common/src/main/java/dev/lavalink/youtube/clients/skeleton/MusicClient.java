@@ -3,6 +3,7 @@ package dev.lavalink.youtube.clients.skeleton;
 import com.sedmelluq.discord.lavaplayer.tools.DataFormatTools;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
+import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpInterface;
 import com.sedmelluq.discord.lavaplayer.track.*;
@@ -73,49 +74,51 @@ public abstract class MusicClient implements Client {
         List<AudioTrack> tracks = new ArrayList<>();
 
         for (JsonBrowser track : json.values()) {
-            JsonBrowser columns = track.get("musicResponsiveListItemRenderer").get("flexColumns");
+            try {
+                JsonBrowser columns = track.get("musicResponsiveListItemRenderer").get("flexColumns");
 
-            if (columns.isNull()) {
-                continue;
+                if (columns.isNull()) {
+                    continue;
+                }
+
+                JsonBrowser metadata = columns.index(0)
+                    .get("musicResponsiveListItemFlexColumnRenderer")
+                    .get("text")
+                    .get("runs")
+                    .index(0);
+
+                String title = metadata.get("text").text();
+                String videoId = metadata.get("navigationEndpoint").get("watchEndpoint").get("videoId").text();
+
+                if (videoId == null) {
+                    // If the track is not available on YouTube Music, videoId will be empty
+                    continue;
+                }
+
+                List<JsonBrowser> runs = columns.index(1)
+                    .get("musicResponsiveListItemFlexColumnRenderer")
+                    .get("text")
+                    .get("runs")
+                    .values();
+
+                String author = !runs.isEmpty() ? runs.get(0).get("text").text() : "Unknown artist";
+
+                if (author == null) {
+                    author = "Unknown artist";
+                }
+
+                long duration = Units.DURATION_MS_UNKNOWN;
+                if (runs.size() > 1) {
+                    JsonBrowser lastElement = runs.get(runs.size() - 1);
+                    if (lastElement.get("navigationEndpoint").isNull()) {
+                        duration = DataFormatTools.durationTextToMillis(lastElement.get("text").text());
+                    }
+                }
+
+                tracks.add(buildAudioTrack(source, track, title, author, duration, videoId, false));
+            } catch (Exception e) {
+                log.debug("Failed to extract music track from search item: {}", e.getMessage());
             }
-
-            JsonBrowser metadata = columns.index(0)
-                .get("musicResponsiveListItemFlexColumnRenderer")
-                .get("text")
-                .get("runs")
-                .index(0);
-
-            String title = metadata.get("text").text();
-            String videoId = metadata.get("navigationEndpoint").get("watchEndpoint").get("videoId").text();
-
-            if (videoId == null) {
-                // If the track is not available on YouTube Music, videoId will be empty
-                continue;
-            }
-
-            List<JsonBrowser> runs = columns.index(1)
-                .get("musicResponsiveListItemFlexColumnRenderer")
-                .get("text")
-                .get("runs")
-                .values();
-
-            String author = runs.get(0).get("text").text();
-
-            if (author == null) {
-                log.debug("Author field is null, client: {}, json: {}", getIdentifier(), json.format());
-                author = "Unknown artist";
-            }
-
-            JsonBrowser lastElement = runs.get(runs.size() - 1);
-
-            if (!lastElement.get("navigationEndpoint").isNull()) {
-                // The duration element should not have this key. If it does,
-                // then duration is probably missing.
-                continue;
-            }
-
-            long duration = DataFormatTools.durationTextToMillis(lastElement.get("text").text());
-            tracks.add(buildAudioTrack(source, track, title, author, duration, videoId, false));
         }
 
         return tracks;

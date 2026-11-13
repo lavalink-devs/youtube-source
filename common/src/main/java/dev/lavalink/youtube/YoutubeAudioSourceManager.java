@@ -54,7 +54,7 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
     public static final String MUSIC_SEARCH_PREFIX = "ytmsearch:";
 
     public static final Client[] DEFAULT_CLIENTS = new Client[] {
-        new Music(), new AndroidVr(), new Web(), new WebEmbedded()
+        new Music(), new AndroidVr(), new TvHtml5Simply(), new Ios(), new Web(), new WebEmbedded()
     };
 
     private static boolean loggedOauthClientNoAccountWarning = false;
@@ -248,13 +248,14 @@ public class YoutubeAudioSourceManager implements AudioSourceManager {
                 try {
                     item = router.route(client);
                 } catch (CannotBeLoaded cbl) {
-                    throw ExceptionTools.wrapUnfriendlyExceptions("This video cannot be loaded.", Severity.SUSPICIOUS, cbl.getCause());
+                    log.debug("Client \"{}\" cannot load track: {}", client.getIdentifier(), cbl.getMessage());
+                    exceptions.add(new ClientException(cbl.getMessage() != null ? cbl.getMessage() : "Track cannot be loaded", client, cbl));
                 } catch (Throwable t) {
                     log.debug("Client \"{}\" threw a non-fatal exception, storing and proceeding...", client.getIdentifier(), t);
-                    exceptions.add(new ClientException(t.getMessage(), client, t));
+                    exceptions.add(new ClientException(t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName(), client, t));
                 }
 
-                if (item != null) {
+                if (item != null && item != AudioReference.NO_TRACK) {
                     break;
                 }
             }
