@@ -38,7 +38,7 @@ public class YoutubeAccessTokenTracker {
   public String getVisitorId() {
     long now = System.currentTimeMillis();
 
-    if (visitorId == null || now - lastVisitorIdUpdate < VISITOR_ID_REFRESH_INTERVAL) {
+    if (visitorId == null || now - lastVisitorIdUpdate >= VISITOR_ID_REFRESH_INTERVAL) {
       synchronized (tokenLock) {
         if (now - lastVisitorIdUpdate < VISITOR_ID_REFRESH_INTERVAL) {
           log.debug("YouTube visitor id was recently updated, not updating again right away.");
